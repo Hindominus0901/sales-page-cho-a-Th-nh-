@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import type { Env, HonoEnv } from './types';
 import { attribution } from './lib/affiliate/attribution';
 import { publicRoutes } from './routes/public';
@@ -57,13 +58,24 @@ app.get('/cam-on/:code', async (c) => {
 });
 
 /**
- * SPA quản trị và portal CTV: mọi đường dẫn con đều trả về cùng một file
- * index.html để router phía trình duyệt tự xử lý.
+ * SPA quản trị và portal CTV: đường dẫn ĐIỀU HƯỚNG trả về index.html để router
+ * phía trình duyệt tự xử lý.
+ *
+ * Loại trừ /assets/ và mọi đường dẫn có phần mở rộng file: nếu không, chính
+ * file .js và .css của SPA cũng bị trả về index.html, trình duyệt nhận HTML
+ * thay cho JavaScript và trang trắng hoàn toàn — không có lỗi mạng nào để lần.
  */
-app.get('/admin/*', (c) => c.env.ASSETS.fetch(new Request(new URL('/admin/index.html', c.req.url))));
-app.get('/admin',   (c) => c.env.ASSETS.fetch(new Request(new URL('/admin/index.html', c.req.url))));
-app.get('/aff/*',   (c) => c.env.ASSETS.fetch(new Request(new URL('/aff/index.html', c.req.url))));
-app.get('/aff',     (c) => c.env.ASSETS.fetch(new Request(new URL('/aff/index.html', c.req.url))));
+const spaShell = (mount: 'admin' | 'aff') => (c: Context<HonoEnv>) => {
+  const path = new URL(c.req.url).pathname;
+  const isFile = path.startsWith(`/${mount}/assets/`) || /\.[a-z0-9]{2,5}$/i.test(path);
+  if (isFile) return c.env.ASSETS.fetch(c.req.raw);
+  return c.env.ASSETS.fetch(new Request(new URL(`/${mount}/index.html`, c.req.url)));
+};
+
+app.get('/admin',   spaShell('admin'));
+app.get('/admin/*', spaShell('admin'));
+app.get('/aff',     spaShell('aff'));
+app.get('/aff/*',   spaShell('aff'));
 
 // Mọi đường dẫn còn lại rơi về file tĩnh do `npm run build:pages` sinh ra.
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
