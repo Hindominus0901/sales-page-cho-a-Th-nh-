@@ -100,6 +100,31 @@ app.get('/aff/*',   spaShell('aff'));
 // Mọi đường dẫn còn lại rơi về file tĩnh do `npm run build:pages` sinh ra.
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
 
+/**
+ * Ngoại lệ chưa bắt: trả JSON cho /api/*, HTML cho phần còn lại.
+ *
+ * Mặc định Hono trả một trang HTML "Internal Server Error". Với /api/* thì
+ * trình duyệt nhận HTML ở chỗ đang chờ JSON, và giao diện chỉ nói được "máy
+ * chủ trả về dữ liệu không đọc được" — đúng lúc cần biết chuyện gì xảy ra thì
+ * lại không có gì để đọc. Đã mất một buổi vì chính chuyện này.
+ *
+ * Câu lỗi trả ra là câu của ngoại lệ. Chấp nhận được vì /api/admin và /api/aff
+ * đã sau lớp đăng nhập, còn API công khai thì không đụng tới bí mật nào.
+ */
+app.onError((err, c) => {
+  const path = new URL(c.req.url).pathname;
+  console.error(`[worker] lỗi chưa bắt ở ${c.req.method} ${path}:`, err);
+
+  if (path.startsWith('/api/')) {
+    return c.json({
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+      path,
+    }, 500);
+  }
+  return c.text('Có lỗi xảy ra. Anh chị tải lại trang giúp em.', 500);
+});
+
 export default {
   fetch: app.fetch,
 
