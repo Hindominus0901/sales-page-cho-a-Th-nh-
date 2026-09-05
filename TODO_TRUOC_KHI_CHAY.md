@@ -76,9 +76,12 @@ Trang `/workshop` tự lấy buổi sắp diễn ra gần nhất. Chưa có link
       21 ngày để anh Thành nhìn thấy hệ quả trước khi đổi.
 - [ ] `/admin` → Quà tặng → thay 4 phần quà mẫu bằng quà thật, điền số lượng
       tồn. Quà hết tồn thì tự ẩn, không cần xoá.
-- [ ] Chốt cách học viên nộp bài: hiện **chưa có màn hình cho học viên tự nộp**,
-      bài vào hệ thống qua trang quản trị. Nếu muốn học viên nộp thẳng trên web
-      thì đây là phần cần làm tiếp.
+- [ ] Gửi link nộp bài cho từng học viên: `/admin` → Học viên → **Chép link** →
+      gửi Zalo. Không gửi thì học viên không có đường vào nộp bài. Cột bên cạnh
+      ghi lần mở gần nhất nên nhìn ra ngay ai chưa từng mở.
+- [ ] Dặn học viên **giữ link riêng, đừng đăng vào nhóm chung** — ai có link là
+      xem được tiến độ và đổi quà của người đó. Lỡ đăng rồi thì bấm **Cấp lại**,
+      mã cũ chết ngay.
 
 ## 9. Nên cân nhắc thêm
 

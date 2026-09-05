@@ -37,9 +37,10 @@ node scripts/create-admin.mjs --email thanh@goccreator.vn --name "Đỗ Mạnh T
 
 ```bash
 npm run typecheck     # TypeScript
-npm test              # 48 unit test: chấm điểm lead, trích mã đơn, so tên
+npm test              # 73 unit test: chấm điểm lead, trích mã đơn, so tên, chuỗi ngày, thứ hạng
 npm run test:flows    # 11 kịch bản thanh toán thật qua HTTP (cần npm run dev)
 npm run test:admin -- --email <email> --password <mật khẩu>
+npm run test:student  # cổng học viên: nộp bài, nộp lại, khoá bài đã duyệt, đổi quà
 ```
 
 `test:flows` phủ đúng những chỗ dễ mất tiền: webhook gửi lại, chuyển thiếu rồi
@@ -268,21 +269,47 @@ có đủ chạm bậc cao nhất không.
 **Bảng vàng** (`/admin/bang-vang`) xếp theo XP, kèm bản đồ nhiệt 8 tuần để nhìn
 ra ai đang đuối trước khi họ bỏ cuộc.
 
-> Hiện chưa có màn hình cho học viên tự nộp bài — bài vào hệ thống qua trang
-> quản trị. Đây là phần tiếp theo cần làm nếu anh Thành muốn học viên nộp thẳng
-> trên web thay vì gửi qua nhóm Zalo.
+### Cổng học viên — `/hoc/<mã>`
+
+Mỗi học viên có một đường link riêng để tự nộp bài. **Không có mật khẩu.** Học
+viên khoá 21 ngày là người bận, mua một lần, học ba tuần rồi thôi — bắt họ tạo
+tài khoản là dựng thêm một bức tường ngay trước thứ mình muốn họ làm mỗi ngày.
+
+Anh Thành vào `/admin` → Học viên → **Chép link** rồi gửi Zalo. Cột bên cạnh
+ghi lần mở gần nhất, nên nhìn ra ngay ai chưa bao giờ mở link. Học viên lỡ đăng
+link vào nhóm chung thì bấm **Cấp lại** — mã cũ chết ngay lúc đó.
+
+Trên trang, học viên thấy: bậc hiện tại và còn bao nhiêu XP nữa lên bậc, số
+coin, chuỗi ngày, 21 ô ngày theo màu (đã duyệt / chờ duyệt / cần sửa / chưa
+nộp), form nộp bài, nhận xét của team, và kho quà đổi được.
+
+Vài quyết định đáng nói:
+
+- **Ô ngày mở sẵn là ngày bị trả về**, không phải ngày hôm nay. Ở đó có nhận
+  xét đang chờ đọc và một việc cụ thể phải làm; ô trống thì lúc nào cũng còn.
+- **Bài đã duyệt thì khoá.** Sửa được sau khi đã cộng coin nghĩa là link đã
+  nhận thưởng có thể bị thay bằng link khác mà coin vẫn giữ nguyên.
+- **Nộp lại thì xoá nhận xét cũ.** Giữ lại thì học viên tưởng team đã đọc bài
+  mới rồi.
+- **Đổi quà trừ coin ngay trong chính câu `UPDATE ... WHERE coin >= ?`**, nên
+  bấm đổi hai lần cùng lúc chỉ trừ được một lần.
+
+Đánh đổi đã cân nhắc: ai có link là vào được. Với nội dung ở đây — bài tập của
+chính học viên, số coin của họ — đó là mức rủi ro đúng: không có tiền, không có
+dữ liệu người khác. Trang gắn `noindex` và `Referrer-Policy: no-referrer` để mã
+không lọt lên Google hay rò qua Referer, và mã dài 128 bit nên không dò được.
 
 ---
 
 ## 9. Cấu trúc
 
 ```
-build/               Pipeline sinh 5 trang HTML tĩnh từ file thiết kế .dc.html
+build/               Pipeline sinh 6 trang HTML tĩnh từ file thiết kế .dc.html
   build.mjs          Đọc design/ + site.config.json → public/*.html
   partials/          CSS, JS, và mảnh HTML của từng trang
 design/              File thiết kế gốc (.dc.html) — nguồn của mọi trang public
 site.config.json     Toàn bộ chữ trên trang. Trường trống thì khối tự ẩn.
-migrations/          8 file schema D1 + seed
+migrations/          9 file schema D1 + seed
 src/
   worker.ts          Điểm vào Hono
   routes/
@@ -291,15 +318,16 @@ src/
     webhook-sepay.ts ⚠️ Phần rủi ro nhất — chống trùng + ghép đơn
     admin/*          API quản trị
     affiliate/*      API portal CTV
+    student.ts       Cổng học viên — nộp bài, đổi quà, chạy bằng mã trong link
   lib/
     scoring/         Bảng điểm lead (+ test)
     payments/        Mã đơn, VietQR, fulfillOrder dùng chung
     affiliate/       Quy kết, máy trạng thái hoa hồng, chi trả
     auth/            Phiên đăng nhập, CSRF, phân quyền
-    game/            Chuỗi ngày, thứ hạng, cộng thưởng khi duyệt bài
+    game/            Chuỗi ngày, thứ hạng, cộng thưởng khi duyệt bài, cổng học viên
 admin/               SPA quản trị (React + Vite) → public/admin/
 affiliate/           SPA portal CTV → public/aff/
-scripts/             Tạo tài khoản admin, hai bộ test đầu-cuối
+scripts/             Tạo tài khoản admin, ba bộ test đầu-cuối
 ```
 
 **Trang public không dùng React.** Chúng đã tồn tại dưới dạng HTML tĩnh sinh từ

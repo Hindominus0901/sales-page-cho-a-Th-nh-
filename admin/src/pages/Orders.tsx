@@ -69,7 +69,7 @@ export default function Orders({ query }: { query: URLSearchParams }) {
                   <td className="right">{vnd(o.amount_total)}</td>
                   <td className="right" style={{
                     fontWeight: o.amount_paid !== o.amount_total && o.amount_paid > 0 ? 700 : 400,
-                    color: o.amount_paid > o.amount_total ? 'var(--warm)' : undefined,
+                    color: o.amount_paid > o.amount_total ? 'var(--canh)' : undefined,
                   }}>{vnd(o.amount_paid)}</td>
                   <td><OrderStatus value={o.status} /></td>
                   <td className="muted mono" style={{ fontSize: 13 }}>{o.affiliate_code ?? '—'}</td>

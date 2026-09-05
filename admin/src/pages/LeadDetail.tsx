@@ -127,7 +127,7 @@ export default function LeadDetail({ id }: { id: string }) {
                       <td>{b.label}</td>
                       <td className="right mono" style={{
                         width: 60, fontWeight: 700,
-                        color: b.points >= 0 ? 'var(--green-dark)' : 'var(--danger)',
+                        color: b.points >= 0 ? 'var(--xanh-dam)' : 'var(--xau)',
                       }}>{b.points >= 0 ? '+' : ''}{b.points}</td>
                     </tr>
                   ))}
@@ -196,7 +196,7 @@ export default function LeadDetail({ id }: { id: string }) {
             <div className="stack" style={{ gap: 11, marginTop: 16 }}>
               {data.notes.length === 0 && <p className="note">Chưa có ghi chú nào.</p>}
               {data.notes.map((n) => (
-                <div key={n.id} style={{ borderLeft: '2px solid var(--line)', paddingLeft: 12 }}>
+                <div key={n.id} style={{ borderLeft: '2px solid var(--vien)', paddingLeft: 12 }}>
                   <div style={{ whiteSpace: 'pre-wrap' }}>{n.body}</div>
                   <div className="note">{n.admin_name ?? 'Hệ thống'} · {dateTime(n.created_at)}</div>
                 </div>

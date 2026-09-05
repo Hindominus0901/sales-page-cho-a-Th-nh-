@@ -97,7 +97,7 @@ export default function Payouts() {
                 </div>
               )}
               {p.rejected_reason && (
-                <div className="note" style={{ marginTop: 10, color: 'var(--danger)' }}>
+                <div className="note" style={{ marginTop: 10, color: 'var(--xau)' }}>
                   Từ chối: {p.rejected_reason}
                 </div>
               )}

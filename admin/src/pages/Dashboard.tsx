@@ -73,8 +73,8 @@ export default function Dashboard() {
             {todo.map((x) => (
               <a key={x.key} href={x.href} className="spread"
                  style={{ textDecoration: 'none', color: 'inherit', padding: '8px 12px',
-                          background: 'var(--danger-bg)', borderRadius: 10 }}>
-                <span><b style={{ color: 'var(--danger)' }}>{data.todo[x.key]}</b> {x.label}</span>
+                          background: 'var(--xau-nen)', borderRadius: 10 }}>
+                <span><b style={{ color: 'var(--xau)' }}>{data.todo[x.key]}</b> {x.label}</span>
                 <span className="muted">xem →</span>
               </a>
             ))}

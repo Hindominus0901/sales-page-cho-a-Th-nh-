@@ -843,6 +843,15 @@ const pages = {
     script: read('thanh-toan.js'),
     noindex: true,
   }),
+  // Cổng học viên. Một file tĩnh dùng chung cho mọi học viên; mã truy cập nằm
+  // trên đường dẫn và trang tự đọc lấy, nên không có gì riêng tư nằm trong file.
+  'hoc.html': page({
+    title: 'Hành trình 21 ngày — ' + cfg.brand,
+    description: 'Nộp bài, xem nhận xét và đổi quà.',
+    body: read('page-hoc.html'),
+    script: read('hoc.js'),
+    noindex: true,
+  }),
 };
 
 

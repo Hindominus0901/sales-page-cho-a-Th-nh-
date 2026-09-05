@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { HonoEnv } from '../../types';
 import { requireAdmin, requireRole, adminUserOf } from '../../lib/auth/guards';
 import { audit } from '../../lib/db/audit';
-import { uuid } from '../../lib/util/id';
+import { uuid, accessToken } from '../../lib/util/id';
 import { now, ictDateTime } from '../../lib/util/datetime';
 
 export const adminContentRoutes = new Hono<HonoEnv>();
@@ -116,7 +116,9 @@ adminContentRoutes.post('/api/admin/workshops/:id/attendance', async (c) => {
 adminContentRoutes.get('/api/admin/students', async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT s.id, s.full_name, s.phone, s.email, s.created_at,
-            e.cohort, e.status AS enrollment_status, e.progress_day, e.posts_done,
+            s.coin, s.xp, s.streak_current,
+            e.id AS enrollment_id, e.cohort, e.status AS enrollment_status,
+            e.progress_day, e.posts_done, e.access_token, e.last_seen_at,
             o.order_code, o.amount_total
      FROM students s
      LEFT JOIN enrollments e ON e.student_id = s.id
@@ -124,6 +126,30 @@ adminContentRoutes.get('/api/admin/students', async (c) => {
      ORDER BY s.created_at DESC LIMIT 300`,
   ).all();
   return c.json({ ok: true, students: rows.results ?? [] });
+});
+
+/**
+ * Cấp lại link học viên. Mã cũ chết ngay lúc mã mới ghi đè — dùng khi học viên
+ * lỡ đăng link vào nhóm chung, hoặc mất điện thoại.
+ */
+adminContentRoutes.post('/api/admin/enrollments/:id/cap-lai-link', async (c) => {
+  const admin = adminUserOf(c);
+  const id = c.req.param('id');
+  const token = accessToken();
+
+  const res = await c.env.DB.prepare(
+    `UPDATE enrollments SET access_token = ?, token_created_at = ?, updated_at = ? WHERE id = ?`,
+  ).bind(token, now(), now(), id).run();
+
+  if ((res.meta.changes ?? 0) === 0) {
+    return c.json({ ok: false, error: 'Không tìm thấy học viên này.' }, 404);
+  }
+
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'enrollment.reissue_token', entityType: 'enrollment', entityId: id,
+  });
+  return c.json({ ok: true, token });
 });
 
 adminContentRoutes.patch('/api/admin/enrollments/:id', async (c) => {

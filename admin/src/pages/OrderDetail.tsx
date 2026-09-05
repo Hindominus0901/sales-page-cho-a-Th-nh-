@@ -78,7 +78,7 @@ export default function OrderDetail({ code }: { code: string }) {
               <tr><td className="note">Đã nhận</td><td className="right"><b>{vnd(o.amount_paid)}</b></td></tr>
               {remaining > 0 && (
                 <tr><td className="note">Còn thiếu</td>
-                    <td className="right" style={{ color: 'var(--warm)', fontWeight: 700 }}>{vnd(remaining)}</td></tr>
+                    <td className="right" style={{ color: 'var(--canh)', fontWeight: 700 }}>{vnd(remaining)}</td></tr>
               )}
               <tr><td className="note">Tạo lúc</td><td className="right">{dateTime(o.created_at)}</td></tr>
               <tr><td className="note">Thanh toán lúc</td><td className="right">{dateTime(o.paid_at)}</td></tr>
@@ -102,7 +102,7 @@ export default function OrderDetail({ code }: { code: string }) {
           ) : (
             <div className="stack" style={{ gap: 12 }}>
               {data.payments.map((p) => (
-                <div key={p.provider_tx_id} style={{ borderLeft: '2px solid var(--line)', paddingLeft: 12 }}>
+                <div key={p.provider_tx_id} style={{ borderLeft: '2px solid var(--vien)', paddingLeft: 12 }}>
                   <div className="spread">
                     <b>{vnd(p.amount)}</b>
                     <span className="note">{dateTime(p.created_at)}</span>

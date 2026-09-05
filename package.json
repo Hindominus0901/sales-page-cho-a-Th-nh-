@@ -25,7 +25,8 @@
     "deploy:preview": "npm run build && wrangler deploy --env preview",
     "deploy": "npm run build && wrangler deploy --env production",
     "test:flows": "node scripts/test-payment-flows.mjs",
-    "test:admin": "node scripts/test-admin-flows.mjs"
+    "test:admin": "node scripts/test-admin-flows.mjs",
+    "test:student": "node scripts/test-student-flows.mjs"
   },
   "dependencies": {
     "hono": "^4.6.14",

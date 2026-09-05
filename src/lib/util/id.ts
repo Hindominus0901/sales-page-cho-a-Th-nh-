@@ -18,3 +18,13 @@ export function randomToken(bytes = 32): string {
   for (const b of buf) bin += String.fromCharCode(b);
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
+
+/**
+ * Mã truy cập cổng học viên. Hex 32 ký tự (128 bit) chứ không phải base64url:
+ * mã này nằm trong đường link gửi qua Zalo, và Zalo/Messenger hay cắt link ở
+ * ký tự lạ. Chỉ [0-9a-f] thì không có gì để cắt.
+ */
+export function accessToken(): string {
+  const buf = crypto.getRandomValues(new Uint8Array(16));
+  return [...buf].map((b) => b.toString(16).padStart(2, '0')).join('');
+}

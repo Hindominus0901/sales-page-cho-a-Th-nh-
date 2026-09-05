@@ -116,7 +116,7 @@ export default function Workshops() {
                   {w.attended} người đã dự
                 </div>
                 {!w.zoom_url && (
-                  <div className="note" style={{ color: 'var(--warm)', marginTop: 5 }}>
+                  <div className="note" style={{ color: 'var(--canh)', marginTop: 5 }}>
                     Chưa có link Zoom — khách đăng ký xong sẽ không thấy nút vào phòng.
                   </div>
                 )}
@@ -181,7 +181,7 @@ function Registrations({ id }: { id: string }) {
   }
 
   return (
-    <div className="table-wrap" style={{ marginTop: 14, borderTop: '1px solid var(--line)' }}>
+    <div className="table-wrap" style={{ marginTop: 14, borderTop: '1px solid var(--vien)' }}>
       {toast.node}
       <table>
         <thead>

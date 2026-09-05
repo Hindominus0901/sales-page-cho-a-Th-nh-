@@ -81,7 +81,7 @@ export default function Commissions({ query }: { query: URLSearchParams }) {
                   <td>
                     <Badge kind={KIND[c.status] ?? 'mute'}>{c.statusLabel}</Badge>
                     {c.holdReasonLabel && (
-                      <div className="note" style={{ color: 'var(--warm)', maxWidth: 220 }}>
+                      <div className="note" style={{ color: 'var(--canh)', maxWidth: 220 }}>
                         {c.holdReasonLabel}
                       </div>
                     )}

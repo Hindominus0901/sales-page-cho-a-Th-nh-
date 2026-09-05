@@ -13,6 +13,7 @@ import { adminAffiliateRoutes } from './routes/admin/affiliates';
 import { adminContentRoutes } from './routes/admin/content';
 import { adminGameRoutes } from './routes/admin/game';
 import { affiliateRoutes } from './routes/affiliate/portal';
+import { studentRoutes } from './routes/student';
 import { runDailyJobs } from './lib/jobs/daily';
 
 const app = new Hono<HonoEnv>();
@@ -40,6 +41,7 @@ app.route('/', adminAffiliateRoutes);
 app.route('/', adminContentRoutes);
 app.route('/', adminGameRoutes);
 app.route('/', affiliateRoutes);
+app.route('/', studentRoutes);
 
 /** Trang quản trị và portal CTV không bao giờ được index. */
 app.use('/admin/*', async (c, next) => { c.header('X-Robots-Tag', 'noindex, nofollow'); await next(); });
@@ -73,6 +75,16 @@ const spaShell = (mount: 'admin' | 'aff') => (c: Context<HonoEnv>) => {
   if (isFile) return c.env.ASSETS.fetch(c.req.raw);
   return c.env.ASSETS.fetch(new Request(new URL(`/${mount}/index.html`, c.req.url)));
 };
+
+/**
+ * Cổng học viên. Mã truy cập nằm trên đường dẫn, trang tự đọc lấy — không có
+ * mật khẩu nào để quên giữa lúc đang muốn nộp bài.
+ */
+app.get('/hoc/:token', async (c) => {
+  c.header('X-Robots-Tag', 'noindex, nofollow');
+  c.header('Referrer-Policy', 'no-referrer');
+  return c.env.ASSETS.fetch(new Request(new URL('/hoc.html', c.req.url)));
+});
 
 app.get('/admin',   spaShell('admin'));
 app.get('/admin/*', spaShell('admin'));

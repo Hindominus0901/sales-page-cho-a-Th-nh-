@@ -169,7 +169,7 @@ function TextSetting(
         <button className="btn sm" disabled={v === initial} onClick={() => onSave(v)}>Lưu</button>
       </div>
       {hint && <div className="note">{hint}</div>}
-      {!initial && !hint && <div className="note" style={{ color: 'var(--warm)' }}>Chưa điền</div>}
+      {!initial && !hint && <div className="note" style={{ color: 'var(--canh)' }}>Chưa điền</div>}
     </div>
   );
 }

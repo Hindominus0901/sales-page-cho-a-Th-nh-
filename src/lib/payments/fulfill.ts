@@ -1,5 +1,5 @@
 import type { Env } from '../../types';
-import { uuid } from '../util/id';
+import { uuid, accessToken } from '../util/id';
 import { now, daysFromNow } from '../util/datetime';
 import { commissionOf } from '../util/money';
 import { auditStmt } from '../db/audit';
@@ -132,10 +132,11 @@ export async function fulfillOrder(
 
   // 2. Ghi danh — UNIQUE(order_id) làm lần chạy lại thành no-op.
   statements.push(env.DB.prepare(
-    `INSERT INTO enrollments (id, student_id, product_id, order_id, status, started_at, created_at, updated_at)
-     VALUES (?,?,?,?, 'active', ?, ?, ?)
+    `INSERT INTO enrollments (id, student_id, product_id, order_id, status, started_at,
+                              access_token, token_created_at, created_at, updated_at)
+     VALUES (?,?,?,?, 'active', ?,?,?,?,?)
      ON CONFLICT(order_id) DO NOTHING`,
-  ).bind(uuid(), studentId, order.product_id, order.id, ts, ts, ts));
+  ).bind(uuid(), studentId, order.product_id, order.id, ts, accessToken(), ts, ts, ts));
 
   statements.push(env.DB.prepare(
     `UPDATE orders SET student_id = ?, updated_at = ? WHERE id = ?`,

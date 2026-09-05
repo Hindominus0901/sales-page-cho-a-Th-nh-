@@ -10,7 +10,7 @@ import { now } from '../util/datetime';
 export async function audit(
   env: Env,
   entry: {
-    actorType: 'admin' | 'affiliate' | 'system' | 'webhook';
+    actorType: 'admin' | 'affiliate' | 'student' | 'system' | 'webhook';
     actorId?: string | null;
     actorLabel?: string | null;
     action: string;

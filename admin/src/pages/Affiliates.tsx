@@ -124,7 +124,7 @@ export default function Affiliates() {
                       {a.name}
                       <div className="muted" style={{ fontSize: 12 }}>{a.email}</div>
                       {!a.bank_account_no && (
-                        <div className="note" style={{ color: 'var(--warm)' }}>chưa có tài khoản ngân hàng</div>
+                        <div className="note" style={{ color: 'var(--canh)' }}>chưa có tài khoản ngân hàng</div>
                       )}
                     </td>
                     <td className="right">{a.clicks}</td>
