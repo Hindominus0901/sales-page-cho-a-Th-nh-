@@ -26,7 +26,8 @@
     "deploy": "npm run build && wrangler deploy --env production",
     "cf:preview": "node scripts/deploy-cloudflare.mjs --env preview",
     "cf:prod": "node scripts/deploy-cloudflare.mjs --env production",
-    "preflight": "node scripts/preflight.mjs --env preview",
+    "cf:deploy": "node scripts/cf-deploy.mjs",
+    "preflight": "node scripts/preflight.mjs",
     "test:flows": "node scripts/test-payment-flows.mjs",
     "test:admin": "node scripts/test-admin-flows.mjs",
     "test:student": "node scripts/test-student-flows.mjs"

@@ -20,13 +20,18 @@ import { execFileSync } from 'node:child_process';
 
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
-const ENV = arg('env', 'preview');
+// 'production' = tầng mặc định của wrangler.jsonc, cái mà `wrangler deploy`
+// không kèm --env sẽ deploy. Đó cũng là bản chạy thật.
+const ENV = arg('env', 'production');
 const SKIP_SECRETS = argv.includes('--no-secrets');
 
 if (!['preview', 'production'].includes(ENV)) {
   console.error(`Môi trường không hợp lệ: ${ENV}. Chỉ nhận "preview" hoặc "production".`);
   process.exit(2);
 }
+
+/** Cờ --env cho wrangler. Bản chạy thật nằm ở tầng mặc định nên không có cờ. */
+const ENV_FLAG = ENV === 'preview' ? ['--env', 'preview'] : [];
 
 const blockers = [];
 const warnings = [];
@@ -39,7 +44,7 @@ const raw = readFileSync('wrangler.jsonc', 'utf8');
 // Bỏ chú thích để đọc được bằng JSON.parse. Chỉ dùng cho việc ĐỌC — lúc ghi id
 // vào file thì phải thay chuỗi tại chỗ, nếu không chú thích tiếng Việt bay sạch.
 const cfg = JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ''));
-const envCfg = cfg.env?.[ENV];
+const envCfg = ENV === 'preview' ? cfg.env?.preview : cfg;
 
 if (!envCfg) {
   console.error(`wrangler.jsonc chưa có khối env.${ENV}.`);
@@ -51,7 +56,8 @@ const PLACEHOLDER = /^0+$|^0{8}-0{4}-0{4}-0{4}-0{12}$/;
 const dbId = envCfg.d1_databases?.[0]?.database_id ?? '';
 if (!dbId || PLACEHOLDER.test(dbId)) {
   block('database_id của D1 chưa điền',
-    'Deploy sẽ thất bại hoặc trỏ vào một database không tồn tại. Chạy `npm run cf:' +
+    'Deploy sẽ thất bại hoặc trỏ vào một database không tồn tại. Tạo D1 trong ' +
+    'dashboard Cloudflare rồi dán id vào wrangler.jsonc, hoặc chạy `npm run cf:' +
     (ENV === 'preview' ? 'preview' : 'prod') + '` để script tự tạo và tự điền.');
 }
 
@@ -93,7 +99,7 @@ if (!baseUrl.startsWith('https://')) {
 if (!SKIP_SECRETS) {
   let names = null;
   try {
-    const out = execFileSync('npx', ['wrangler', 'secret', 'list', '--env', ENV],
+    const out = execFileSync('npx', ['wrangler', 'secret', 'list', ...ENV_FLAG],
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     // Output có thể lẫn banner của wrangler — bắt lấy đoạn JSON đầu tiên.
     const json = out.slice(out.indexOf('['), out.lastIndexOf(']') + 1);

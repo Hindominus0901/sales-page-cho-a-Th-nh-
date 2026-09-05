@@ -51,17 +51,32 @@ webhook, đơn hết hạn trả muộn, CTV tự mua, và CTV thứ hai cướp
 
 ## 3. Deploy lên Cloudflare
 
-### Một câu lệnh
+Hai đường, chọn một.
+
+### Đường 1 — Nối repo trong dashboard, không cần terminal
+
+Đây là đường anh Thành đang dùng. Toàn bộ làm trên trình duyệt: tạo D1/KV/R2,
+nối repo GitHub, điền hai ô build. Từ đó mỗi lần đẩy mã là Cloudflare tự deploy.
+
+**Xem [`DEPLOY_CLOUDFLARE.md`](DEPLOY_CLOUDFLARE.md)** — đi từng bước, ghi rõ ô
+nào điền chữ gì.
+
+Hai ô quan trọng trong phần cấu hình build:
+
+| Ô | Điền |
+|---|---|
+| Build command | `npm run build` |
+| Deploy command | `node scripts/cf-deploy.mjs` |
+
+`scripts/cf-deploy.mjs` làm phần Workers Builds không tự làm: soát cấu hình,
+chạy migration D1, nạp dữ liệu nền lần đầu, rồi deploy.
+
+### Đường 2 — Một câu lệnh trên máy
 
 ```bash
 npx wrangler login          # một lần duy nhất, mở trình duyệt rồi bấm Allow
-npm run cf:preview          # dựng preview: goc-creator-preview.workers.dev
-```
-
-Xong preview và đã chuyển thật 2.000đ kiểm chứng SePay thì cắt sang thật:
-
-```bash
-npm run cf:prod
+npm run cf:prod             # bản chạy thật
+npm run cf:preview          # hoặc dựng bản thử: goc-creator-preview.workers.dev
 ```
 
 Script tự làm hết, và **chạy lại được nhiều lần** — lần hai không tạo trùng tài
@@ -84,12 +99,15 @@ Cuối cùng script in ra đủ đường dẫn cần dùng, gồm **URL webhook
 Hai thứ phải tự điền, vì chúng nằm ở tài khoản ngân hàng và tài khoản SePay:
 
 ```jsonc
-// wrangler.jsonc → env.preview.vars (và env.production.vars)
+// wrangler.jsonc → "vars" ở tầng ngoài cùng (bản chạy thật)
 "SEPAY_ACCOUNT_NO": "<số tài khoản Techcombank của ANLIFE GROUP>",
 ```
 
+Khoá webhook đặt trong dashboard (Settings → Variables and Secrets → Secret),
+hoặc bằng lệnh:
+
 ```bash
-npx wrangler secret put SEPAY_WEBHOOK_API_KEY --env preview
+npx wrangler secret put SEPAY_WEBHOOK_API_KEY
 ```
 
 Thiếu một trong hai thì `preflight` **chặn deploy**, kèm giải thích vì sao — chứ
@@ -98,7 +116,8 @@ không để deploy thành công rồi phát hiện lúc có người chuyển t
 Muốn soát trước mà chưa deploy:
 
 ```bash
-npm run preflight
+npm run preflight            # soát bản chạy thật
+npm run preflight -- --env preview
 ```
 
 ### Ba lỗi hay gặp
@@ -114,21 +133,6 @@ cũng không hết.
 **Có nhiều KV namespace cùng khớp** — tài khoản đang có mấy namespace tên na ná
 nhau từ lần thử trước. Script không đoán bừa; vào dashboard xoá bớt, hoặc điền
 tay id đúng vào `wrangler.jsonc`.
-
-### Cách thứ hai: không cần terminal
-
-Nếu không muốn cài Node trên máy, dựng bằng dashboard Cloudflare rồi để GitHub
-tự deploy:
-
-1. **Workers & Pages → D1** → tạo `goc-creator-preview`, chép `Database ID`.
-2. **Workers & Pages → KV** → tạo một namespace, chép `ID`.
-3. **R2** → tạo bucket `goc-creator-media-preview`.
-4. Dán ba id vào `wrangler.jsonc` → `env.preview` (sửa thẳng trên GitHub cũng được).
-5. **Workers & Pages → Create → Connect to Git**, chọn repo này, lệnh build
-   `npm run build`, rồi đặt các khoá bí mật trong phần Settings → Variables.
-
-Từ đó mỗi lần push lên nhánh là Cloudflare tự build và deploy. Dựng lâu hơn,
-nhưng sau đó không phải gõ lệnh nào nữa.
 
 ---
 
@@ -367,6 +371,7 @@ admin/               SPA quản trị (React + Vite) → public/admin/
 affiliate/           SPA portal CTV → public/aff/
 scripts/             Tạo tài khoản admin, ba bộ test đầu-cuối
   deploy-cloudflare.mjs  Dựng D1/KV/R2 và deploy bằng một lệnh
+  cf-deploy.mjs          Lệnh deploy cho Workers Builds (đường dashboard)
   preflight.mjs          Chặn deploy thiếu thông tin nhận tiền
 ```
 
