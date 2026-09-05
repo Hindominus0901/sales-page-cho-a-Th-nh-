@@ -140,6 +140,22 @@ ra chỗ an toàn ngay, rồi đăng nhập `/admin` → Nhân sự → đổi m
 Tài khoản chỉ được tạo khi bảng còn rỗng, nên những lần deploy sau không sinh
 thêm tài khoản nào.
 
+### Quên mật khẩu quản trị
+
+Mật khẩu chỉ hiện một lần và hệ chỉ lưu bản băm một chiều — không ai đọc lại
+được. Mất thì lấy lại thế này:
+
+1. **Settings → Build → Variables** → thêm `RESET_ADMIN_PASSWORD` = `1`
+2. **Deployments → Retry deployment**
+3. Mật khẩu mới in ra ở cuối nhật ký build — chép ngay
+4. **Xoá biến `RESET_ADMIN_PASSWORD` đi**, rồi deploy lại
+
+Bước 4 là bắt buộc. Để nguyên thì mỗi lần deploy mật khẩu lại đổi một lần, và
+mật khẩu anh vừa chép sẽ hết dùng được mà không có gì báo.
+
+`ADMIN_EMAIL` phải trỏ đúng tài khoản cần đặt lại. Email chưa có trong bảng thì
+script tạo tài khoản owner mới cho email đó, không đụng vào tài khoản cũ.
+
 ---
 
 ## Bước 6 — Việc quan trọng nhất

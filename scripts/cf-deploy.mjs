@@ -214,9 +214,22 @@ const countUsableAdmins = () =>
 let firstAdmin = null;
 const adminEmail = (process.env.ADMIN_EMAIL ?? '').trim().toLowerCase();
 
-if (DRY) {
-  say('(bỏ qua ở chế độ --dry-run)');
-} else if (countUsableAdmins() > 0) {
+/**
+ * Công tắc quên mật khẩu.
+ *
+ * Mật khẩu quản trị chỉ hiện MỘT LẦN và hệ chỉ lưu bản băm một chiều — không
+ * ai đọc lại được, kể cả người viết script này. Mất mật khẩu mà không có đường
+ * này thì hệ khoá cứng vĩnh viễn: bước dưới thấy "đã có tài khoản dùng được"
+ * rồi bỏ qua, mãi mãi.
+ *
+ * Đặt RESET_ADMIN_PASSWORD=1 trong Settings → Build → Variables and Secrets,
+ * deploy lại, mật khẩu mới in ra trong log build. XOÁ BIẾN ĐI NGAY SAU ĐÓ —
+ * để nguyên thì mỗi lần deploy lại đổi mật khẩu một lần, và anh sẽ không hiểu
+ * vì sao hôm qua vào được hôm nay không.
+ */
+const forceReset = /^(1|true|yes|on)$/i.test((process.env.RESET_ADMIN_PASSWORD ?? '').trim());
+
+if (!forceReset && countUsableAdmins() > 0) {
   done('Đã có tài khoản quản trị dùng được — không tạo thêm');
 } else if (!adminEmail) {
   say('⚠ Chưa có tài khoản quản trị nào, và chưa biết tạo cho email nào.');
@@ -229,15 +242,27 @@ if (DRY) {
 } else {
   const bytes = crypto.getRandomValues(new Uint8Array(14));
   const password = [...bytes].map((b) => ALPHABET[b % ALPHABET.length]).join('');
-  const hash = await hashPassword(password);
+  const hash = DRY ? '(dry-run)' : await hashPassword(password);
   // Sửa trước, tạo sau. Tài khoản có thể đã tồn tại nhưng mang chuỗi băm
   // Workers không kiểm chứng nổi (sinh ở mức vòng lặp vượt trần) — lúc đó nó
   // vô dụng, và INSERT sẽ vướng UNIQUE(email_norm) rồi hỏng cả bước này.
-  const sua = `UPDATE admin_users SET password_hash = '${hash}', is_active = 1,
-                 updated_at = unixepoch() WHERE email_norm = '${adminEmail}';`;
-  wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG, '--command', sua], { quiet: true });
+  //
+  // Hỏi TRƯỚC xem dòng đó có tồn tại không, thay vì sửa rồi đếm số tài khoản
+  // dùng được: khi chạy với RESET_ADMIN_PASSWORD, các tài khoản khác cũng dùng
+  // được, nên phép đếm ấy luôn ra "đã có" và script không bao giờ tạo mới.
+  const daCo = countWhere(
+    `SELECT COUNT(*) AS n FROM admin_users WHERE email_norm = '${adminEmail}'`) > 0;
 
-  if (countUsableAdmins() > 0) {
+  if (DRY) {
+    // Chạy thật phần quyết định, chỉ không ghi gì: nhánh chọn sai là chỗ dễ
+    // hỏng nhất ở bước này, mà --dry-run bỏ qua cả bước thì không soi được.
+    say(daCo
+      ? `(dry-run) sẽ đặt lại mật khẩu cho tài khoản sẵn có: ${adminEmail}`
+      : `(dry-run) sẽ tạo tài khoản owner đầu tiên: ${adminEmail}`);
+  } else if (daCo) {
+    const sua = `UPDATE admin_users SET password_hash = '${hash}', is_active = 1,
+                   updated_at = unixepoch() WHERE email_norm = '${adminEmail}';`;
+    wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG, '--command', sua], { quiet: true });
     firstAdmin = { email: adminEmail, password, reset: true };
     done(`Đã đặt lại mật khẩu cho tài khoản sẵn có: ${adminEmail}`);
   } else {
@@ -248,6 +273,13 @@ if (DRY) {
     wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG, '--command', sql], { quiet: true });
     firstAdmin = { email: adminEmail, password, reset: false };
     done(`Đã tạo tài khoản owner đầu tiên: ${adminEmail}`);
+  }
+
+  if (forceReset) {
+    say('');
+    say('  ⚠ RESET_ADMIN_PASSWORD đang bật. XOÁ biến đó trong Settings → Build');
+    say('    ngay sau khi đăng nhập được — để nguyên thì mỗi lần deploy mật khẩu');
+    say('    lại đổi, và lần sau anh sẽ không vào được bằng mật khẩu vừa chép.');
   }
 }
 
