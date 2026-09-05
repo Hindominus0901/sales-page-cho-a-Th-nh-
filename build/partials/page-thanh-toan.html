@@ -44,6 +44,15 @@
           <div data-order-name style="font-size:13px;color:#55555c;margin-top:6px"></div>
         </div>
 
+        <!-- Chuyển thiếu: nói rõ đã nhận bao nhiêu, còn thiếu bao nhiêu.
+             QR bên dưới đã đổi sang đúng phần còn lại, nội dung chuyển khoản
+             giữ nguyên để lần chuyển thứ hai khớp vào đúng đơn này. -->
+        <div data-partial hidden style="background:rgba(240,165,0,.12);border:1px solid rgba(138,90,0,.3);border-radius:16px;padding:16px 18px;margin-bottom:24px;font-size:15px;line-height:1.7;color:#333">
+          <div style="font-weight:700;margin-bottom:4px">Đã nhận một phần học phí</div>
+          <div>Đã nhận: <b data-paid-so-far></b> · Còn thiếu: <b style="color:#8a5a00" data-remaining></b></div>
+          <div style="font-size:13px;color:#4a4a52;margin-top:6px">Anh chị chuyển nốt phần còn lại theo mã QR bên dưới, giữ nguyên nội dung chuyển khoản.</div>
+        </div>
+
         <div style="display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start" class="fc2-payrow">
           <div style="border:1px solid rgba(25,25,25,.12);border-radius:16px;padding:12px;line-height:0">
             <img data-qr alt="Mã QR chuyển khoản" width="220" height="220" style="width:220px;height:220px;display:block">

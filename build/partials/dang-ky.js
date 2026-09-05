@@ -122,7 +122,7 @@
         // Cất sẵn để trang sau hiện ngay, khỏi phải hỏi lại máy chủ
         stashOrder(b.order.code, { order: b.order, payment: b.payment, demo: b.demo });
         // Sang bước 2 — mã đơn nằm trên đường dẫn để anh chị mở lại được
-        location.href = '/thanh-toan?ma=' + encodeURIComponent(b.order.code);
+        location.href = '/thanh-toan/' + encodeURIComponent(b.order.code);
       })
       .catch(function () {
         fallback.hidden = false;

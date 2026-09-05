@@ -23,7 +23,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "deploy:preview": "npm run build && wrangler deploy --env preview",
-    "deploy": "npm run build && wrangler deploy --env production"
+    "deploy": "npm run build && wrangler deploy --env production",
+    "test:flows": "node scripts/test-payment-flows.mjs"
   },
   "dependencies": {
     "hono": "^4.6.14",
