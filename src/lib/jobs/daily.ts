@@ -13,7 +13,22 @@ export async function runDailyJobs(env: Env): Promise<void> {
   await safely('dọn phiên hết hạn', () => pruneSessions(env));
   // Lưới đỡ cho hộp thư đi. Việc gửi chính đã chạy ngay sau webhook; lượt này
   // nhặt những cái lúc đó lỗi, để một mail hỏng lúc 2h sáng không nằm im mãi.
-  await safely('gửi lại email còn tồn', () => drainOutbox(env, 100));
+  await safely('gửi lại email còn tồn', () => drainOutbox(env));
+}
+
+/**
+ * Việc chạy mỗi giờ: chỉ đẩy hộp thư đi.
+ *
+ * Một lượt chỉ gửi được 20 email (trần subrequest của Workers), nên nếu chỉ có
+ * cron hằng đêm thì hàng đợi tồn 30 email phải mất hai ngày mới hết. Mỗi giờ
+ * một lượt là 480 email/ngày, thừa sức cho quy mô này, mà lượt nào không có gì
+ * để gửi thì tốn đúng một câu SELECT.
+ *
+ * Các việc còn lại (hết hạn đơn, duyệt hoa hồng, dọn phiên) cố ý KHÔNG chạy ở
+ * đây: chúng tính theo ngày, chạy 24 lần/ngày chẳng thêm gì ngoài rác trong log.
+ */
+export async function runHourlyJobs(env: Env): Promise<void> {
+  await safely('đẩy hộp thư đi', () => drainOutbox(env));
 }
 
 async function safely(label: string, fn: () => Promise<unknown>): Promise<void> {

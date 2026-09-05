@@ -15,7 +15,7 @@ import { adminGameRoutes } from './routes/admin/game';
 import { adminStaffRoutes } from './routes/admin/staff';
 import { affiliateRoutes } from './routes/affiliate/portal';
 import { studentRoutes } from './routes/student';
-import { runDailyJobs } from './lib/jobs/daily';
+import { runDailyJobs, runHourlyJobs } from './lib/jobs/daily';
 
 const app = new Hono<HonoEnv>();
 
@@ -128,8 +128,11 @@ app.onError((err, c) => {
 export default {
   fetch: app.fetch,
 
-  /** 03:00 giờ Việt Nam mỗi ngày. */
-  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    ctx.waitUntil(runDailyJobs(env));
+  /**
+   * Hai lịch chạy: '0 20 * * *' là 03:00 giờ Việt Nam mỗi ngày (trọn bộ việc
+   * hằng ngày), '0 * * * *' là mỗi giờ (chỉ đẩy hộp thư đi).
+   */
+  async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(event.cron === '0 20 * * *' ? runDailyJobs(env) : runHourlyJobs(env));
   },
 } satisfies ExportedHandler<Env>;

@@ -189,7 +189,17 @@ const affId = created.body.affiliate.id;
 // Test phải tự dựng đủ dữ liệu, không phụ thuộc vào việc đã chạy bộ test
 // thanh toán trước đó hay chưa.
 const productId = db.prepare("SELECT id FROM products LIMIT 1").get()?.id;
-while (db.prepare('SELECT COUNT(*) n FROM orders').get().n < 2 && productId) {
+// 30 đơn, không phải 2. Vòng lặp cũ gọi D1 hai lần cho mỗi hoa hồng, nên chỉ
+// vỡ khi một đợt chi có hơn ~23 cái — và với 2 cái thì bộ kiểm chứng báo xanh
+// suốt trong khi lỗi nằm đó chờ một CTV bán chạy.
+//
+// Nói thẳng giới hạn của bộ kiểm này: bản giả lập chạy máy nhà KHÔNG áp trần
+// 50 subrequest của Workers, nên 30 hoa hồng ở đây không tái hiện được cú ném
+// trên thật — y như trần 100.000 vòng của PBKDF2 từng lọt qua mọi bài kiểm.
+// Cái nó giữ được là phần logic: gộp một đợt chi lớn vào cùng một batch thì
+// không con nào bị bỏ sót, và không con nào kẹt lại để lần sau chi trùng.
+const SO_DON = 30;
+while (db.prepare('SELECT COUNT(*) n FROM orders').get().n < SO_DON && productId) {
   const n = db.prepare('SELECT COUNT(*) n FROM orders').get().n;
   db.prepare(`INSERT INTO orders
     (id, order_code, product_id, full_name, phone, phone_norm, email, email_norm,
@@ -200,8 +210,8 @@ while (db.prepare('SELECT COUNT(*) n FROM orders').get().n < 2 && productId) {
       null, null);
 }
 
-const orderIds = db.prepare('SELECT id FROM orders LIMIT 2').all().map((r) => r.id);
-if (orderIds.length >= 2) {
+const orderIds = db.prepare('SELECT id FROM orders LIMIT ?').all(SO_DON).map((r) => r.id);
+if (orderIds.length >= SO_DON) {
   orderIds.forEach((oid, i) => {
     db.prepare(`INSERT OR REPLACE INTO commissions
       (id, affiliate_id, order_id, base_amount, rate, amount, status, available_at, created_at, updated_at)
@@ -211,7 +221,7 @@ if (orderIds.length >= 2) {
 
   const payout = await aff.post('/api/aff/payouts');
   ok('yêu cầu rút thành công', payout.body.ok, true);
-  ok('số tiền đúng (2 đơn × 400k)', payout.body.amount, 800000);
+  ok(`số tiền đúng (${SO_DON} đơn × 400k)`, payout.body.amount, SO_DON * 400000);
   ok('mã đợt chi đúng định dạng', /^PO-\d{4}-\d{4}$/.test(payout.body.payoutCode), true);
 
   const again = await aff.post('/api/aff/payouts');
@@ -228,8 +238,11 @@ if (orderIds.length >= 2) {
     (await admin.post(`/api/admin/payouts/${payoutId}/paid`, {})).status, 400);
   ok('đánh dấu đã chi kèm mã giao dịch thành công',
     (await admin.post(`/api/admin/payouts/${payoutId}/paid`, { reference: 'FT20260905001' })).status, 200);
-  ok('cả hai hoa hồng chuyển sang đã chi',
-    db.prepare("SELECT COUNT(*) n FROM commissions WHERE id LIKE 'c-test-%' AND status='paid'").get().n, 2);
+  ok('TẤT CẢ hoa hồng chuyển sang đã chi, không sót cái nào',
+    db.prepare("SELECT COUNT(*) n FROM commissions WHERE id LIKE 'c-test-%' AND status='paid'").get().n, SO_DON);
+  // Sót một cái là nó quay lại đợt chi sau và CTV được trả tiền hai lần.
+  ok('không còn cái nào kẹt ở payout_requested',
+    db.prepare("SELECT COUNT(*) n FROM commissions WHERE id LIKE 'c-test-%' AND status='payout_requested'").get().n, 0);
   ok('đã chi rồi thì không chi lại được',
     (await admin.post(`/api/admin/payouts/${payoutId}/paid`, { reference: 'FT-lan-2' })).status, 400);
 }

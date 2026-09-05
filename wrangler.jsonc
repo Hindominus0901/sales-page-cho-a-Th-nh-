@@ -78,7 +78,10 @@
   //   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "goc-creator-media" }]
 
   // 03:00 giờ Việt Nam = 20:00 UTC hôm trước
-  "triggers": { "crons": ["0 20 * * *"] },
+  // "0 20 * * *" = 03:00 giờ Việt Nam — trọn bộ việc hằng ngày.
+  // "0 * * * *"  = mỗi giờ — chỉ đẩy hộp thư đi, vì một lượt chỉ gửi được 20
+  //                email (trần subrequest của Workers).
+  "triggers": { "crons": ["0 20 * * *", "0 * * * *"] },
 
   "env": {
     "preview": {
@@ -98,7 +101,7 @@
         { "binding": "DB", "database_name": "goc-creator-preview", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
       ],
       "kv_namespaces": [{ "binding": "CACHE", "id": "0000000000000000000000000000000000" }],
-      "triggers": { "crons": ["0 20 * * *"] }
+      "triggers": { "crons": ["0 20 * * *", "0 * * * *"] }
     }
   }
 }

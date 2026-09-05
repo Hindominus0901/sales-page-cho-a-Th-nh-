@@ -36,6 +36,21 @@ export async function queueMail(env: Env, mail: Mail | null): Promise<void> {
 
 const MAX_ATTEMPTS = 4;
 
+/**
+ * Trần số email gửi trong MỘT lượt chạy.
+ *
+ * Workers gói Free cho 50 "subrequest" mỗi lần chạy, và mọi lời gọi ra ngoài
+ * đều tính: một email là 1 fetch tới Resend + 1 câu lệnh D1 ghi kết quả. Quá
+ * trần thì fetch ném ngay lập tức — mà sendMail() bắt hết lỗi và trả
+ * { ok: false }, nên vòng lặp KHÔNG dừng: nó lặng lẽ đánh dấu từng email còn
+ * lại là "không gọi được Resend" và cộng attempts. Bốn đêm như thế là những
+ * email chưa từng được gửi thật sự nằm vĩnh viễn ở trạng thái 'failed'.
+ *
+ * 20 email × 2 subrequest = 40, chừa chỗ cho câu SELECT và cho việc mà lượt
+ * chạy này đi kèm (webhook đã dùng vài lời gọi D1 trước khi tới đây).
+ */
+const MAX_SENDS_PER_RUN = 20;
+
 export interface DrainResult {
   sent: number;
   failed: number;
@@ -49,15 +64,18 @@ export interface DrainResult {
  * trong vài giây) và trong việc chạy hằng đêm để nhặt những cái lỗi. Gửi ngay mà
  * không có lưới đỡ thì một mail lỗi lúc 2h sáng nằm đó mãi mãi.
  */
-export async function drainOutbox(env: Env, limit = 20): Promise<DrainResult> {
+export async function drainOutbox(env: Env, limit = MAX_SENDS_PER_RUN): Promise<DrainResult> {
   const out: DrainResult = { sent: 0, failed: 0, skipped: 0 };
+  // Kẹp lại dù người gọi xin nhiều hơn: hạn mức là của nền tảng, không phải
+  // của người gọi. Còn tồn thì lượt chạy sau nhặt tiếp — cron chạy hằng giờ.
+  const take = Math.min(limit, MAX_SENDS_PER_RUN);
 
   const rows = await env.DB.prepare(
     `SELECT id, to_email, to_name, subject, body_text, body_html, attempts
      FROM email_outbox
      WHERE status = 'pending' AND attempts < ?
      ORDER BY created_at LIMIT ?`,
-  ).bind(MAX_ATTEMPTS, limit).all<{
+  ).bind(MAX_ATTEMPTS, take).all<{
     id: string; to_email: string; to_name: string | null; subject: string;
     body_text: string; body_html: string | null; attempts: number;
   }>();

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { HonoEnv } from '../../types';
 import { requireAdmin, requireRole, adminUserOf } from '../../lib/auth/guards';
 import { audit } from '../../lib/db/audit';
-import { transitionCommission, COMMISSION_LABEL, HOLD_REASON_LABEL } from '../../lib/affiliate/commission';
+import { transitionCommission, transitionCommissions, COMMISSION_LABEL, HOLD_REASON_LABEL } from '../../lib/affiliate/commission';
 import { PAYOUT_LABEL } from '../../lib/affiliate/payout';
 import { uuid, randomToken } from '../../lib/util/id';
 import { now, ictDateTime } from '../../lib/util/datetime';
@@ -251,9 +251,8 @@ adminAffiliateRoutes.post('/api/admin/payouts/:id/:action', requireRole('owner',
     await c.env.DB.prepare(
       `UPDATE payouts SET status = 'paid', paid_at = ?, paid_by = ?, payment_reference = ?, updated_at = ? WHERE id = ?`,
     ).bind(ts, admin.id, reference, ts, id).run();
-    for (const cid of commissionIds) {
-      await transitionCommission(c.env, cid, 'paid', { type: 'admin', id: admin.id, label: admin.email });
-    }
+    await transitionCommissions(c.env, commissionIds, 'paid',
+      { type: 'admin', id: admin.id, label: admin.email });
 
   } else if (action === 'reject') {
     if (payout.status === 'paid') return c.json({ ok: false, error: 'Đợt chi đã chuyển tiền, không từ chối được.' }, 400);
@@ -261,9 +260,8 @@ adminAffiliateRoutes.post('/api/admin/payouts/:id/:action', requireRole('owner',
       `UPDATE payouts SET status = 'rejected', rejected_reason = ?, updated_at = ? WHERE id = ?`,
     ).bind(String(body.reason ?? '').slice(0, 500), ts, id).run();
     // Trả hoa hồng về 'approved' để CTV yêu cầu lại được — không đánh mất tiền của họ.
-    for (const cid of commissionIds) {
-      await transitionCommission(c.env, cid, 'approved', { type: 'admin', id: admin.id, label: admin.email });
-    }
+    await transitionCommissions(c.env, commissionIds, 'approved',
+      { type: 'admin', id: admin.id, label: admin.email });
     await c.env.DB.prepare(`DELETE FROM payout_items WHERE payout_id = ?`).bind(id).run();
 
   } else {
