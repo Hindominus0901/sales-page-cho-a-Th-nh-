@@ -56,10 +56,14 @@ app.get('/thanh-toan/:code', async (c) => {
   return c.env.ASSETS.fetch(new Request(new URL('/thanh-toan.html', c.req.url)));
 });
 
-app.get('/cam-on/:code', async (c) => {
-  c.header('X-Robots-Tag', 'noindex, nofollow');
-  return c.env.ASSETS.fetch(new Request(new URL('/cam-on.html', c.req.url)));
-});
+/**
+ * Đường dẫn cũ. Chưa từng có trang /cam-on.html nào được sinh ra — trang thanh
+ * toán tự đổi sang trạng thái "đã nhận học phí" ngay tại chỗ khi tiền về, nên
+ * không cần trang thứ hai. Giữ route lại và chuyển hướng, phòng khi có link cũ
+ * đã gửi cho khách; xoá hẳn thì link đó thành 404.
+ */
+app.get('/cam-on/:code', (c) =>
+  c.redirect(`/thanh-toan/${encodeURIComponent(c.req.param('code'))}`, 302));
 
 /**
  * SPA quản trị và portal CTV: đường dẫn ĐIỀU HƯỚNG trả về index.html để router

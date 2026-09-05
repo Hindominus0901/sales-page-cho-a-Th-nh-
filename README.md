@@ -51,47 +51,84 @@ webhook, đơn hết hạn trả muộn, CTV tự mua, và CTV thứ hai cướp
 
 ## 3. Deploy lên Cloudflare
 
-### 3.1 Tạo tài nguyên
+### Một câu lệnh
 
 ```bash
-npx wrangler d1 create goc-creator-prod
-npx wrangler kv namespace create CACHE
-npx wrangler r2 bucket create goc-creator-media
+npx wrangler login          # một lần duy nhất, mở trình duyệt rồi bấm Allow
+npm run cf:preview          # dựng preview: goc-creator-preview.workers.dev
 ```
 
-Chép `database_id` và `id` vừa nhận vào `wrangler.jsonc` → `env.production`.
+Xong preview và đã chuyển thật 2.000đ kiểm chứng SePay thì cắt sang thật:
 
-### 3.2 Điền thông tin ngân hàng
+```bash
+npm run cf:prod
+```
 
-Trong `wrangler.jsonc` → `env.production.vars`:
+Script tự làm hết, và **chạy lại được nhiều lần** — lần hai không tạo trùng tài
+nguyên, không sinh lại khoá, không nạp đè dữ liệu:
+
+| Bước | Script làm gì |
+|---|---|
+| Tài nguyên | Tạo D1, KV, R2 nếu chưa có. Đã có thì dùng lại. |
+| `wrangler.jsonc` | Tự điền `database_id` và id KV vào đúng khối môi trường, giữ nguyên chú thích trong file. |
+| Khoá bí mật | Sinh `SESSION_SECRET` và `IP_HASH_SALT` **chỉ khi chưa có** — sinh lại là đá văng mọi người đang đăng nhập. Đẩy qua stdin, không ghi ra file. |
+| Soát cấu hình | Chạy `scripts/preflight.mjs`, **dừng hẳn** nếu thiếu thứ khiến hệ không nhận được tiền. |
+| Migration | `d1 migrations apply --remote`. Nạp dữ liệu nền chỉ khi database còn trắng. |
+| Deploy | `npm run build` rồi `wrangler deploy`. |
+| Tài khoản | Tạo admin nếu chưa có ai (thêm `-- --email <email>`). |
+
+Cuối cùng script in ra đủ đường dẫn cần dùng, gồm **URL webhook để dán vào SePay**.
+
+### Thứ script KHÔNG tự làm được
+
+Hai thứ phải tự điền, vì chúng nằm ở tài khoản ngân hàng và tài khoản SePay:
 
 ```jsonc
+// wrangler.jsonc → env.preview.vars (và env.production.vars)
 "SEPAY_ACCOUNT_NO": "<số tài khoản Techcombank của ANLIFE GROUP>",
-"SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
-"SEPAY_BANK_CODE": "TCB",
-"PUBLIC_BASE_URL": "https://<domain thật>"
 ```
-
-> Bỏ trống `SEPAY_ACCOUNT_NO` thì trang thanh toán báo lỗi và **không bán được**.
-
-### 3.3 Đặt khoá bí mật
-
-Không bao giờ để trong file:
 
 ```bash
-npx wrangler secret put SESSION_SECRET --env production        # openssl rand -base64 48
-npx wrangler secret put IP_HASH_SALT --env production          # openssl rand -base64 32
-npx wrangler secret put SEPAY_WEBHOOK_API_KEY --env production # lấy trong SePay
-npx wrangler secret put TURNSTILE_SECRET_KEY --env production  # tuỳ chọn
+npx wrangler secret put SEPAY_WEBHOOK_API_KEY --env preview
 ```
 
-### 3.4 Chạy migration rồi deploy
+Thiếu một trong hai thì `preflight` **chặn deploy**, kèm giải thích vì sao — chứ
+không để deploy thành công rồi phát hiện lúc có người chuyển tiền thật.
+
+Muốn soát trước mà chưa deploy:
 
 ```bash
-npm run db:migrate:prod
-npm run deploy
-node scripts/create-admin.mjs --email <email> --remote --env production
+npm run preflight
 ```
+
+### Ba lỗi hay gặp
+
+**`Wrangler chưa đăng nhập Cloudflare`** — chạy `npx wrangler login`. Nếu máy
+không mở được trình duyệt thì dùng API token: tạo token quyền *Edit Workers* ở
+dashboard rồi `export CLOUDFLARE_API_TOKEN=...` trước khi chạy.
+
+**`Không kết nối được tới api.cloudflare.com`** — mạng công ty hoặc VPN đang
+chặn. Đây là lỗi mạng, không phải lỗi đăng nhập; đăng nhập lại bao nhiêu lần
+cũng không hết.
+
+**Có nhiều KV namespace cùng khớp** — tài khoản đang có mấy namespace tên na ná
+nhau từ lần thử trước. Script không đoán bừa; vào dashboard xoá bớt, hoặc điền
+tay id đúng vào `wrangler.jsonc`.
+
+### Cách thứ hai: không cần terminal
+
+Nếu không muốn cài Node trên máy, dựng bằng dashboard Cloudflare rồi để GitHub
+tự deploy:
+
+1. **Workers & Pages → D1** → tạo `goc-creator-preview`, chép `Database ID`.
+2. **Workers & Pages → KV** → tạo một namespace, chép `ID`.
+3. **R2** → tạo bucket `goc-creator-media-preview`.
+4. Dán ba id vào `wrangler.jsonc` → `env.preview` (sửa thẳng trên GitHub cũng được).
+5. **Workers & Pages → Create → Connect to Git**, chọn repo này, lệnh build
+   `npm run build`, rồi đặt các khoá bí mật trong phần Settings → Variables.
+
+Từ đó mỗi lần push lên nhánh là Cloudflare tự build và deploy. Dựng lâu hơn,
+nhưng sau đó không phải gõ lệnh nào nữa.
 
 ---
 
@@ -328,6 +365,8 @@ src/
 admin/               SPA quản trị (React + Vite) → public/admin/
 affiliate/           SPA portal CTV → public/aff/
 scripts/             Tạo tài khoản admin, ba bộ test đầu-cuối
+  deploy-cloudflare.mjs  Dựng D1/KV/R2 và deploy bằng một lệnh
+  preflight.mjs          Chặn deploy thiếu thông tin nhận tiền
 ```
 
 **Trang public không dùng React.** Chúng đã tồn tại dưới dạng HTML tĩnh sinh từ
