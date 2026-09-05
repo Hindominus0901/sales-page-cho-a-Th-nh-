@@ -1,0 +1,273 @@
+{
+  "_huongDan": "Điền các giá trị còn trống rồi chạy lại: npm run build. Trường nào để trống sẽ được ẨN khỏi trang thay vì hiện [[X]].",
+  "_huongDanVideo": "Cách 1 (nhẹ nhất, hợp với Vercel): tải 12 video lên YouTube ở chế độ \"Không công khai\" (Unlisted), rồi dán ID video vào mục \"youtube\" bên dưới — ID là đoạn sau ?v= trong đường dẫn. Cách 2: để trống mục \"youtube\" thì trang sẽ phát file mp4 trong public/videos (hợp với VPS). Muốn để video trên CDN riêng thì điền \"videoBaseUrl\".",
+  "brand": "Góc Creator",
+  "title": "Thử thách 21 ngày — Xây thương hiệu cá nhân & nguồn thu nhập thứ hai | Góc Creator",
+  "description": "21 ngày, 21 bài. Kênh có định vị, tuyến nội dung và kho chất liệu. Thành đọc và sửa từng bài. Về đích đúng hạn nhận học bổng và một buổi coaching riêng.",
+  "canonicalUrl": "",
+  "ogImage": "/media/hero.jpg",
+  "startDateText": "",
+  "scholarshipName": "Gương sáng hiếu học",
+  "_makeupPolicyNhap": "BẢN NHÁP — a Thành xác nhận lại trước khi chạy quảng cáo, xem TODO_TRUOC_KHI_CHAY.md.",
+  "makeupPolicy": "Trễ một ngày thì nộp bù trong vòng 48 giờ, ghép chung với bài kế tiếp. Anh chị chỉ cần báo trước với trợ giảng qua nhóm Zalo để được ghi nhận — không cần lý do, không bị loại khỏi thử thách. Chỉ ảnh hưởng tới điều kiện nhận học bổng \"về đích đúng hạn\", không ảnh hưởng tới việc tiếp tục học.",
+  "stats": [
+    {
+      "value": "",
+      "label": "khoá đã chạy"
+    },
+    {
+      "value": "",
+      "label": "học viên tham gia"
+    },
+    {
+      "value": "",
+      "label": "người đi trọn 21 ngày"
+    },
+    {
+      "value": "",
+      "label": "bài Thành đã sửa"
+    }
+  ],
+  "testimonialIndustry": "",
+  "legal": {
+    "company": "",
+    "taxId": "",
+    "address": "",
+    "hotline": "",
+    "email": "",
+    "mocNotified": false
+  },
+  "policies": {
+    "privacy": "",
+    "terms": "",
+    "refund": ""
+  },
+  "heroVideo": "fb-01",
+  "youtube": {
+    "fb-01": "",
+    "fb-02": "",
+    "fb-03": "",
+    "fb-04": "",
+    "fb-05": "",
+    "fb-06": "",
+    "fb-07": "",
+    "fb-08": "",
+    "fb-09": "",
+    "fb-10": "",
+    "fb-11": "",
+    "fb-12": ""
+  },
+  "videoBaseUrl": "",
+  "videoCaptions": {
+    "fb-01": "",
+    "fb-02": "",
+    "fb-03": "",
+    "fb-04": "",
+    "fb-05": "",
+    "fb-06": "",
+    "fb-07": "",
+    "fb-08": "",
+    "fb-09": "",
+    "fb-10": "",
+    "fb-11": "",
+    "fb-12": ""
+  },
+  "_huongDanFaq": "Thêm/sửa/xoá câu hỏi thoải mái ở mục \"faq\". Câu nào để trống phần \"a\" sẽ bị ẩn khỏi trang — dùng cách đó để ghi sẵn câu cần trả lời mà chưa chốt được nội dung.",
+  "faq": [
+    {
+      "q": "Khoá này dành cho ai?",
+      "a": "Dành cho anh chị nghiêm túc muốn có nguồn thu nhập thứ hai từ chính kĩ năng và chuyên môn của mình. Không cần vốn, không cần kinh nghiệm làm nội dung, không cần nhiều thời gian — chỉ cần anh chị đã có một nghề hoặc một sản phẩm để nói về nó."
+    },
+    {
+      "q": "Mỗi ngày cần bỏ ra bao nhiêu thời gian?",
+      "a": "Cái ngốn thời gian nhất là lúc ngồi nghĩ hôm nay đăng gì. Buổi hai xử lý đúng chỗ đó — có kho chất liệu rồi thì ngồi xuống là viết được."
+    },
+    {
+      "q": "Không rành công nghệ, không biết AI thì có theo kịp không?",
+      "a": "Được. Phần AI bắt đầu từ chỗ chưa biết gì, chỉ dùng công cụ miễn phí hoặc rẻ. Trong các khoá trước có học viên hơn 60 tuổi đi trọn 21 ngày và nhận học bổng."
+    },
+    {
+      "q": "Tôi ngại lộ mặt, có làm được không?",
+      "a": "Được — nhiều anh chị bắt đầu bằng bài viết, rồi ảnh, rồi giọng nói, rồi mới tới video. Không ai bị ép phải lên hình ngay từ ngày đầu."
+    },
+    {
+      "q": "Nộp bài như thế nào, ai là người sửa?",
+      "a": "Mỗi ngày một bài, đăng thật lên kênh thật của anh chị rồi nộp vào nhóm — không phải bài tập nộp cho có rồi cất đi. Team của Thành đọc và nhận xét từng bài, chỉ ra chỗ chưa tới và cách cải thiện."
+    },
+    {
+      "q": "Học xong 21 ngày tôi có được những gì?",
+      "a": "Một kênh có định vị rõ ràng, 21 bài đã đăng thật trên kênh thật, và một kho chất liệu để tự viết tiếp mà không cần Thành nữa. Kèm bộ 100 Hook, 21 kịch bản nội dung dựng sẵn, template kế hoạch content và một năm trong cộng đồng Rèn Thân — Tâm — Trí."
+    },
+    {
+      "q": "Học bổng và buổi coaching riêng nhận thế nào?",
+      "a": "Nộp đủ 21 bài đúng hạn và quay một video chia sẻ thật thì được. Tiêu chí công khai từ đầu, không ngoại lệ. Phần thử thách thì ai tham gia cũng có, kể cả người trễ hạn — chỉ phần thưởng mới cần về đích đúng hạn."
+    },
+    {
+      "q": "Thành từ chối những trường hợp nào?",
+      "a": "Anh chị cần tiền gấp ngay trong tháng này — đây là chuyện đường dài. Anh chị mua khoá về để đó cho yên tâm. Anh chị muốn nổi tiếng còn chuyện ra khách tính sau. Hoặc anh chị chưa có nghề, chưa có sản phẩm gì để nói."
+    },
+    {
+      "q": "Lớp có bao nhiêu người?",
+      "a": "Tối đa 30 chỗ mỗi khoá, để Thành và team còn đọc và sửa được từng bài."
+    },
+    {
+      "q": "Đóng tiền và nhận lớp thế nào?",
+      "a": "Bấm nút đăng ký, điền thông tin rồi chuyển khoản bằng mã QR hiện ngay trên trang. Nhớ giữ nguyên nội dung chuyển khoản để bên Thành đối soát. Chuyển xong bên Thành sẽ nhắn Zalo gửi link vào nhóm và lịch học."
+    },
+    {
+      "q": "Bận đột xuất, làm không kịp một ngày thì sao?",
+      "a": "Trễ một ngày thì nộp bù trong vòng 48 giờ, ghép chung với bài kế tiếp — chỉ cần báo trước với trợ giảng qua nhóm Zalo. Không bị loại khỏi thử thách, chỉ ảnh hưởng tới điều kiện nhận học bổng \"về đích đúng hạn\"."
+    },
+    {
+      "q": "Nếu học không hiệu quả thì có được hoàn tiền không?",
+      "a": "Có. Trong 14 ngày đầu kể từ ngày đóng tiền, nếu anh chị thấy không phù hợp thì nhắn Zalo để được hoàn lại 100%, không cần lý do."
+    },
+    {
+      "q": "Lớp học vào khung giờ nào, học trên nền tảng gì?",
+      "a": ""
+    }
+  ],
+  "_huongDanChu": "Sửa câu chữ trên trang mà không cần đụng vào mã: thêm một dòng vào \"textOverrides\" theo dạng \"câu gốc\": \"câu mới\". Câu gốc phải khớp đúng với bản thiết kế. Chạy lại npm run build; nếu câu gốc không tìm thấy, build sẽ báo cho biết.",
+  "textOverrides": {
+    "Nhìn thẳng vào thực tế đi": "90% những ai làm nội dung sẽ thua trong trò chơi xây THCN"
+  },
+  "_huongDanAnh": "Ảnh chụp Thành là ảnh dọc toàn thân. Build tự cắt sang khung 16:9 (hero) và 4:5 (mục \"Tại sao nên nghe Thành\"). Nếu thấy cắt chưa đẹp thì chỉnh \"cropY\" — số càng nhỏ thì lấy phần càng cao trong ảnh.",
+  "heroPhoto": {
+    "src": "thanh-1.jpg",
+    "cropY": 300
+  },
+  "portraitPhoto": {
+    "src": "thanh-2.jpg",
+    "cropY": 120
+  },
+  "positioning": {
+    "_ghiChu": "Khối 'đi từ gốc'. Để trống 'heading' là ẩn cả khối.",
+    "eyebrow": "",
+    "heading": "Xây kênh là xây mình",
+    "lead": "Trước khi nói tới thu nhập, phải nói tới con người mình đã. Kênh chỉ là công cụ — nó khuếch đại thứ anh chị vốn có, chứ không tạo ra thứ anh chị chưa có.",
+    "steps": [
+      {
+        "label": "Bắt đầu từ gốc",
+        "title": "Con người mình",
+        "text": "Anh chị là ai, đã đi qua những gì, giỏi thật ở chỗ nào. Chưa rõ chỗ này thì đăng bao nhiêu bài cũng không ai nhớ."
+      },
+      {
+        "label": "Công cụ",
+        "title": "Cái kênh",
+        "text": "Kênh không phải đích đến. Nó là cái loa để đúng người tìm thấy anh chị — và tin anh chị trước khi nhắn tin."
+      },
+      {
+        "label": "Kết quả",
+        "title": "Sự nghiệp",
+        "text": "Khi gốc vững và loa đúng, khách tự tìm tới. Thu nhập là hệ quả, không phải mục tiêu đặt lên đầu."
+      }
+    ],
+    "closing": "Phát triển bản thân trước, thu nhập theo sau. Thứ tự ngược lại thì hiếm khi đi được xa."
+  },
+  "audience": {
+    "_ghiChu": "Để trống 'heading' là ẩn khối.",
+    "heading": "Lớp này hợp với ai",
+    "items": [
+      "Anh chị từ khoảng 30–40 tuổi trở lên, đã có nghề và có chuyên môn thật.",
+      "Muốn được đúng người biết tới, chứ không chạy theo lượt xem cho vui.",
+      "Sẵn sàng làm thật trong 21 ngày, mỗi ngày một bài."
+    ]
+  },
+  "caseStudy": {
+    "_ghiChu": "Ví dụ nổi bật đặt ngay dưới hero. Để trống 'stat' là ẩn khối.",
+    "eyebrow": "CHUYỆN CÓ THẬT",
+    "stat": "150 triệu",
+    "statLabel": "tổng giá trị 5 đơn hàng",
+    "text": "Một anh chưa từng xuất hiện trước ống kính. Sau khi làm rõ mình là ai và đăng đúng thứ cần đăng: 3 ngày, 2 video, 5 đơn hàng — tổng 150 triệu.",
+    "chips": [
+      "3 ngày",
+      "2 video",
+      "5 đơn hàng"
+    ]
+  },
+  "leadMagnet": {
+    "_ghiChu": "Trang /ban-do-21-ngay — trang xin thông tin đổi lấy tài liệu 'Bản Đồ 21 Ngày' (0đ), dẫn vào phễu trước khi tới trang bán khoá 2tr. Điền downloadUrl + zaloGroupUrl trong .env (LEAD_MAGNET_URL, LEAD_MAGNET_ZALO_URL) trước khi chạy quảng cáo — chưa điền thì sau khi để lại thông tin trang chỉ hiện lời cảm ơn, không có nút tải/vào nhóm.",
+    "eyebrow": "TẢI MIỄN PHÍ — 2 PHÚT",
+    "title": "Bản Đồ 21 Ngày | Góc Creator",
+    "description": "Bản đồ 21 ngày đăng gì, theo thứ tự nào — để đúng người tìm thấy anh chị, không phải để có thêm view.",
+    "headline": "Bản Đồ 21 Ngày",
+    "subheadline": "Biết chính xác 21 ngày tới nên đăng gì, theo thứ tự nào — để đúng người tìm thấy anh chị, không phải chỉ để có thêm view.",
+    "lead": "Đây là bản rút gọn của thứ Thành đang dùng để hướng dẫn học viên trong Thử thách 21 ngày. Điền thông tin bên dưới, tài liệu gửi ngay qua Zalo/email.",
+    "bullets": [
+      "21 ngày, 21 chủ đề cụ thể — không phải danh sách ý tưởng chung chung",
+      "Cách chọn chủ đề từ đúng nghề, đúng khách hàng của anh chị, không phải bắt chước người khác",
+      "Khung viết 1 bài trong 20 phút, kể cả khi chưa quen viết",
+      "3 buổi hướng dẫn trực tiếp miễn phí (Content AI System Summit) dành riêng cho người tải bản đồ"
+    ],
+    "formNote": "Thông tin của anh chị chỉ dùng để gửi tài liệu và mời vào 3 buổi hướng dẫn, không chia sẻ cho bên thứ ba.",
+    "thankYouHeadline": "Đã nhận được thông tin của anh chị",
+    "thankYouText": "Thành sẽ gửi Bản Đồ 21 Ngày qua Zalo trong ít phút. Trong lúc chờ, anh chị bấm nút bên dưới để vào nhóm và giữ chỗ 3 buổi hướng dẫn miễn phí.",
+    "downloadLabel": "Tải Bản Đồ 21 Ngày",
+    "zaloLabel": "Vào nhóm Zalo + giữ chỗ 3 buổi miễn phí"
+  },
+  "club": {
+    "_ghiChu": "Khối giới thiệu CLB. Để trống 'heading' là ẩn khối.",
+    "eyebrow": "ĐI KÈM KHOÁ HỌC",
+    "heading": "CLB Rèn Thân — Tâm — Trí",
+    "lead": "Học xong 21 ngày, anh chị không bị bỏ lại một mình. Một năm sinh hoạt cùng cộng đồng những người cũng đang xây mình.",
+    "items": [
+      {
+        "title": "Rèn Thân",
+        "text": "Giữ nếp sinh hoạt và sức khoẻ — thứ nuôi được đường dài, không phải làm bùng lên rồi tắt."
+      },
+      {
+        "title": "Rèn Tâm",
+        "text": "Bớt sợ bị đánh giá, bớt so sánh với người khác. Xuất hiện đều đặn mà không kiệt sức."
+      },
+      {
+        "title": "Rèn Trí",
+        "text": "Hoạt động đọc sách chung. Đọc rồi bàn, bàn rồi làm — không đọc để đó."
+      }
+    ],
+    "highlight": "Học viên trong CLB nhiều người là chuyên gia trong nghề của mình, và họ chia sẻ lại miễn phí cho cả nhóm. Anh chị vào học một khoá, nhưng học được từ rất nhiều người."
+  },
+  "_huongDanPlaceholder": "Ô nào chưa có nội dung sẽ hiện khung gạch đứt màu cam kèm nhãn mô tả, để anh nhìn là biết cần bỏ gì vào. Điền xong thì khung tự biến mất. Khi chạy thật, đặt showPlaceholders = false để giấu hết các khung còn trống.",
+  "showPlaceholders": true,
+  "logo": {
+    "_ghiChu": "Bỏ file logo vào public/media/ rồi ghi tên file vào đây, vd: logo.png",
+    "src": "",
+    "alt": "Góc Creator"
+  },
+  "footer": {
+    "tagline": "Xây kênh là xây mình — 21 ngày để bắt đầu.",
+    "_ghiChu": "Cột liên hệ ở footer. Để trống thì hiện khung placeholder."
+  },
+  "feedbackImages": {
+    "_ghiChu": "Ảnh chụp feedback hiện trên trang. Muốn thêm: bỏ file vào public/media/ rồi thêm một dòng {\"src\":\"ten-file.jpg\",\"caption\":\"Tên học viên\"}. Để src rỗng thì hiện khung placeholder.",
+    "items": [
+      {
+        "src": "fb-hanhchi.png",
+        "caption": "Chị Hạnh Chi — học viên feedback"
+      },
+      {
+        "src": "fb-nhung.jpg",
+        "caption": "Chị Nhung Tuyết — học viên feedback"
+      },
+      {
+        "src": "fb-trang.jpg",
+        "caption": "Chị Nguyễn Thị Trang — học viên feedback"
+      },
+      {
+        "src": "fb-2.jpg",
+        "caption": "Học viên feedback"
+      },
+      {
+        "src": "fb-chichi.jpg",
+        "caption": "Chị Chi — học viên feedback"
+      },
+      {
+        "src": "",
+        "caption": "Chỗ trống — thêm ảnh feedback mới"
+      },
+      {
+        "src": "",
+        "caption": "Chỗ trống — thêm ảnh feedback mới"
+      }
+    ]
+  }
+}

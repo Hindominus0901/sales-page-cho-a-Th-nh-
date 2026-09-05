@@ -1,0 +1,322 @@
+/* Thuộc tính hidden phải thắng cả display viết thẳng trong thẻ,
+   nếu không khối QR sẽ hiện sẵn với các ô trống trước khi khách bấm đăng ký. */
+[hidden]{display:none !important}
+
+/* ---------- Cột nội dung ----------
+   Bản thiết kế để khung ngoài rộng 1400px còn khối chữ bên trong chỉ 700–760px,
+   nên tiêu đề nằm sát mép trái còn đoạn văn thì thụt vào — nhìn lệch nhau.
+   Cách sửa: thu khung ngoài thành một cột hẹp và cho khối bên trong chiếm trọn
+   cột đó, để tiêu đề và nội dung dùng chung một lề trái. */
+.fc2 > div[style*="max-width:1400px"],
+.fc2 > div[style*="max-width:760px"]{max-width:1040px !important;margin-left:auto !important;margin-right:auto !important}
+.fc2 > div > div[style*="max-width:720px"],
+.fc2 > div > div[style*="max-width:760px"],
+.fc2 > div > div[style*="max-width:800px"],
+.fc2 > div > div[style*="max-width:900px"],
+.fc2 > div > div[style*="max-width:700px"],
+.fc2 > div > ul[style*="max-width:720px"]{max-width:100% !important}
+.fc2 footer > div{max-width:1040px !important;margin:0 auto}
+
+/* Thanh cố định dưới đáy không được che mất chân trang */
+.fc2 footer{padding-bottom:104px !important}
+
+/* ---------- Cỡ chữ ----------
+   Bản thiết kế đặt cỡ chữ thẳng trong thẻ và hơi nhỏ so với bề rộng cột. */
+.fc2 p[style*="font-size:16px"],
+.fc2 li[style*="font-size:16px"]{font-size:18px !important;line-height:1.7 !important}
+.fc2 p[style*="font-size:15px"],
+.fc2 li[style*="font-size:15px"]{font-size:17px !important;line-height:1.7 !important}
+.fc2 p[style*="font-size:14px"],
+.fc2 li[style*="font-size:14px"]{font-size:16px !important;line-height:1.7 !important}
+.fc2 div[style*="font-size:14px"]:not([style*="width:"]){font-size:16px !important;line-height:1.65 !important}
+.fc2 div[style*="font-size:15px"]:not([style*="width:"]){font-size:17px !important}
+.fc2 div[style*="font-size:16px"]:not([style*="width:"]){font-size:18px !important}
+.fc2 details summary{font-size:18px !important}
+.fc2 h2{font-size:40px !important;line-height:1.15}
+.fc2 h1{font-size:50px !important;line-height:1.08}
+
+/* Cột chữ rộng nhưng không để dòng dài quá — trên ~85 ký tự là mắt khó bắt dòng.
+   Tiêu đề và thẻ vẫn chiếm trọn bề ngang nên trang không bị cảm giác trống. */
+.fc2 > div > p,
+.fc2 > div > ul,
+.fc2 > div > div > p:not([style*="text-align:center"]),
+.fc2 > div > div > ul{max-width:74ch}
+
+/* ---------- Tương phản màu ----------
+   Bản thiết kế dùng vài mức xám quá nhạt trên nền kem, đọc không rõ.
+   Chỉnh đậm lên cho đạt mức tối thiểu 4.5:1. */
+.fc2 [style*="color:#77777d"]{color:#61616a !important}
+.fc2 [style*="color:#9a9aa0"]{color:#67676f !important}
+.fc2 [style*="color:#55555c"]{color:#4a4a52 !important}
+.fc2 [style*="color:#f0a500"]{color:#8a5a00 !important}
+.fc2 [style*="color:#2f7a4d"]{color:#26643f !important}
+/* Dòng miễn trừ ở chân trang: 12px quá nhỏ để đọc màu xám */
+.fc2 footer span[style*="font-size:12px"]{font-size:14px !important;color:#5c5c64 !important}
+
+/* Trên nền tối thì giữ nguyên màu sáng của bản thiết kế */
+.fc2 [style*="background:#1a1a1a"] [style*="color:#77777d"],
+.fc2 [style*="background:#1a1a1a"] [style*="color:#9a9aa0"]{color:rgba(255,255,255,.7) !important}
+
+/* Ảnh Thành ở mục "Tại sao anh chị nên nghe Thành" */
+@media (max-width:900px){
+  .fc2-why{grid-template-columns:1fr !important;gap:24px !important}
+  .fc2-why > img{max-width:320px;margin:0 auto}
+}
+
+/* ---------- Form đăng ký ---------- */
+.fc2-label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px}
+.fc2-input{width:100%;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;font-size:15px;color:#191919;
+  background:#fff;border:1.5px solid rgba(25,25,25,.18);border-radius:12px;padding:13px 14px;
+  transition:border-color .15s,box-shadow .15s}
+.fc2-input::placeholder{color:#a3a3a8}
+.fc2-input:focus{outline:0;border-color:#2f7a4d;box-shadow:0 0 0 3px rgba(47,122,77,.15)}
+.fc2-input[aria-invalid="true"]{border-color:#d33;box-shadow:0 0 0 3px rgba(211,51,51,.12)}
+.fc2-err{font-size:13px;color:#d33;margin-top:5px;display:none}
+.fc2-err.fc2-on{display:block}
+.fc2-formerr{font-size:14px;color:#d33;font-weight:600;display:none}
+.fc2-formerr.fc2-on{display:block}
+#fc2-submit[disabled]{opacity:.6;cursor:progress}
+#fc2-submit[disabled]::after{display:none}
+
+.fc2-copy{font-family:'Inter',system-ui,sans-serif;font-size:12px;font-weight:600;color:#2f7a4d;background:rgba(47,122,77,.1);
+  border:0;border-radius:8px;padding:5px 10px;cursor:pointer;transition:background .15s;flex-shrink:0}
+.fc2-copy:hover{background:rgba(47,122,77,.2)}
+.fc2-copy.fc2-done{background:#2f7a4d;color:#fff}
+
+.fc2-paylabel{font-size:12px;color:#77777d;margin-bottom:3px}
+.fc2-payvalue{font-size:16px;font-weight:700;color:#191919;word-break:break-word}
+
+/* ---------- Dải video tự chạy ---------- */
+.fc2-vmarquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+.fc2-vtrack{display:flex;gap:16px;width:max-content;animation:fc2-vscroll linear infinite}
+.fc2-vtrack:hover{animation-play-state:paused}
+@keyframes fc2-vscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ---------- Thumbnail video ---------- */
+.fc2-vthumb{transition:transform .25s ease,filter .25s ease}
+.fc2-vthumb:hover{transform:scale(1.04);filter:brightness(1.05)}
+.fc2-vthumb:focus-visible{outline:3px solid #2f7a4d;outline-offset:3px}
+
+/* ---------- Lightbox ---------- */
+.fc2-lb{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+  background:rgba(12,12,12,.9);backdrop-filter:blur(8px);padding:20px}
+.fc2-lb.fc2-open{display:flex}
+.fc2-lb video{max-width:min(440px,92vw);max-height:86vh;width:auto;border-radius:20px;background:#000;display:block;
+  box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.fc2-lb-yt{width:min(440px,92vw);aspect-ratio:9/16;max-height:86vh;border-radius:20px;overflow:hidden;background:#000;
+  box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.fc2-lb-yt iframe{width:100%;height:100%;display:block;border:0}
+.fc2-lb-img{max-width:min(760px,92vw);max-height:86vh;width:auto;border-radius:16px;background:#fff;display:block;
+  box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.fc2-imgthumb{transition:transform .25s ease}
+.fc2-imgthumb:hover{transform:scale(1.02)}
+.fc2-imgthumb:focus-visible{outline:3px solid #2f7a4d;outline-offset:3px}
+.fc2-lb-close{position:absolute;top:18px;right:18px;width:46px;height:46px;border-radius:9999px;border:0;cursor:pointer;
+  background:rgba(255,255,255,.15);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);transition:background .15s}
+.fc2-lb-close:hover{background:rgba(255,255,255,.3)}
+.fc2-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:9999px;border:0;cursor:pointer;
+  background:rgba(255,255,255,.15);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);transition:background .15s}
+.fc2-lb-nav:hover{background:rgba(255,255,255,.3)}
+.fc2-lb-prev{left:18px}
+.fc2-lb-next{right:18px}
+.fc2-lb-cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#fff;font-size:14px;font-weight:600;
+  padding:0 80px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+
+/* ---------- Trang lead magnet /ban-do-21-ngay ---------- */
+@media (max-width:860px){
+  .fc2-leadgrid{grid-template-columns:1fr !important}
+}
+
+/* ---------- Đáp ứng màn hình nhỏ ---------- */
+@media (max-width:720px){
+  .fc2 h1{font-size:32px !important}
+  .fc2 h2{font-size:26px !important}
+  .fc2-payrow{grid-template-columns:1fr !important;justify-items:center}
+  .fc2-payrow img[data-qr]{margin:0 auto}
+  .fc2 [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important}
+  .fc2 [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr) !important}
+  .fc2 [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr !important}
+  .fc2-lb-nav{width:40px;height:40px}
+  .fc2-lb-prev{left:8px}
+  .fc2-lb-next{right:8px}
+  .fc2-lb-cap{padding:0 60px;font-size:13px}
+}
+
+
+
+/* ---------- Các khối nội dung mới ---------- */
+@media (max-width:860px){
+  .fc2-steps{grid-template-columns:1fr !important}
+  .fc2 [data-case]{grid-template-columns:1fr !important;gap:22px !important;padding:30px 26px !important}
+  .fc2 [data-case] > div:first-child{display:flex;align-items:baseline;gap:12px}
+  .fc2 [data-case] > div:first-child > div:first-child{font-size:44px !important}
+}
+
+/* ---------- Nút dừng dải tự chạy ----------
+   WCAG 2.2.2: nội dung tự chuyển động quá 5 giây phải có cách dừng.
+   Dừng khi hover là chưa đủ — bàn phím và màn hình cảm ứng không hover được. */
+.fc2-marqwrap{position:relative}
+.fc2-pause{position:absolute;top:-42px;right:0;z-index:5;display:inline-flex;align-items:center;gap:7px;
+  min-height:44px;padding:8px 16px;border:1.5px solid rgba(25,25,25,.2);border-radius:9999px;
+  background:rgba(255,255,255,.85);color:#26643f;cursor:pointer;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:600;transition:background .18s,border-color .18s}
+.fc2-pause:hover{background:#fff;border-color:#26643f}
+.fc2-pause:focus-visible{outline:3px solid #2f7a4d;outline-offset:2px}
+.fc2-marqwrap[data-paused] .fc2-vtrack,
+.fc2-marqwrap[data-paused] .fc2-cardtrack,
+.fc2-marqwrap:focus-within .fc2-vtrack,
+.fc2-marqwrap:focus-within .fc2-cardtrack{animation-play-state:paused}
+@media (max-width:720px){
+  .fc2-pause{top:-40px;padding:7px 13px;font-size:13px}
+}
+
+/* ---------- Vùng bấm tối thiểu 44x44 trên màn hình chạm ----------
+   Nút "Sao chép" vốn cao ~26px, ngón tay bấm hụt. */
+@media (pointer:coarse){
+  .fc2-copy{min-height:44px;padding:0 16px;font-size:13px}
+}
+
+/* Thông báo lỗi phải được đọc lên, không chỉ hiện màu đỏ */
+.fc2-errsummary{display:none;background:rgba(211,51,51,.08);border:1.5px solid rgba(211,51,51,.35);
+  border-radius:14px;padding:16px 18px;margin-bottom:4px}
+.fc2-errsummary.fc2-on{display:block}
+.fc2-errsummary h2{font-family:'Inter',system-ui,sans-serif !important;font-size:16px !important;font-weight:700;
+  color:#a02020;margin:0 0 8px;text-transform:none !important}
+.fc2-errsummary ul{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.fc2-errsummary a{color:#a02020;font-size:14px;font-weight:600}
+.fc2-errsummary:focus-visible{outline:3px solid #d33;outline-offset:2px}
+
+/* ==========================================================================
+   Animation — theo bộ chuẩn của Emil Kowalski
+   ========================================================================== */
+
+/* Easing dựng sẵn của CSS quá yếu; dùng đường cong mạnh hơn. */
+:root{
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --ease-in-out:cubic-bezier(.77,0,.175,1);
+}
+
+/* --- Chỉ animate transform và opacity ---
+   Bản thiết kế cho vệt sáng CTA chạy bằng thuộc tính `left` (gây layout lại
+   mỗi khung hình) và cho viền giá nhấp nháy bằng `box-shadow` (gây vẽ lại).
+   Đổi sang transform/opacity để chạy trên GPU. */
+.fc2-cta::after,
+.fc2-pricebox::after{
+  left:-60% !important;
+  animation-name:fc2-sweep !important;
+  will-change:transform;
+}
+@keyframes fc2-sweep{
+  from{transform:translateX(0) skewX(-20deg)}
+  to{transform:translateX(475%) skewX(-20deg)}
+}
+
+.fc2-priceglow{animation:none !important}
+.fc2-priceglow::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  border:2px solid rgba(47,122,77,.55);opacity:0;
+  animation:fc2-ring 2.2s var(--ease-in-out) infinite;
+}
+@keyframes fc2-ring{0%,100%{opacity:0}50%{opacity:1}}
+
+/* --- Vào màn hình: ease-out, không phải ease --- */
+.fc2-reveal{transition:opacity .5s var(--ease-out),transform .5s var(--ease-out)}
+
+/* --- Phản hồi khi nhấn ---
+   Bản thiết kế gắn hiệu ứng vào a[href="#dang-ky"]; nút giờ trỏ sang /dang-ky
+   nên quy tắc cũ không còn khớp và 7 nút CTA mất hẳn phản hồi khi bấm. */
+.fc2 a[href="/dang-ky"],
+.fc2 button[type="submit"],
+.fc2-pause,
+.fc2-copy{transition:transform .16s var(--ease-out),box-shadow .16s var(--ease-out),background .16s ease}
+.fc2 a[href="/dang-ky"]:active,
+.fc2 button[type="submit"]:active,
+.fc2-copy:active{transform:scale(.97)}
+
+/* --- Hover chỉ dành cho chuột ---
+   Trên màn hình cảm ứng, chạm sinh ra hover giả và hiệu ứng bị kẹt lại. */
+@media (hover:hover) and (pointer:fine){
+  .fc2 a[href="/dang-ky"]:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(47,122,77,.3)}
+  .fc2-vthumb:hover{transform:scale(1.03);filter:brightness(1.04)}
+  .fc2-imgthumb:hover{transform:scale(1.02)}
+}
+.fc2-vthumb,.fc2-imgthumb{transition:transform .2s var(--ease-out),filter .2s var(--ease-out)}
+
+/* --- Lightbox mở ra: 0.96 chứ không phải 0 ---
+   Không có gì trong đời thực hiện ra từ hư không.
+   Phần tử đi từ display:none nên transition bị bỏ qua nếu đổi cùng lúc;
+   JS gắn .fc2-in ở khung hình kế tiếp để trình duyệt có trạng thái khởi điểm. */
+.fc2-lb{opacity:0;transition:opacity .2s var(--ease-out)}
+.fc2-lb.fc2-in{opacity:1}
+.fc2-lb video,.fc2-lb-yt,.fc2-lb-img{
+  transform:scale(.96);opacity:0;
+  transition:transform .26s var(--ease-out),opacity .26s var(--ease-out);
+}
+.fc2-lb.fc2-in video,.fc2-lb.fc2-in .fc2-lb-yt,.fc2-lb.fc2-in .fc2-lb-img{
+  transform:scale(1);opacity:1;
+}
+
+/* --- Giảm chuyển động: bớt và nhẹ đi, không phải tắt sạch ---
+   Giữ lại fade vì nó giúp hiểu chuyện gì đang xảy ra; bỏ phần dịch chuyển. */
+@media (prefers-reduced-motion:reduce){
+  .fc2-track,.fc2-cardtrack,.fc2-vtrack{animation:none !important}
+  .fc2-cta::after,.fc2-pricebox::after,.fc2-priceglow::before{animation:none !important;opacity:0 !important}
+  .fc2-reveal{opacity:1 !important;transform:none !important;transition:opacity .2s ease}
+  .fc2-vthumb:hover,.fc2-imgthumb:hover,.fc2 a[href="/dang-ky"]:hover{transform:none}
+  .fc2-lb video,.fc2-lb-yt,.fc2-lb-img{transform:none;transition:opacity .2s ease}
+  .fc2-lb.fc2-in video,.fc2-lb.fc2-in .fc2-lb-yt,.fc2-lb.fc2-in .fc2-lb-img{transform:none}
+}
+
+/* ---------- Câu chốt: vệt bút dạ thay cho nét gạch nguệch ngoạc ---------- */
+.fc2-mark{position:relative;display:inline-block;z-index:0}
+.fc2-mark::before{
+  content:'';position:absolute;z-index:-1;
+  left:-.14em;right:-.14em;bottom:.06em;height:.40em;
+  background:linear-gradient(180deg,rgba(168,217,141,.95),rgba(168,217,141,.72));
+  /* bốn góc bo lệch nhau một chút cho ra dáng nét bút, không phải khối chữ nhật */
+  border-radius:.34em .5em .28em .46em;
+  transform:rotate(-.6deg);
+}
+@media (max-width:720px){
+  .fc2-mark::before{height:.36em}
+}
+
+/* ---------- Nút dừng dải tự chạy: ẩn khỏi mắt, vẫn còn cho bàn phím ----------
+   Nút hiện thường trực trông rối, nhưng bỏ hẳn thì người dùng bàn phím không có
+   cách nào dừng (WCAG 2.2.2). Giải pháp: chỉ hiện khi tab tới. Chuột và chạm
+   vẫn dừng được bằng cách rê vào dải; máy bật "giảm chuyển động" thì dừng sẵn. */
+.fc2-pause{
+  position:absolute;width:1px;height:1px;padding:0;margin:0;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0;top:0;right:0;
+}
+.fc2-pause:focus-visible{
+  width:auto;height:auto;padding:8px 16px;margin:0;overflow:visible;clip:auto;
+  top:-42px;min-height:44px;
+  display:inline-flex;align-items:center;gap:7px;
+  border:1.5px solid #26643f;border-radius:9999px;background:#fff;color:#26643f;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:600;
+  outline:3px solid #2f7a4d;outline-offset:2px;
+}
+
+/* ---------- Lưới ảnh feedback: một hàng ngang, cỡ nhỏ ----------
+   Trước đây là lưới 2 cột, ảnh cao 4:5 nên chiếm rất nhiều chiều dọc. */
+.fc2-fbgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:start}
+.fc2-fbgrid > div > div:first-child{aspect-ratio:3/4 !important;border-radius:12px !important}
+.fc2-fbgrid > div > div:last-child{padding:7px 2px !important;font-size:12px !important;
+  line-height:1.4 !important;color:#4a4a52}
+
+@media (max-width:900px){
+  /* Chia 5 cột trên màn hình nhỏ thì ảnh bé quá — cho trượt ngang thay vì ép nhỏ */
+  .fc2-fbgrid{display:flex;overflow-x:auto;gap:12px;scroll-snap-type:x mandatory;
+    padding-bottom:6px;scrollbar-width:none}
+  .fc2-fbgrid::-webkit-scrollbar{display:none}
+  .fc2-fbgrid > div{flex:0 0 148px;scroll-snap-align:start}
+}
+
+/* ---------- Footer 3 cột ---------- */
+@media (max-width:820px){
+  .fc2-footcols{grid-template-columns:1fr !important;gap:28px !important}
+}

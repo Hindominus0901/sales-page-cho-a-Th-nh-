@@ -1,0 +1,97 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "goc-creator",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Trang public là HTML tĩnh do `npm run build:pages` sinh ra.
+  // run_worker_first: Worker xử lý trước để bắt attribution ?ref= và render
+  // các trang động (/thanh-toan/:ma), rồi mới rơi về file tĩnh.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+
+  "observability": { "enabled": true },
+
+  "vars": {
+    "APP_ENV": "development",
+    "PUBLIC_BASE_URL": "http://localhost:8787",
+    // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán
+    "SEPAY_BANK_CODE": "TCB",
+    "SEPAY_BANK_NAME": "Techcombank",
+    "SEPAY_ACCOUNT_NO": "",
+    "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+    "ORDER_CODE_PREFIX": "GC",
+    "AFFILIATE_DEFAULT_RATE_BP": "2000",
+    "AFFILIATE_COOKIE_DAYS": "90",
+    "COMMISSION_HOLD_DAYS": "7"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "goc-creator-dev",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "0000000000000000000000000000000000" }
+  ],
+
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "goc-creator-media-dev" }
+  ],
+
+  // 03:00 giờ Việt Nam = 20:00 UTC hôm trước
+  "triggers": { "crons": ["0 20 * * *"] },
+
+  "env": {
+    "preview": {
+      "vars": {
+        "APP_ENV": "preview",
+        "PUBLIC_BASE_URL": "https://goc-creator-preview.workers.dev",
+        "SEPAY_BANK_CODE": "TCB",
+        "SEPAY_BANK_NAME": "Techcombank",
+        "SEPAY_ACCOUNT_NO": "",
+        "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+        "ORDER_CODE_PREFIX": "GC",
+        "AFFILIATE_DEFAULT_RATE_BP": "2000",
+        "AFFILIATE_COOKIE_DAYS": "90",
+        "COMMISSION_HOLD_DAYS": "7"
+      },
+      "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "goc-creator-preview", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+      ],
+      "kv_namespaces": [{ "binding": "CACHE", "id": "0000000000000000000000000000000000" }],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "goc-creator-media-preview" }],
+      "triggers": { "crons": ["0 20 * * *"] }
+    },
+    "production": {
+      "vars": {
+        "APP_ENV": "production",
+        "PUBLIC_BASE_URL": "https://goc-creator.workers.dev",
+        "SEPAY_BANK_CODE": "TCB",
+        "SEPAY_BANK_NAME": "Techcombank",
+        "SEPAY_ACCOUNT_NO": "",
+        "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+        "ORDER_CODE_PREFIX": "GC",
+        "AFFILIATE_DEFAULT_RATE_BP": "2000",
+        "AFFILIATE_COOKIE_DAYS": "90",
+        "COMMISSION_HOLD_DAYS": "7"
+      },
+      "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "goc-creator-prod", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+      ],
+      "kv_namespaces": [{ "binding": "CACHE", "id": "0000000000000000000000000000000000" }],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "goc-creator-media" }],
+      "triggers": { "crons": ["0 20 * * *"] }
+    }
+  }
+}
