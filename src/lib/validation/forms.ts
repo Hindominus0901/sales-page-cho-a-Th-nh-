@@ -34,17 +34,37 @@ const honeypot = z.string().optional().default('').refine((v) => v.trim() === ''
   message: 'spam',
 });
 
-/** Form workshop — thu thêm dữ liệu để chấm điểm. */
+/**
+ * Form workshop — MỌI Ô ĐỀU BẮT BUỘC.
+ *
+ * Đánh đổi có thật: ô nào cũng bắt buộc thì ít người điền xong hơn. Đổi lại,
+ * lead nào vào cũng đủ dữ liệu để chấm điểm, nên đội bán hàng gọi đúng người
+ * trước. Anh Thành chọn hướng này — ít lead mà chất lượng hơn nhiều lead rỗng.
+ *
+ * Riêng goal_text KHÔNG bắt buộc: form đã có "stuck" hỏi điều đang mắc kẹt,
+ * hai ô tự luận liền nhau là chỗ người ta bỏ ngang. Trang hiện tại cũng không
+ * hiện ô này.
+ */
 export const workshopFormSchema = z.object({
   name: vnName,
   phone: vnPhone,
-  email: optionalEmail,
-  field: clean(120).optional().default(''),
-  stuck: clean(500).optional().default(''),        // điều đang mắc kẹt nhất
+  email: requiredEmail,
+  field: clean(120).refine((v) => v.length >= 2, {
+    message: 'Anh chị cho biết mình đang làm lĩnh vực gì.',
+  }),
+  stuck: clean(500).refine((v) => v.length >= 5, {
+    message: 'Anh chị viết vài chữ về điều đang mắc kẹt nhất — Thành đọc hết.',
+  }),
   goal_text: clean(500).optional().default(''),    // mục tiêu lớn nhất
-  daily_time: z.enum(['over_2h', '1_2h', 'under_1h']).optional(),
-  channel: z.enum(['has_over_10k', 'has_1k_10k', 'has_under_1k', 'none_yet']).optional(),
-  goal: z.enum(['sell_products', 'get_clients', 'build_personal_brand', 'just_curious']).optional(),
+  daily_time: z.enum(['over_2h', '1_2h', 'under_1h'], {
+    message: 'Anh chị chọn thời gian mỗi ngày dành được.',
+  }),
+  channel: z.enum(['has_over_10k', 'has_1k_10k', 'has_under_1k', 'none_yet'], {
+    message: 'Anh chị chọn tình trạng kênh hiện tại.',
+  }),
+  goal: z.enum(['sell_products', 'get_clients', 'build_personal_brand', 'just_curious'], {
+    message: 'Anh chị chọn điều mong nhất khi xây kênh.',
+  }),
   website: honeypot,
   session: z.string().optional(),
   'cf-turnstile-response': z.string().optional(),

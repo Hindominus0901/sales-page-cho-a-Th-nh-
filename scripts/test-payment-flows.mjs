@@ -231,7 +231,7 @@ test('Email xác nhận vào hàng đợi đúng một lần dù webhook gửi l
   ok('không thử lại vô ích', mail.attempts, 0);
 });
 
-test('Workshop: có email thì gửi một lần, không email thì không xếp hàng rỗng', async () => {
+test('Workshop: mọi ô bắt buộc, gửi mail đúng một lần', async () => {
   const dangKy = (phone, email) => post('/api/workshop/register', {
     name: 'Lê Thị Hoa', phone, email,
     field: 'Bán đồ handmade', stuck: 'Không biết bắt đầu từ đâu',
@@ -249,12 +249,22 @@ test('Workshop: có email thì gửi một lần, không email thì không xếp
   const mail = db.prepare("SELECT * FROM email_outbox WHERE template='workshop_registered'").get();
   ok('mail có link phòng Zoom', mail.body_text.includes('https://zoom.us/j/kiem-chung'), true);
 
-  // Email là tuỳ chọn ở form workshop — không điền thì không có gì để gửi, và
-  // hàng đợi không được chứa dòng rỗng chỉ để rồi thất bại lúc gửi.
-  await dangKy('0912000222', '');
-  ok('không email thì không xếp hàng',
+  // Email nay BẮT BUỘC ở form workshop: thiếu thì đăng ký bị từ chối ngay,
+  // không tạo lead rỗng và cũng không có dòng mail rỗng nào lọt vào hàng đợi.
+  const thieuEmail = await dangKy('0912000222', '');
+  ok('thiếu email bị từ chối', thieuEmail.status, 400);
+  ok('không sinh thêm bản ghi đăng ký nào',
+    count('SELECT COUNT(*) n FROM workshop_registrations'), 1);
+  ok('hàng đợi mail không có dòng rỗng',
     count("SELECT COUNT(*) n FROM email_outbox WHERE template='workshop_registered'"), 1);
-  ok('nhưng vẫn ghi nhận đăng ký', count('SELECT COUNT(*) n FROM workshop_registrations'), 2);
+
+  // Thiếu một ô chọn cũng bị từ chối — đó là điểm của việc bắt buộc hết.
+  const thieuChon = await post('/api/workshop/register', {
+    name: 'Trần Văn B', phone: '0912000333', email: 'b@vidu.com',
+    field: 'Bán đồ handmade', stuck: 'Không biết bắt đầu từ đâu',
+    channel: 'none_yet', goal: 'sell_products', website: '',
+  }, { 'cf-connecting-ip': scenarioIp });
+  ok('thiếu ô chọn bị từ chối', thieuChon.status, 400);
 });
 
 /**

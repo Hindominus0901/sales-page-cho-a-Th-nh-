@@ -90,54 +90,57 @@
           </div>
 
           <div>
-            <label for="fc2-ws-email" class="fc2-label">Email (không bắt buộc)</label>
-            <input id="fc2-ws-email" name="email" type="email" autocomplete="email" placeholder="email@cua-anh-chi.com" class="fc2-input">
+            <label for="fc2-ws-email" class="fc2-label">Email <span style="color:#d33">*</span></label>
+            <input id="fc2-ws-email" name="email" type="email" required autocomplete="email" placeholder="email@cua-anh-chi.com" class="fc2-input">
             <div class="fc2-err" data-err="email"></div>
           </div>
 
           <div>
-            <label for="fc2-ws-field" class="fc2-label">Anh chị đang làm lĩnh vực gì?</label>
-            <input id="fc2-ws-field" name="field" type="text" placeholder="Ví dụ: thiết kế nội thất, spa, dạy học…" class="fc2-input">
+            <label for="fc2-ws-field" class="fc2-label">Anh chị đang làm lĩnh vực gì? <span style="color:#d33">*</span></label>
+            <input id="fc2-ws-field" name="field" type="text" required placeholder="Ví dụ: thiết kế nội thất, spa, dạy học…" class="fc2-input">
             <div class="fc2-err" data-err="field"></div>
           </div>
 
           <!-- Ba ô dưới đây nuôi phần chấm điểm lead: chúng là thứ cho biết
                nên gọi ai trước, nên đặt ngay trong form chứ không để hỏi sau. -->
           <div>
-            <label for="fc2-ws-channel" class="fc2-label">Kênh của anh chị hiện tại</label>
-            <select id="fc2-ws-channel" name="channel" class="fc2-input">
+            <label for="fc2-ws-channel" class="fc2-label">Kênh của anh chị hiện tại <span style="color:#d33">*</span></label>
+            <select id="fc2-ws-channel" name="channel" required class="fc2-input">
               <option value="">— Chọn —</option>
               <option value="none_yet">Chưa có kênh</option>
               <option value="has_under_1k">Đã có, dưới 1.000 người theo dõi</option>
               <option value="has_1k_10k">Đã có, 1.000 – 10.000 người theo dõi</option>
               <option value="has_over_10k">Đã có, trên 10.000 người theo dõi</option>
             </select>
+            <div class="fc2-err" data-err="channel"></div>
           </div>
 
           <div>
-            <label for="fc2-ws-time" class="fc2-label">Mỗi ngày anh chị dành được bao nhiêu thời gian?</label>
-            <select id="fc2-ws-time" name="daily_time" class="fc2-input">
+            <label for="fc2-ws-time" class="fc2-label">Mỗi ngày anh chị dành được bao nhiêu thời gian? <span style="color:#d33">*</span></label>
+            <select id="fc2-ws-time" name="daily_time" required class="fc2-input">
               <option value="">— Chọn —</option>
               <option value="under_1h">Dưới 1 giờ</option>
               <option value="1_2h">1 – 2 giờ</option>
               <option value="over_2h">Trên 2 giờ</option>
             </select>
+            <div class="fc2-err" data-err="daily_time"></div>
           </div>
 
           <div>
-            <label for="fc2-ws-goal" class="fc2-label">Điều anh chị mong nhất khi xây kênh</label>
-            <select id="fc2-ws-goal" name="goal" class="fc2-input">
+            <label for="fc2-ws-goal" class="fc2-label">Điều anh chị mong nhất khi xây kênh <span style="color:#d33">*</span></label>
+            <select id="fc2-ws-goal" name="goal" required class="fc2-input">
               <option value="">— Chọn —</option>
               <option value="get_clients">Thu hút khách hàng</option>
               <option value="sell_products">Bán sản phẩm / dịch vụ</option>
               <option value="build_personal_brand">Xây thương hiệu cá nhân</option>
               <option value="just_curious">Tìm hiểu thêm đã</option>
             </select>
+            <div class="fc2-err" data-err="goal"></div>
           </div>
 
           <div>
-            <label for="fc2-ws-stuck" class="fc2-label">Điều anh chị đang mắc kẹt nhất khi xây kênh</label>
-            <textarea id="fc2-ws-stuck" name="stuck" rows="3" placeholder="Viết vài chữ cũng được — Thành đọc hết." class="fc2-input" style="resize:vertical;min-height:82px;padding-top:12px"></textarea>
+            <label for="fc2-ws-stuck" class="fc2-label">Điều anh chị đang mắc kẹt nhất khi xây kênh <span style="color:#d33">*</span></label>
+            <textarea id="fc2-ws-stuck" name="stuck" rows="3" required placeholder="Viết vài chữ cũng được — Thành đọc hết." class="fc2-input" style="resize:vertical;min-height:82px;padding-top:12px"></textarea>
             <div class="fc2-err" data-err="stuck"></div>
           </div>
 
