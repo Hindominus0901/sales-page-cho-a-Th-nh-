@@ -69,12 +69,20 @@ Mỗi khoá chọn kiểu **Secret** (không phải Text), để nó không hi�
 
 | Tên khoá | Lấy ở đâu |
 |---|---|
+| `SEPAY_ACCOUNT_NO` | **số tài khoản Techcombank của ANLIFE GROUP**, gõ liền không dấu cách |
 | `SESSION_SECRET` | tự sinh — xem bên dưới |
 | `IP_HASH_SALT` | tự sinh — xem bên dưới |
 | `SEPAY_WEBHOOK_API_KEY` | SePay → Tích hợp webhook → API Key |
 | `RESEND_API_KEY` | *(tuỳ chọn)* resend.com → API Keys. Không có thì hệ vẫn chạy, chỉ là khách không nhận được email xác nhận |
 
-**Cách tự sinh hai khoá đầu mà không cần terminal:** mở tab mới, bấm `F12` để
+> **Vì sao số tài khoản cũng đặt ở đây, dù nó không bí mật gì** (nó được in
+> thẳng trên trang cho khách chuyển khoản): vì `wrangler deploy` **ghi đè** phần
+> biến thường bằng nội dung file cấu hình mỗi lần deploy, còn secret thì sống
+> sót. Đặt ở đây là điền một lần rồi yên tâm, và không phải sửa mã.
+>
+> Anh Thành tự gõ trực tiếp vào đây thì không ai chép nhầm — kể cả Claude.
+
+**Cách tự sinh `SESSION_SECRET` và `IP_HASH_SALT` mà không cần terminal:** mở tab mới, bấm `F12` để
 mở cửa sổ dành cho lập trình viên, chọn tab **Console**, dán dòng này rồi Enter:
 
 ```js
@@ -162,3 +170,9 @@ những khối đó **tự ẩn**, trang không vỡ. Danh sách đầy đủ n�
 
 Nhưng **thiếu số tài khoản ngân hàng thì bộ soát chặn deploy**, vì đó là thứ
 khiến hệ trông vẫn bình thường mà không nhận được đồng nào.
+
+> **Đừng thay mã QR động bằng ảnh QR tĩnh trong app ngân hàng.** Mã QR trang
+> thanh toán sinh ra đã điền sẵn **số tiền** và **mã đơn** vào nội dung chuyển
+> khoản — chính mã đơn đó là thứ để hệ tự nhận ra tiền của ai. Ảnh QR tĩnh không
+> có hai thứ đó, nên mọi giao dịch sẽ rơi vào "chưa khớp" và phải gán tay từng
+> cái. Đó đúng là việc mà cả hệ thống này sinh ra để khỏi phải làm.

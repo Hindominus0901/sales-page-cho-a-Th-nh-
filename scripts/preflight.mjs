@@ -71,12 +71,6 @@ if (!kvId || PLACEHOLDER.test(kvId)) {
 
 const vars = envCfg.vars ?? {};
 
-if (!String(vars.SEPAY_ACCOUNT_NO ?? '').trim()) {
-  block('SEPAY_ACCOUNT_NO trống',
-    'Trang thanh toán không sinh được mã QR và không in được số tài khoản. ' +
-    'Khách bấm mua xong sẽ nhìn thấy một trang trống rỗng.');
-}
-
 if (!String(vars.SEPAY_ACCOUNT_NAME ?? '').trim()) {
   block('SEPAY_ACCOUNT_NAME trống',
     'Khách chuyển khoản không thấy tên chủ tài khoản để đối chiếu — nhiều người ' +
@@ -96,6 +90,15 @@ if (!baseUrl.startsWith('https://')) {
 
 // ------------------------------------------------------------------ khoá bí mật
 
+// --no-secrets dùng khi chạy thử ngoại tuyến: bỏ qua việc gọi wrangler. Nhưng
+// bỏ qua luôn cả việc soát số tài khoản thì cờ này thành cách vô hiệu hoá một
+// lỗi chặn — nên vẫn phải nói ra khi file cấu hình chưa có số nào.
+if (SKIP_SECRETS && !String(vars.SEPAY_ACCOUNT_NO ?? '').trim()) {
+  warn('Chưa thấy số tài khoản nhận tiền trong wrangler.jsonc',
+    'Đang chạy với --no-secrets nên không kiểm được phần Secrets của dashboard. ' +
+    'Nếu đã đặt SEPAY_ACCOUNT_NO ở đó thì bỏ qua.');
+}
+
 if (!SKIP_SECRETS) {
   let names = null;
   try {
@@ -109,9 +112,30 @@ if (!SKIP_SECRETS) {
     // chuyện bình thường ở lần chạy đầu, không phải lý do để chặn.
     warn('Chưa đọc được danh sách khoá bí mật',
       'Thường là do Worker chưa từng được deploy. Script deploy sẽ tự đặt khoá.');
+    // Không biết được secret có gì thì ít nhất soát phần trong file cấu hình.
+    if (!String(vars.SEPAY_ACCOUNT_NO ?? '').trim()) {
+      warn('Chưa thấy số tài khoản nhận tiền trong wrangler.jsonc',
+        'Nếu đã đặt SEPAY_ACCOUNT_NO trong phần Secrets của dashboard thì bỏ qua. ' +
+        'Chưa đặt ở đâu cả thì trang thanh toán không sinh được mã QR.');
+    }
   }
 
   if (names) {
+    // Số tài khoản đặt được ở HAI chỗ: "vars" trong wrangler.jsonc, hoặc phần
+    // Secrets của dashboard. Đặt trong dashboard tiện hơn cho người không sửa
+    // mã — và quan trọng hơn: `wrangler deploy` GHI ĐÈ vars bằng nội dung file
+    // cấu hình, còn secret thì sống sót qua mọi lần deploy. Nên với người làm
+    // trên dashboard, chỗ duy nhất điền một lần rồi yên tâm là Secrets.
+    if (!String(vars.SEPAY_ACCOUNT_NO ?? '').trim() && !names.has('SEPAY_ACCOUNT_NO')) {
+      block('Chưa có số tài khoản nhận tiền',
+        'Trang thanh toán không sinh được mã QR và không in được số tài khoản — ' +
+        'khách bấm mua xong nhìn thấy một trang trống rỗng.\n' +
+        '  Điền một trong hai chỗ:\n' +
+        '    · Dashboard Cloudflare → Settings → Variables and Secrets → thêm\n' +
+        '      SEPAY_ACCOUNT_NO kiểu Secret (khuyến nghị, không phải sửa mã)\n' +
+        '    · hoặc "SEPAY_ACCOUNT_NO" trong wrangler.jsonc');
+    }
+
     for (const [name, why] of [
       ['SESSION_SECRET', 'Không có thì không ai đăng nhập được vào /admin hay /aff.'],
       ['IP_HASH_SALT', 'Không có thì không băm được IP để thống kê và chống spam.'],
