@@ -33,7 +33,19 @@ export async function hashIp(env: Env, ip: string | null): Promise<string | null
   return b64url(buf).slice(0, 22);
 }
 
-const PBKDF2_ITERATIONS = 210_000;
+/**
+ * 100.000 là TRẦN CỦA CLOUDFLARE WORKERS, không phải lựa chọn.
+ *
+ * Đặt cao hơn thì WebCrypto ném thẳng: "iteration counts above 100000 are not
+ * supported". Bản giả lập chạy máy nhà KHÔNG áp giới hạn này, nên 210.000 chạy
+ * ngon lành suốt quá trình làm và chỉ vỡ khi lên thật — đúng kiểu lỗi tệ nhất.
+ *
+ * Thấp hơn khuyến nghị của OWASP, nhưng đây là mức trần nền tảng cho phép. Bù
+ * lại bằng chỗ khác: khoá đăng nhập luỹ tiến sau 5 lần sai, và mật khẩu do hệ
+ * sinh ngẫu nhiên 14 ký tự chứ không để người dùng tự đặt.
+ */
+const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_MAX = 100_000;
 
 /**
  * Băm mật khẩu bằng PBKDF2-SHA256. Argon2/bcrypt cần WASM trên Workers;
@@ -53,6 +65,15 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const saltB64 = parts[2]!;
   const expected = parts[3]!;
   if (!Number.isInteger(iterations) || iterations < 1000) return false;
+
+  // Chuỗi băm cũ sinh ở mức Workers không kiểm chứng nổi: trả false thay vì để
+  // WebCrypto ném. Ném thì thành lỗi 500 và người dùng đọc được một câu kỹ
+  // thuật vô nghĩa, thay vì "sai mật khẩu" — mà kết cục vẫn là không vào được.
+  if (iterations > PBKDF2_MAX) {
+    console.error(`[auth] chuỗi băm ${iterations} vòng vượt trần ${PBKDF2_MAX} của Workers — `
+      + 'tài khoản này phải đặt lại mật khẩu.');
+    return false;
+  }
 
   const salt = fromB64url(saltB64);
   const bits = await derive(password, salt, iterations);

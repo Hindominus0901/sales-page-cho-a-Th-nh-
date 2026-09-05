@@ -129,6 +129,18 @@ try {
 
 heading('Dữ liệu nền');
 
+function countWhere(sql) {
+  try {
+    const out = wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG,
+      '--command', sql, '--json'], { quiet: true });
+    if (DRY) return 1;
+    const parsed = json(out);
+    return Number(parsed?.[0]?.results?.[0]?.n ?? parsed?.results?.[0]?.n ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
 function count(table) {
   try {
     const out = wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG,
@@ -184,17 +196,28 @@ async function hashPassword(password) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password),
     'PBKDF2', false, ['deriveBits']);
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 210_000, hash: 'SHA-256' }, key, 256);
-  return `pbkdf2$210000$${b64url(salt)}$${b64url(bits)}`;
+    { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' }, key, 256);
+  return `pbkdf2$100000$${b64url(salt)}$${b64url(bits)}`;
 }
+
+/**
+ * Đếm tài khoản quản trị THẬT SỰ ĐĂNG NHẬP ĐƯỢC, không phải đếm số dòng.
+ *
+ * Chuỗi băm sinh ở mức vòng lặp vượt trần của Workers thì WebCrypto từ chối
+ * kiểm chứng — dòng vẫn nằm trong bảng nhưng không ai vào được bằng nó. Đếm
+ * số dòng thì script thấy "đã có tài khoản" rồi bỏ qua, và hệ khoá cứng.
+ */
+const countUsableAdmins = () =>
+  countWhere("SELECT COUNT(*) AS n FROM admin_users "
+    + "WHERE is_active = 1 AND password_hash LIKE 'pbkdf2$100000$%'");
 
 let firstAdmin = null;
 const adminEmail = (process.env.ADMIN_EMAIL ?? '').trim().toLowerCase();
 
 if (DRY) {
   say('(bỏ qua ở chế độ --dry-run)');
-} else if (count('admin_users') > 0) {
-  done('Đã có tài khoản quản trị — không tạo thêm');
+} else if (countUsableAdmins() > 0) {
+  done('Đã có tài khoản quản trị dùng được — không tạo thêm');
 } else if (!adminEmail) {
   say('⚠ Chưa có tài khoản quản trị nào, và chưa biết tạo cho email nào.');
   say('  Thêm ADMIN_EMAIL vào Settings → Build → Variables and Secrets rồi deploy lại.');
@@ -207,13 +230,25 @@ if (DRY) {
   const bytes = crypto.getRandomValues(new Uint8Array(14));
   const password = [...bytes].map((b) => ALPHABET[b % ALPHABET.length]).join('');
   const hash = await hashPassword(password);
-  const sql = `INSERT INTO admin_users
-      (id, email, email_norm, name, password_hash, role, is_active, created_at, updated_at)
-    VALUES ('${crypto.randomUUID()}', '${adminEmail}', '${adminEmail}',
-            'Chủ hệ thống', '${hash}', 'owner', 1, unixepoch(), unixepoch());`;
-  wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG, '--command', sql], { quiet: true });
-  firstAdmin = { email: adminEmail, password };
-  done(`Đã tạo tài khoản owner đầu tiên: ${adminEmail}`);
+  // Sửa trước, tạo sau. Tài khoản có thể đã tồn tại nhưng mang chuỗi băm
+  // Workers không kiểm chứng nổi (sinh ở mức vòng lặp vượt trần) — lúc đó nó
+  // vô dụng, và INSERT sẽ vướng UNIQUE(email_norm) rồi hỏng cả bước này.
+  const sua = `UPDATE admin_users SET password_hash = '${hash}', is_active = 1,
+                 updated_at = unixepoch() WHERE email_norm = '${adminEmail}';`;
+  wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG, '--command', sua], { quiet: true });
+
+  if (countUsableAdmins() > 0) {
+    firstAdmin = { email: adminEmail, password, reset: true };
+    done(`Đã đặt lại mật khẩu cho tài khoản sẵn có: ${adminEmail}`);
+  } else {
+    const sql = `INSERT INTO admin_users
+        (id, email, email_norm, name, password_hash, role, is_active, created_at, updated_at)
+      VALUES ('${crypto.randomUUID()}', '${adminEmail}', '${adminEmail}',
+              'Chủ hệ thống', '${hash}', 'owner', 1, unixepoch(), unixepoch());`;
+    wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG, '--command', sql], { quiet: true });
+    firstAdmin = { email: adminEmail, password, reset: false };
+    done(`Đã tạo tài khoản owner đầu tiên: ${adminEmail}`);
+  }
 }
 
 // ══════════════════════════════════════════ 7. Việc tiếp theo
@@ -235,7 +270,7 @@ console.log(`
       ${base}/api/webhooks/sepay
 ${firstAdmin ? `
   ┌─────────────────────────────────────────────────────────────────┐
-  │  TÀI KHOẢN QUẢN TRỊ ĐẦU TIÊN — mật khẩu chỉ hiện MỘT LẦN ở đây  │
+  │  ${firstAdmin.reset ? 'MẬT KHẨU MỚI' : 'TÀI KHOẢN QUẢN TRỊ ĐẦU TIÊN'} — chỉ hiện MỘT LẦN ở đây${firstAdmin.reset ? '                 ' : '        '}│
   └─────────────────────────────────────────────────────────────────┘
 
       Đăng nhập : ${base}/admin

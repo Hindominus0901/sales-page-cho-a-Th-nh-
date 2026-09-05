@@ -35,7 +35,8 @@ if (!['owner', 'admin', 'staff'].includes(role)) {
 const b64url = (buf) => Buffer.from(buf).toString('base64')
   .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-const ITERATIONS = 210_000;
+// Trần của Cloudflare Workers. Cao hơn thì WebCrypto ném lúc kiểm mật khẩu.
+const ITERATIONS = 100_000;
 
 async function hashPassword(password) {
   const salt = crypto.getRandomValues(new Uint8Array(16));
