@@ -73,10 +73,16 @@ Mỗi khoá chọn kiểu **Secret** (không phải Text), để nó không hi�
 | `SEPAY_WEBHOOK_API_KEY` | SePay → Tích hợp webhook → API Key |
 | `RESEND_API_KEY` | *(tuỳ chọn)* resend.com → API Keys. Không có thì hệ vẫn chạy, chỉ là khách không nhận được email xác nhận |
 
-> **Vì sao số tài khoản cũng đặt ở đây, dù nó không bí mật gì** (nó được in
-> thẳng trên trang cho khách chuyển khoản): vì `wrangler deploy` **ghi đè** phần
-> biến thường bằng nội dung file cấu hình mỗi lần deploy, còn secret thì sống
-> sót. Đặt ở đây là điền một lần rồi yên tâm, và không phải sửa mã.
+> **Số tài khoản BẮT BUỘC đặt kiểu Secret, không phải Text.**
+>
+> Trong bảng *Runtime variables and secrets* có sẵn một loạt dòng kiểu Text
+> (`SEPAY_BANK_CODE`, `APP_ENV`…). Những dòng đó do `wrangler.jsonc` sinh ra, và
+> **mỗi lần deploy `wrangler` ghi đè lại toàn bộ chúng bằng nội dung file**. Gõ
+> số tài khoản vào một dòng Text nghĩa là lần deploy kế tiếp xoá sạch nó — không
+> báo gì, và trang thanh toán im lặng hỏng.
+>
+> Secret thì không nằm trong file cấu hình nên deploy không đụng tới. Điền một
+> lần rồi yên tâm.
 >
 > Anh Thành tự gõ trực tiếp vào đây thì không ai chép nhầm — kể cả Claude.
 

@@ -35,10 +35,17 @@
   "vars": {
     "APP_ENV": "production",
     "PUBLIC_BASE_URL": "https://goc-creator-challenge.workers.dev",
-    // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán
+    // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán.
+    //
+    // SEPAY_ACCOUNT_NO CỐ Ý KHÔNG có ở đây. `wrangler deploy` ghi đè toàn bộ
+    // phần vars bằng nội dung file này mỗi lần deploy, nên để nó ở đây với giá
+    // trị rỗng là mỗi lần deploy lại xoá sạch số tài khoản anh Thành vừa điền
+    // trong dashboard — mà không báo gì, và trang thanh toán im lặng hỏng.
+    //
+    // Đặt nó bên Settings → Variables and Secrets của Worker, kiểu Secret:
+    // secret không nằm trong file này nên deploy không đụng tới.
     "SEPAY_BANK_CODE": "TCB",
     "SEPAY_BANK_NAME": "Techcombank",
-    "SEPAY_ACCOUNT_NO": "",
     "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
     "ORDER_CODE_PREFIX": "GC",
     "AFFILIATE_DEFAULT_RATE_BP": "2000",
@@ -80,8 +87,7 @@
         "PUBLIC_BASE_URL": "https://goc-creator-challenge-preview.workers.dev",
         "SEPAY_BANK_CODE": "TCB",
         "SEPAY_BANK_NAME": "Techcombank",
-        "SEPAY_ACCOUNT_NO": "",
-        "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+            "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
         "ORDER_CODE_PREFIX": "GC",
         "AFFILIATE_DEFAULT_RATE_BP": "2000",
         "AFFILIATE_COOKIE_DAYS": "90",
