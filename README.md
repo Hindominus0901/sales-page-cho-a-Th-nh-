@@ -47,6 +47,15 @@ npm run test:student  # cổng học viên: nộp bài, nộp lại, khoá bài 
 chuyển nốt, chuyển thừa, nội dung chuyển khoản bị ngân hàng cắt xén, sai khoá
 webhook, đơn hết hạn trả muộn, CTV tự mua, và CTV thứ hai cướp quy kết.
 
+Tài khoản cho `test:admin` tạo bằng `node scripts/create-admin.mjs --email <email>`.
+Script **tự sinh mật khẩu và in ra một lần** — không có cờ `--password`, đưa vào
+cũng bị bỏ qua.
+
+Ba bộ kiểm chạy qua HTTP đều tự dựng lấy dữ liệu nền của mình (cộng tác viên,
+buổi workshop, học viên) và đổi dải IP mỗi lần chạy. Trước đây chúng dựa vào dữ
+liệu còn sót trong database cục bộ từ phiên trước, nên đổi tên Worker hay chạy
+lại trong vòng 10 phút là báo đỏ vì lý do không liên quan gì tới sản phẩm.
+
 ---
 
 ## 3. Deploy lên Cloudflare

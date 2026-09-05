@@ -8,15 +8,12 @@
  * và hoa hồng không được phép trả kép. Unit test không phủ được vì nó nằm ở
  * tương tác giữa ràng buộc UNIQUE của D1, batch atomic và thứ tự xử lý.
  */
-import { DatabaseSync } from 'node:sqlite';
-import { readdirSync } from 'node:fs';
-import { join } from 'node:path';
 
+import { openLocalD1 } from './lib/local-d1.mjs';
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:8787';
 const WEBHOOK_KEY = process.env.SEPAY_WEBHOOK_API_KEY ?? 'dev-webhook-key-123';
-const D1_DIR = '.wrangler/state/v3/d1/miniflare-D1DatabaseObject';
 
-const db = new DatabaseSync(join(D1_DIR, readdirSync(D1_DIR).find((f) => f.endsWith('.sqlite'))));
+const db = openLocalD1();
 
 let failures = 0;
 const ok = (label, actual, expected) => {
@@ -250,7 +247,7 @@ test('Workshop: có email thì gửi một lần, không email thì không xếp
   ok('đăng ký lại không gửi thêm', count("SELECT COUNT(*) n FROM email_outbox WHERE template='workshop_registered'"), 1);
 
   const mail = db.prepare("SELECT * FROM email_outbox WHERE template='workshop_registered'").get();
-  ok('mail có link phòng Zoom', mail.body_text.includes('https://zoom.us/j/123'), true);
+  ok('mail có link phòng Zoom', mail.body_text.includes('https://zoom.us/j/kiem-chung'), true);
 
   // Email là tuỳ chọn ở form workshop — không điền thì không có gì để gửi, và
   // hàng đợi không được chứa dòng rỗng chỉ để rồi thất bại lúc gửi.
@@ -260,12 +257,66 @@ test('Workshop: có email thì gửi một lần, không email thì không xếp
   ok('nhưng vẫn ghi nhận đăng ký', count('SELECT COUNT(*) n FROM workshop_registrations'), 2);
 });
 
+/**
+ * Hai cộng tác viên cố định mà các kịch bản hoa hồng dựa vào.
+ *
+ * Trước đây hai dòng này nằm sẵn trong database cục bộ từ một phiên làm việc cũ,
+ * không có ở đâu trong mã. Đổi tên Worker một cái là miniflare sinh database
+ * mới, dữ liệu nền biến mất, và ba kịch bản hoa hồng gãy vì lý do không liên
+ * quan gì tới hoa hồng. Bộ kiểm chứng phải tự dựng lấy thứ nó cần.
+ *
+ * reset() cố ý KHÔNG xoá bảng affiliates, nên dựng một lần ở đây là đủ cho mọi
+ * kịch bản.
+ */
+function seedAffiliates() {
+  const ctv = [
+    ['aff1', 'MINHANH', 'Minh Anh', 'minhanh@vidu.com', '0911111111', '84911111111', 'NGUYEN MINH ANH'],
+    ['aff2', 'HOANGNAM', 'Hoàng Nam', 'nam@vidu.com', '0922222222', '84922222222', 'TRAN HOANG NAM'],
+  ];
+  const stmt = db.prepare(`INSERT OR REPLACE INTO affiliates
+      (id, code, name, email, email_norm, phone, phone_norm, status, commission_rate,
+       bank_account_name, payout_threshold, created_at, updated_at)
+    VALUES (?,?,?,?,?,?,?, 'active', 2000, ?, 500000, unixepoch(), unixepoch())`);
+  for (const [id, code, name, email, phone, phoneNorm, bank] of ctv) {
+    stmt.run(id, code, name, email, email, phone, phoneNorm, bank);
+  }
+}
+
+/**
+ * Một buổi workshop đang mở đăng ký.
+ *
+ * Cũng là dữ liệu nền từng nằm sẵn trong database cũ. Buổi workshop trong dữ
+ * liệu mẫu có ngày cố định, nên nó tự hết hạn theo thời gian và kịch bản gãy
+ * vào một ngày chẳng ai đụng vào mã — /api/workshop/register trả 503 "chưa có
+ * buổi nào đang mở". Đặt ngày theo lúc chạy để bộ kiểm chứng không có hạn dùng.
+ */
+function seedWorkshopSession() {
+  db.prepare(`INSERT OR REPLACE INTO workshop_sessions
+      (id, slug, title, starts_at, duration_min, zoom_url, zalo_group_url,
+       status, created_at, updated_at)
+    VALUES ('ws-test', 'ws-test', 'Workshop kiểm chứng', unixepoch() + 604800, 135,
+            'https://zoom.us/j/kiem-chung', 'https://zalo.me/g/kiem-chung',
+            'upcoming', unixepoch(), unixepoch())`).run();
+}
+
 // ------------------------------------------------------------------ chạy
 
+/**
+ * Dải IP riêng cho mỗi lần chạy.
+ *
+ * Rate limit của /api/workshop/register là 5 lượt trong 10 phút cho mỗi IP, và
+ * nó nằm trong KV — KV sống qua các lần chạy script. Dùng IP cố định thì lần
+ * chạy thứ hai trong vòng 10 phút ăn 429, kịch bản workshop báo đỏ, và cái đỏ
+ * đó không nói gì về sản phẩm cả. Đổi dải IP mỗi lần chạy là hết.
+ */
+const runBlock = Math.floor(Math.random() * 65536);
+
 console.log(`\nKiểm chứng luồng thanh toán — ${BASE}\n`);
+seedAffiliates();
+seedWorkshopSession();
 for (const [i, [name, fn]] of scenarios.entries()) {
   await reset();
-  scenarioIp = `10.0.0.${i + 1}`;
+  scenarioIp = `10.${runBlock >> 8}.${runBlock & 255}.${i + 1}`;
   console.log(name);
   try {
     await fn();

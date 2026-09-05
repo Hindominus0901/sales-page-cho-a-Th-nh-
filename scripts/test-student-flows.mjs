@@ -6,14 +6,11 @@
  *
  * Không cần đăng nhập: cổng học viên chạy bằng mã trong đường link.
  */
-import { DatabaseSync } from 'node:sqlite';
-import { readdirSync } from 'node:fs';
-import { join } from 'node:path';
 import { randomUUID, randomBytes } from 'node:crypto';
+import { openLocalD1 } from './lib/local-d1.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:8787';
-const D1_DIR = '.wrangler/state/v3/d1/miniflare-D1DatabaseObject';
-const db = new DatabaseSync(join(D1_DIR, readdirSync(D1_DIR).find((f) => f.endsWith('.sqlite'))));
+const db = openLocalD1();
 
 let failures = 0;
 const ok = (label, actual, expected) => {

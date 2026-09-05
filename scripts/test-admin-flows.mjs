@@ -5,10 +5,8 @@
  *   node scripts/create-admin.mjs --email admin@test.vn
  *   node scripts/test-admin-flows.mjs --email admin@test.vn --password <mật khẩu vừa in>
  */
-import { DatabaseSync } from 'node:sqlite';
-import { readdirSync } from 'node:fs';
-import { join } from 'node:path';
 
+import { openLocalD1 } from './lib/local-d1.mjs';
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:8787';
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
@@ -16,8 +14,7 @@ const EMAIL = arg('email');
 const PASSWORD = arg('password');
 if (!EMAIL || !PASSWORD) { console.error('Cần --email và --password'); process.exit(1); }
 
-const D1_DIR = '.wrangler/state/v3/d1/miniflare-D1DatabaseObject';
-const db = new DatabaseSync(join(D1_DIR, readdirSync(D1_DIR).find((f) => f.endsWith('.sqlite'))));
+const db = openLocalD1();
 
 let failures = 0;
 const ok = (label, actual, expected) => {
