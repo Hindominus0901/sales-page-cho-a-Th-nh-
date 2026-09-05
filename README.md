@@ -1,0 +1,285 @@
+# Góc Creator — 3 trang bán hàng + CMS + hệ affiliate
+
+Chạy trên Cloudflare Workers. Một codebase, một lần deploy.
+
+| Đường dẫn | Việc |
+|---|---|
+| `/` | Trang bán **Thử thách 21 ngày** (2.000.000đ) |
+| `/workshop` | Đăng ký **workshop Zoom miễn phí** — thay hoàn toàn Google Form |
+| `/ban-do-21-ngay` | Lead magnet **Bản Đồ 21 Ngày** (0đ) |
+| `/dang-ky` → `/thanh-toan/<mã>` | Điền thông tin → QR chuyển khoản, tự nhận biết khi tiền về |
+| `/admin` | Trang quản trị |
+| `/aff` | Portal cộng tác viên |
+| `/r/<mã CTV>` | Link giới thiệu rút gọn |
+
+---
+
+## 1. Chạy trên máy
+
+```bash
+npm install
+npm run db:migrate          # tạo bảng trong D1 cục bộ
+npm run db:seed             # sản phẩm + cài đặt mặc định
+npm run build               # dựng 5 trang HTML + 2 SPA
+cp .dev.vars.example .dev.vars   # rồi điền các khoá bên trong
+npm run dev                 # http://localhost:8787
+```
+
+Tạo tài khoản quản trị đầu tiên (mật khẩu in ra **một lần**):
+
+```bash
+node scripts/create-admin.mjs --email thanh@goccreator.vn --name "Đỗ Mạnh Thành"
+```
+
+---
+
+## 2. Kiểm chứng
+
+```bash
+npm run typecheck     # TypeScript
+npm test              # 48 unit test: chấm điểm lead, trích mã đơn, so tên
+npm run test:flows    # 11 kịch bản thanh toán thật qua HTTP (cần npm run dev)
+npm run test:admin -- --email <email> --password <mật khẩu>
+```
+
+`test:flows` phủ đúng những chỗ dễ mất tiền: webhook gửi lại, chuyển thiếu rồi
+chuyển nốt, chuyển thừa, nội dung chuyển khoản bị ngân hàng cắt xén, sai khoá
+webhook, đơn hết hạn trả muộn, CTV tự mua, và CTV thứ hai cướp quy kết.
+
+---
+
+## 3. Deploy lên Cloudflare
+
+### 3.1 Tạo tài nguyên
+
+```bash
+npx wrangler d1 create goc-creator-prod
+npx wrangler kv namespace create CACHE
+npx wrangler r2 bucket create goc-creator-media
+```
+
+Chép `database_id` và `id` vừa nhận vào `wrangler.jsonc` → `env.production`.
+
+### 3.2 Điền thông tin ngân hàng
+
+Trong `wrangler.jsonc` → `env.production.vars`:
+
+```jsonc
+"SEPAY_ACCOUNT_NO": "<số tài khoản Techcombank của ANLIFE GROUP>",
+"SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+"SEPAY_BANK_CODE": "TCB",
+"PUBLIC_BASE_URL": "https://<domain thật>"
+```
+
+> Bỏ trống `SEPAY_ACCOUNT_NO` thì trang thanh toán báo lỗi và **không bán được**.
+
+### 3.3 Đặt khoá bí mật
+
+Không bao giờ để trong file:
+
+```bash
+npx wrangler secret put SESSION_SECRET --env production        # openssl rand -base64 48
+npx wrangler secret put IP_HASH_SALT --env production          # openssl rand -base64 32
+npx wrangler secret put SEPAY_WEBHOOK_API_KEY --env production # lấy trong SePay
+npx wrangler secret put TURNSTILE_SECRET_KEY --env production  # tuỳ chọn
+```
+
+### 3.4 Chạy migration rồi deploy
+
+```bash
+npm run db:migrate:prod
+npm run deploy
+node scripts/create-admin.mjs --email <email> --remote --env production
+```
+
+---
+
+## 4. Cấu hình SePay
+
+1. Đăng ký SePay, kết nối tài khoản Techcombank của ANLIFE GROUP.
+2. Tích hợp → Webhook → thêm endpoint:
+   - URL: `https://<domain>/api/webhooks/sepay`
+   - Kiểu xác thực: **API Key**, giá trị đúng bằng `SEPAY_WEBHOOK_API_KEY` ở trên.
+3. **Chuyển thật 2.000đ** vào tài khoản, nội dung ghi một mã đơn có thật.
+4. Vào `/admin` → **Nhật ký** kiểm tra webhook đã tới, và **Giao dịch chưa khớp**
+   xem có rơi vào đó không.
+
+> ⚠️ Shape payload của SePay đổi tuỳ tài khoản có bật virtual sub-account hay
+> không. Toàn bộ payload gốc luôn được ghi vào bảng `webhook_events` trước khi
+> xử lý, nên nếu shape khác dự đoán thì **không mất dữ liệu** — đọc lại bảng đó
+> rồi chỉnh nhánh ghép đơn trong `src/routes/webhook-sepay.ts`.
+
+### Vì sao gõ đúng nội dung chuyển khoản lại quan trọng
+
+Hệ thống khớp giao dịch với đơn bằng mã đơn (`GC` + 6 ký tự) trong nội dung
+chuyển khoản. Mã dùng bảng chữ bỏ các ký tự dễ nhầm (B I O S U 0 1 2 5 8) và
+nội dung được bỏ dấu, viết hoa, lọc ký tự lạ trước khi dò — nên sống sót qua
+việc ngân hàng cắt xén và chèn thêm chữ.
+
+Không đọc được mã thì có một nhánh dự phòng: khớp đúng số tiền với **duy nhất
+một** đơn đang chờ trong 48h mà 4 số cuối điện thoại xuất hiện trong nội dung.
+Đòi cả ba điều kiện vì ghép nhầm đơn tệ hơn nhiều so với để giao dịch chưa
+khớp — chưa khớp thì admin gán tay một cú bấm, còn ghép nhầm thì hai người cùng
+sai và có thể phát sinh hoa hồng cho nhầm CTV.
+
+---
+
+## 5. Việc anh Thành cần làm trước khi chạy quảng cáo
+
+### Bắt buộc theo luật thương mại điện tử
+
+Điền `legal` trong `site.config.json`: tên công ty, mã số thuế, địa chỉ,
+hotline, email, và đánh dấu đã thông báo Bộ Công Thương. **Thiếu thì không được
+chạy quảng cáo.**
+
+### Ba trang chính sách
+
+`policies` trong `site.config.json` — bảo mật, điều khoản, và **hoàn tiền**.
+Trang đang in cam kết "14 ngày hoàn 100%, không cần lý do": đây là điều khoản
+ràng buộc, không phải câu quảng cáo, nên phải có trang chính sách thật đứng sau.
+
+### 12 video feedback
+
+Repo chỉ giữ ảnh poster. File `.mp4` không mang lên được vì Workers Assets giới
+hạn 25 MB/file (`fb-01.mp4` nặng 24,5 MB) và tổng 112 MB thì mỗi lần deploy phải
+đẩy lại toàn bộ.
+
+1. Tải 12 file lên YouTube, đặt **Không công khai (Unlisted)**.
+2. Dán ID (hoặc cả link) vào `site.config.json` → `youtube`.
+3. `npm run build:pages`.
+
+Ô nào có ID thì phát qua `youtube-nocookie.com`; ô nào trống vẫn hiện poster.
+Thumbnail luôn lấy từ poster nên chất lượng ảnh không đổi.
+
+### Số liệu còn trống
+
+Chạy `npm run build:pages`, script in ra đúng danh sách còn thiếu:
+
+- `stats` — 4 ô số liệu cuối trang. **Thiếu 1 trong 4 là cả khối bị ẩn.**
+- `startDateText` và ngày khai giảng trong `/admin` → Cài đặt.
+- `testimonialIndustry` — ngành nghề trong một câu testimonial.
+- FAQ "Lớp học vào khung giờ nào, học trên nền tảng gì?" — đang bỏ trống nên bị ẩn.
+- `makeupPolicy` — chính sách nộp bù đang là **bản nháp**, cần xác nhận.
+
+Nguyên tắc chung: trường nào trống thì khối đó **tự ẩn**, không bao giờ hiện
+`[[X]]` cho khách thấy.
+
+### Workshop
+
+Vào `/admin` → **Workshop** tạo buổi, điền link Zoom và nhóm Zalo. Trang
+`/workshop` tự lấy buổi sắp diễn ra gần nhất. Chưa có link Zoom thì khách đăng
+ký xong không thấy nút vào phòng — nút bị ẩn chứ không hiện nút chết.
+
+---
+
+## 6. Cách hệ thống chấm điểm lead
+
+Rule-based thuần, không AI. Bảng điểm nằm trong `src/lib/scoring/rules.ts` —
+để trong code để review được, diff được, và có test đi kèm.
+
+| Nhóm | Tối đa | Ghi chú |
+|---|---|---|
+| Ngân sách / sẵn sàng đầu tư | 30 | Tín hiệu mua mạnh nhất |
+| Thời điểm muốn bắt đầu | 25 | |
+| Thời gian mỗi ngày | 15 | Khoá đòi mỗi ngày một bài |
+| Hiện trạng kênh | 12 | "Chưa có kênh" vẫn được 5đ — vẫn đúng tệp mục tiêu |
+| Mục tiêu | 10 | Ra khách > xây thương hiệu > tò mò |
+| Nguồn | 10 | Đã dự workshop +10, qua CTV +5 |
+| Chất lượng liên hệ | 8 | SĐT hợp lệ +5, email +2, Facebook +1 |
+| Trừ điểm | −10 | Trùng trong 24h −5, tự luận bỏ trống −5 |
+
+**NÓNG ≥70** gọi trong 2 giờ · **ẤM 40–69** gọi trong 24 giờ · **LẠNH <40** nuôi
+bằng nội dung.
+
+Điểm **chỉ được tăng**: form workshop ngắn không hạ điểm của lead đã điền form
+tư vấn đầy đủ. Đổi bảng điểm thì tăng `SCORING_VERSION`; lead cũ giữ nguyên
+version của nó cho tới khi bấm "Chấm lại điểm" trong CMS.
+
+---
+
+## 7. Hệ affiliate 20%
+
+**Quy kết theo chạm đầu tiên, cửa sổ 90 ngày.** Tệp này mua theo nội dung: CTV
+làm video giới thiệu cho người lạ, người đó cân nhắc vài tuần rồi mới quyết.
+Tính chạm cuối thì ai chạy retarget từ khoá thương hiệu cũng gặt được công của
+người giới thiệu đầu, và mọi tranh chấp thành không phân xử được.
+
+`leads.affiliate_id` ghi **một lần** lúc lead ra đời và không bao giờ bị ghi đè
+— chặn ở tầng repository chứ không chỉ là quy ước. Khách xoá cookie sau đó cũng
+không dịch chuyển được hoa hồng. CTV thứ hai vẫn thấy click của mình trong
+dashboard (`is_first_touch = 0`) nhưng hoa hồng không đổi chủ.
+
+**Vòng đời hoa hồng:**
+
+```
+đơn paid → pending (chờ hết cửa sổ hoàn tiền 7 ngày)
+              ├─ nghi tự giới thiệu → held → admin bỏ treo / từ chối
+              └─ tới hạn → approved (cron 03:00 tự duyệt)
+   → CTV yêu cầu rút (đủ ngưỡng) → payout_requested
+   → admin duyệt → admin đánh dấu đã chi (bắt buộc có mã giao dịch) → paid
+```
+
+**Trả hoa hồng hai lần là bất khả thi về cấu trúc**, không phụ thuộc code cẩn
+thận: `UNIQUE(order_id)` trên `commissions` và `UNIQUE(commission_id)` trên
+`payout_items`.
+
+**Chống tự giới thiệu** phân tầng: chỉ từ chối thẳng khi trùng số điện thoại
+hoặc email của chính CTV; tín hiệu yếu hơn (cùng IP, tên trùng tài khoản ngân
+hàng) thì **treo lại** chờ admin xem — treo thì CTV còn khiếu nại được, huỷ âm
+thầm thì họ chỉ thấy hoa hồng biến mất mà không hiểu vì sao.
+
+---
+
+## 8. Cấu trúc
+
+```
+build/               Pipeline sinh 5 trang HTML tĩnh từ file thiết kế .dc.html
+  build.mjs          Đọc design/ + site.config.json → public/*.html
+  partials/          CSS, JS, và mảnh HTML của từng trang
+design/              File thiết kế gốc (.dc.html) — nguồn của mọi trang public
+site.config.json     Toàn bộ chữ trên trang. Trường trống thì khối tự ẩn.
+migrations/          7 file schema D1 + seed
+src/
+  worker.ts          Điểm vào Hono
+  routes/
+    public.ts        Đăng ký workshop, lead magnet, theo dõi sự kiện
+    checkout.ts      Tạo đơn, tra cứu đơn
+    webhook-sepay.ts ⚠️ Phần rủi ro nhất — chống trùng + ghép đơn
+    admin/*          API quản trị
+    affiliate/*      API portal CTV
+  lib/
+    scoring/         Bảng điểm lead (+ test)
+    payments/        Mã đơn, VietQR, fulfillOrder dùng chung
+    affiliate/       Quy kết, máy trạng thái hoa hồng, chi trả
+    auth/            Phiên đăng nhập, CSRF, phân quyền
+admin/               SPA quản trị (React + Vite) → public/admin/
+affiliate/           SPA portal CTV → public/aff/
+scripts/             Tạo tài khoản admin, hai bộ test đầu-cuối
+```
+
+**Trang public không dùng React.** Chúng đã tồn tại dưới dạng HTML tĩnh sinh từ
+file thiết kế gốc; viết lại thành component là cách chắc chắn nhất làm hỏng
+thiết kế, và không được lợi gì vì đó là trang đọc-và-bấm-nút. Zero JS framework
+cũng cho LCP tốt hơn hẳn trên 3G/4G Việt Nam.
+
+---
+
+## 9. Sửa nội dung trang
+
+Sửa `site.config.json` rồi `npm run build:pages`. Script in ra danh sách những
+gì còn thiếu và những khối đang bị ẩn.
+
+Muốn đổi một câu cụ thể mà không đụng vào mã: thêm dòng vào `textOverrides`
+theo dạng `"câu gốc": "câu mới"`. Không tìm thấy câu gốc thì build báo.
+
+---
+
+## 10. Việc chạy hằng đêm
+
+Cron 03:00 giờ Việt Nam (`0 20 * * *` UTC):
+
+- Chuyển đơn quá hạn chưa nhận đồng nào sang `expired`. **Không xoá** — khách
+  chuyển khoản muộn vẫn phải khớp được vào đúng đơn.
+- Tự duyệt hoa hồng đã qua cửa sổ hoàn tiền và **không bị treo**. Hoa hồng
+  `held` không bao giờ tự duyệt, phải có người xem.
+- Dọn phiên đăng nhập hết hạn.

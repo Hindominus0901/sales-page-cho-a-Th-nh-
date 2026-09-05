@@ -1,76 +1,81 @@
-# Việc cần a Thành xác nhận trước khi chạy quảng cáo
+# Việc cần làm trước khi chạy quảng cáo
 
-Cập nhật sau buổi polish trang đăng ký 21 ngày + xây trang lead magnet (31/08/2026).
-Danh sách này cũng chính là những gì `npm run build` sẽ in ra cảnh báo — chạy build
-sau khi điền để kiểm tra lại.
+Danh sách này cũng chính là những gì `npm run build:pages` in ra cảnh báo —
+chạy build sau khi điền để kiểm tra lại.
 
-## 1. Bắt buộc theo luật (trang có thanh toán)
+## 1. Chặn hoàn toàn — không làm thì không bán được
 
-Điền vào `site.config.json` → `legal`: `company`, `taxId`, `address`, `hotline`, `email`.
-Thiếu thì trang **không được hiện thông tin pháp nhân** ở footer — bắt buộc phải có
-trước khi chạy quảng cáo theo quy định TMĐT.
+- [ ] **Số tài khoản nhận tiền.** `SEPAY_ACCOUNT_NO` trong `wrangler.jsonc` →
+      `env.production.vars`. Bỏ trống thì trang thanh toán báo lỗi.
+- [ ] **Khoá webhook SePay.** `npx wrangler secret put SEPAY_WEBHOOK_API_KEY --env production`,
+      giá trị lấy trong SePay → Tích hợp webhook.
+- [ ] **Chuyển thật 2.000đ** để xác minh shape payload webhook và luồng đối
+      soát đầu-cuối. Payload của SePay đổi tuỳ tài khoản có bật virtual
+      sub-account hay không.
 
-## 2. Thông tin thật còn thiếu (site.config.json)
+## 2. Bắt buộc theo luật thương mại điện tử
 
-- `stats` — 4 số liệu cuối trang (khoá đã chạy / học viên / người về đích / bài đã sửa).
-  Thiếu 1 trong 4 thì cả khối bị ẩn.
-- `startDateText`, và biến `START_DATE` trong `.env` — ngày khai giảng thật.
-- `testimonialIndustry` — ngành nghề dùng trong 1 câu testimonial.
-- `policies` — 3 link chính sách (bảo mật / điều khoản / hoàn tiền). Chưa có thì
-  3 link ở footer bị ẩn.
-- FAQ "Lớp học vào khung giờ nào, học trên nền tảng gì?" — để trống vì không biết
-  lịch học thật và nền tảng dùng (Zoom? Google Meet?). Điền câu trả lời vào `faq`
-  trong `site.config.json`.
+- [ ] `legal` trong `site.config.json`: tên công ty (CÔNG TY TNHH THƯƠNG MẠI &
+      DỊCH VỤ ANLIFE GROUP), mã số thuế, địa chỉ, hotline, email, và
+      `mocNotified` khi đã thông báo Bộ Công Thương.
+- [ ] `policies` — link ba trang chính sách: bảo mật, điều khoản, **hoàn tiền**.
 
-## 3. Bản nháp cần a Thành duyệt lại (đã điền tạm để trang không bị trống)
+Trang đang in cam kết **"14 ngày hoàn 100%, không cần lý do"**. Đây là điều
+khoản ràng buộc chứ không phải câu quảng cáo — phải có trang chính sách thật
+đứng sau, và anh Thành xác nhận đúng ý trước khi chạy quảng cáo.
 
-- `makeupPolicy` — chính sách nộp bù khi trễ hạn. Bản nháp: nộp bù trong 48h, báo
-  trước qua Zalo, không ảnh hưởng gì ngoài điều kiện học bổng. README gốc ghi
-  chính sách này "chưa chốt" — xác nhận lại rồi xoá dòng `_makeupPolicyNhap`
-  trong `site.config.json`.
-- FAQ "hoàn tiền" — đã viết theo cam kết **14 ngày hoàn 100%, không cần lý do**
-  (đúng như quyết định trong `claude/01-chien-luoc-he-thong.md`). Câu này cũng được
-  thêm thành 1 dòng nhỏ ngay dưới nút "Đăng ký giữ chỗ" ở trang chủ. Xác nhận lại
-  với a Thành rằng cam kết này đúng ý trước khi chạy quảng cáo — đây là điều khoản
-  ràng buộc, không phải câu quảng cáo.
-- `scholarshipName` đã điền "Gương sáng hiếu học" theo tên đã chốt trong
-  `claude/02-rmbc-content-ai-system.md`. Xác nhận đúng chính tả/tên chính thức.
+## 3. Nội dung thật còn thiếu
 
-## 4. Trang lead magnet mới — `/ban-do-21-ngay`
+- [ ] `stats` — 4 ô số liệu cuối trang (khoá đã chạy / học viên / người về đích
+      / bài Thành đã sửa). **Thiếu 1 trong 4 thì cả khối bị ẩn.**
+- [ ] `startDateText` và ngày khai giảng trong `/admin` → Cài đặt.
+- [ ] `testimonialIndustry` — ngành nghề dùng trong một câu testimonial.
+- [ ] FAQ *"Lớp học vào khung giờ nào, học trên nền tảng gì?"* — đang bỏ trống
+      nên câu này bị ẩn khỏi trang.
+- [ ] `logo.src` — bỏ file logo vào `public/media/` rồi ghi tên vào đây.
+- [ ] `contact.zalo` và `contact.email` — hiện ở chân trang.
 
-Trang mới, xin tên + Zalo (+ email tuỳ chọn) để đổi lấy tài liệu "Bản Đồ 21 Ngày",
-theo đúng phễu đã chốt: lead magnet 0đ → sự kiện 3 buổi (Content AI System Summit)
-→ cohort 2tr. Trang **chưa được gắn link vào trang chủ** — dùng để chạy quảng cáo
-riêng, dẫn traffic thẳng vào `/ban-do-21-ngay`.
+## 4. Bản nháp cần xác nhận
 
-Cần điền 2 biến trong `.env` trước khi chạy quảng cáo cho trang này:
+- [ ] `makeupPolicy` — chính sách nộp bù khi trễ hạn. Bản nháp hiện tại: nộp bù
+      trong 48h, báo trước qua Zalo, không ảnh hưởng gì ngoài điều kiện học
+      bổng. Xác nhận rồi xoá dòng `_makeupPolicyNhap`.
+- [ ] `scholarshipName` đang là "Gương sáng hiếu học" — xác nhận đúng chính tả.
 
-- `LEAD_MAGNET_URL` — link tải file Bản Đồ 21 Ngày (PDF/Google Drive). File PDF
-  thật **chưa được tạo** — cần thiết kế/viết nội dung riêng, ngoài phạm vi trang web.
-- `LEAD_MAGNET_ZALO_URL` — link vào nhóm Zalo hoặc trang đăng ký sự kiện 3 buổi.
+## 5. Video feedback
 
-Chưa điền thì sau khi để lại thông tin, khách chỉ thấy lời cảm ơn, không có nút
-tải/vào nhóm — trang vẫn chạy được, không lỗi, nhưng phễu bị đứt ở đây.
+Repo chỉ giữ 12 ảnh poster; file `.mp4` không mang lên được vì Workers Assets
+giới hạn 25 MB/file (`fb-01.mp4` nặng 24,5 MB).
 
-Nội dung trang (tiêu đề, gạch đầu dòng, câu cảm ơn) nằm ở `site.config.json` →
-`leadMagnet`, sửa được mà không cần đụng code, y như các phần khác của trang.
+- [ ] Tải 12 video lên YouTube, đặt **Không công khai (Unlisted)**.
+- [ ] Dán ID (hoặc cả link) vào `site.config.json` → `youtube`.
+- [ ] `npm run build:pages`.
 
-## 5. Backend/dashboard cho lead — đã xây xong
+Chưa làm thì 18 ô video trên trang vẫn hiện poster nhưng bấm vào không phát
+được gì.
 
-- Bảng `leads` mới trong cùng database (Postgres khi deploy Vercel, SQLite khi
-  chạy máy nhà/VPS) — không cần thêm dịch vụ ngoài.
-- `POST /api/leads` — API công khai nhận đăng ký từ trang lead magnet.
-- `/admin` — thêm tab "Lead — Bản Đồ 21 Ngày" cạnh tab đăng ký khoá học, có ô tìm
-  kiếm, ghi chú nội bộ, và nút "Tải CSV" riêng cho leads.
-- Thẻ số liệu tổng quan có thêm "lead Bản Đồ 21 Ngày".
+## 6. Lead magnet Bản Đồ 21 Ngày
 
-## 6. Trước khi deploy bản này
+- [ ] File PDF "Bản Đồ 21 Ngày" — **chưa tồn tại**, cần thiết kế riêng.
+- [ ] `/admin` → Cài đặt → điền link tải và link nhóm Zalo.
 
-Các file **mã nguồn** đã sửa (`server/`, `build/`, `site.config.json`, `public/admin.html`,
-`.env.example`, `.env`) đã được cập nhật trực tiếp trong folder `web/` trên máy.
-File **HTML đã build sẵn** trong `public/` (`index.html`, `dang-ky.html`,
-`thanh-toan.html`, `ban-do-21-ngay.html`) **CHƯA được ghi đè** — máy làm việc
-(môi trường của Claude) không có ảnh/video thật của a Thành nên bản build ở đó
-thiếu ảnh. Trước khi deploy: chạy `npm run build` ngay trên máy đang có đủ
-`public/media/` + `public/videos/` để trang mới ra đúng ảnh/video thật, rồi mới
-`git commit` / push lên Vercel.
+Chưa điền thì sau khi để lại thông tin, khách chỉ thấy lời cảm ơn — phễu đứt ở
+đây. Trang vẫn chạy, không lỗi.
+
+## 7. Workshop
+
+- [ ] `/admin` → Workshop → tạo buổi, điền link Zoom, ID phòng, link nhóm Zalo.
+
+Trang `/workshop` tự lấy buổi sắp diễn ra gần nhất. Chưa có link Zoom thì khách
+đăng ký xong không thấy nút vào phòng.
+
+## 8. Nên cân nhắc thêm
+
+Hiện **không có email hay SMS xác nhận** — theo quyết định "không cần thông
+báo, xem trong CMS". Hệ quả: link Zoom và xác nhận mua hàng chỉ tồn tại trên
+trang cảm ơn, ai đóng tab sau khi chuyển khoản là mất dấu vết đơn hàng của
+mình. Schema cố ý chưa có bảng gửi email, nhưng thêm vào là thuần bổ sung,
+không phá gì đang chạy.
+
+Ngoài ra nên tắt bản deploy cũ trên Vercel sau khi cắt sang Cloudflare — gói
+Hobby của Vercel không được dùng cho mục đích thương mại.
