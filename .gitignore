@@ -21,3 +21,6 @@ public/aff/
 
 # Video gốc không nằm trong repo (dùng YouTube unlisted), chỉ giữ poster
 public/videos/*.mp4
+
+# File tạm lúc kiểm chứng — không bao giờ commit
+*.tmp.mjs

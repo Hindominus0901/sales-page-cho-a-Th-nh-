@@ -12,6 +12,7 @@ import { adminOrderRoutes } from './routes/admin/orders';
 import { adminAffiliateRoutes } from './routes/admin/affiliates';
 import { adminContentRoutes } from './routes/admin/content';
 import { adminGameRoutes } from './routes/admin/game';
+import { adminStaffRoutes } from './routes/admin/staff';
 import { affiliateRoutes } from './routes/affiliate/portal';
 import { studentRoutes } from './routes/student';
 import { runDailyJobs } from './lib/jobs/daily';
@@ -40,6 +41,7 @@ app.route('/', adminOrderRoutes);
 app.route('/', adminAffiliateRoutes);
 app.route('/', adminContentRoutes);
 app.route('/', adminGameRoutes);
+app.route('/', adminStaffRoutes);
 app.route('/', affiliateRoutes);
 app.route('/', studentRoutes);
 

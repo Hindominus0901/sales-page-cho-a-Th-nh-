@@ -327,6 +327,54 @@ console.log('Đổi quà');
 }
 console.log('');
 
+// ---------------------------------------------------------------- nhân sự
+//
+// Thêm người vào hệ quản trị là việc nguy hiểm nhất trong cả trang: sai một
+// nước là mất quyền vào chính trang này, và sửa thì phải bới cơ sở dữ liệu.
+// Bốn luật dưới đây kiểm ở tầng server, không phải chỉ ẩn nút trên giao diện.
+console.log('Nhân sự');
+{
+  const meRow = (await admin.get('/api/admin/staff')).body;
+  const laOwner = meRow?.staff !== undefined;
+  if (!laOwner) {
+    console.log('   (bỏ qua — tài khoản đang dùng không phải owner)');
+  } else {
+    const email = `nv-${Date.now()}@test.vn`;
+    const them = await admin.post('/api/admin/staff', { name: 'Bạn Trực Page', email, role: 'staff' });
+    ok('thêm được nhân viên', them.status, 200);
+    ok('mật khẩu trả về đúng một lần', typeof them.body.password === 'string', true);
+    ok('email trùng → 409 chứ không phải 500',
+      (await admin.post('/api/admin/staff', { name: 'Trùng', email, role: 'staff' })).status, 409);
+
+    ok('tự đổi vai trò của mình bị chặn',
+      (await admin.patch(`/api/admin/staff/${meRow.me}`, { role: 'staff' })).status, 400);
+    ok('tự tắt tài khoản của mình bị chặn',
+      (await admin.patch(`/api/admin/staff/${meRow.me}`, { isActive: false })).status, 400);
+
+    const nvId = them.body.id;
+    const dat = await admin.post(`/api/admin/staff/${nvId}/mat-khau`);
+    ok('đặt lại mật khẩu được', dat.status, 200);
+    ok('mật khẩu mới khác mật khẩu cũ', dat.body.password !== them.body.password, true);
+
+    const nv = makeClient();
+    const dnMoi = await nv.req('POST', '/api/admin/login', { email, password: dat.body.password });
+    ok('mật khẩu MỚI đăng nhập được', dnMoi.status, 200);
+    nv.setCsrf((await nv.get('/api/admin/me')).body.csrfToken);
+    ok('mật khẩu CŨ hết dùng được',
+      (await makeClient().req('POST', '/api/admin/login', { email, password: them.body.password })).status, 401);
+
+    ok('nhân viên xem danh sách nhân sự → 403', (await nv.get('/api/admin/staff')).status, 403);
+    ok('nhân viên tự nâng mình lên owner → 403',
+      (await nv.patch(`/api/admin/staff/${nvId}`, { role: 'owner' })).status, 403);
+
+    // Tắt xong thì phiên của người đó phải chết ngay, không đợi hết hạn —
+    // tắt tài khoản mà họ vẫn thao tác được thì việc tắt gần như vô nghĩa.
+    ok('tắt được tài khoản', (await admin.patch(`/api/admin/staff/${nvId}`, { isActive: false })).status, 200);
+    ok('phiên của người vừa bị tắt chết ngay', (await nv.get('/api/admin/me')).status, 401);
+  }
+}
+console.log('');
+
 // ---------------------------------------------------------------- đăng xuất
 console.log('Đăng xuất');
 ok('đăng xuất được', (await admin.post('/api/admin/logout')).status, 200);

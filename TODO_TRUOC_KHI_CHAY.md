@@ -96,7 +96,17 @@ Trang `/workshop` tự lấy buổi sắp diễn ra gần nhất. Chưa có link
 - [ ] Đặt `RESEND_API_KEY` nếu muốn khách nhận email xác nhận đơn. Không đặt thì
       hệ vẫn chạy, chỉ là khách phải dùng `/tra-cuu` để tìm lại đơn.
 
-## 10. Nên cân nhắc thêm
+## 10. Nhân sự
+
+- [ ] Đổi mật khẩu tài khoản quản trị đầu tiên (cái sinh ra từ
+      `scripts/create-admin.mjs`): `/admin` → Nhân sự → Đặt lại mật khẩu.
+- [ ] Tạo **thêm một tài khoản `owner` thứ hai** trước khi giao việc cho người
+      khác. Chỉ có một owner nghĩa là mất tài khoản đó là mất luôn quyền quản lý
+      nhân sự, và chữa thì phải bới cơ sở dữ liệu.
+- [ ] Người trực page nên để vai trò `staff` — xem và chăm lead được, nhưng
+      không duyệt hoa hồng hay đổi cơ chế thưởng được.
+
+## 11. Nên cân nhắc thêm
 
 **Zalo ZNS chưa làm.** Zalo yêu cầu doanh nghiệp xác minh và duyệt từng mẫu tin,
 mất vài ngày làm việc. Email xác nhận đã có; muốn thêm Zalo thì bảng

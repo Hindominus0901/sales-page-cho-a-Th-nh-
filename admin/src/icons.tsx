@@ -1,6 +1,6 @@
 /**
  * Icon nét mảnh, dựng thẳng bằng SVG thay vì kéo cả một thư viện icon về —
- * mười một cái icon không đáng để thêm một phụ thuộc.
+ * mười mấy cái icon không đáng để thêm một phụ thuộc.
  */
 const S = (d: string, extra?: string) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -27,6 +27,8 @@ export const ICONS: Record<string, JSX.Element> = {
   mechanics: S('M12 15a3 3 0 100-6 3 3 0 000 6z', 'M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-2.9 1.2V21a2 2 0 11-4 0v-.1A1.7 1.7 0 007 19.4a1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00-1.2-2.9H1a2 2 0 110-4h.1A1.7 1.7 0 002.6 7a1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1A1.7 1.7 0 007 2.6h.1A1.7 1.7 0 008.9 1V1a2 2 0 114 0v.1A1.7 1.7 0 0017 2.6a1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V7a1.7 1.7 0 001.5 1h.1a2 2 0 110 4H23a1.7 1.7 0 00-1.6 1z'),
   audit:     S('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2', 'M9 3h6v4H9zM9 12h6M9 16h4'),
   settings:  S('M4 6h16M4 12h16M4 18h16', 'M8 4v4M16 10v4M11 16v4'),
+  staff:     S('M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20',
+               'M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M17 11l2 2 4-4'),
 };
 
 export const Icon = ({ name }: { name: string }) => ICONS[name] ?? ICONS.overview!;

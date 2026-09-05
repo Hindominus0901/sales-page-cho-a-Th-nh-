@@ -353,7 +353,7 @@ src/
     public.ts        Đăng ký workshop, lead magnet, theo dõi sự kiện
     checkout.ts      Tạo đơn, tra cứu đơn
     webhook-sepay.ts ⚠️ Phần rủi ro nhất — chống trùng + ghép đơn
-    admin/*          API quản trị
+    admin/*          API quản trị (gồm staff.ts — quản lý người dùng)
     affiliate/*      API portal CTV
     student.ts       Cổng học viên — nộp bài, đổi quà, chạy bằng mã trong link
   lib/
@@ -422,7 +422,34 @@ thêm một bộ gửi Zalo là đủ, không phải sửa lại luồng.
 
 ---
 
-## 12. Việc chạy hằng đêm
+## 12. Nhân sự và ba vai trò
+
+`/admin` → **Nhân sự** (chỉ `owner` mở được): thêm người, đổi vai trò, tắt tài
+khoản, đặt lại mật khẩu.
+
+| Vai trò | Làm được |
+|---|---|
+| `owner` | Tất cả, và là vai trò duy nhất quản lý được nhân sự |
+| `admin` | Duyệt bài, duyệt và chi hoa hồng, sửa nội dung, đổi cơ chế thưởng |
+| `staff` | Xem và chăm lead, xem đơn hàng — **không** đụng được vào tiền và cơ chế |
+
+Bốn luật kiểm ở tầng server, không phải chỉ ẩn nút:
+
+1. **Luôn còn ít nhất một `owner` đang hoạt động.** Mất người cuối cùng là
+   không ai vào lại được màn hình này, và sửa thì phải bới cơ sở dữ liệu.
+2. **Không tự đổi vai trò hay tự tắt mình.** Tự khoá mình ra ngoài là loại lỗi
+   không có đường quay lại từ giao diện.
+3. **Mật khẩu hiện đúng một lần** lúc tạo hoặc lúc đặt lại. Không route nào trả
+   về chuỗi băm, và cũng không có đường nào giải ngược nó ra.
+4. **Tắt tài khoản hoặc đổi mật khẩu là xoá phiên của người đó ngay.** Không đợi
+   phiên hết hạn — tắt mà họ vẫn thao tác được thì việc tắt gần như vô nghĩa.
+
+Mọi thay đổi ghi vào `audit_log`: thêm người vào hệ quản trị là việc phải truy
+lại được sau này.
+
+---
+
+## 13. Việc chạy hằng đêm
 
 Cron 03:00 giờ Việt Nam (`0 20 * * *` UTC):
 
