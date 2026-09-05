@@ -136,14 +136,25 @@ if (!SKIP_SECRETS) {
         '    · hoặc "SEPAY_ACCOUNT_NO" trong wrangler.jsonc');
     }
 
-    for (const [name, why] of [
-      ['SESSION_SECRET', 'Không có thì không ai đăng nhập được vào /admin hay /aff.'],
-      ['IP_HASH_SALT', 'Không có thì không băm được IP để thống kê và chống spam.'],
-      ['SEPAY_WEBHOOK_API_KEY',
-        'Tiền về mà hệ không biết: SePay gọi webhook, hệ từ chối vì không có khoá ' +
-        'để đối chiếu, đơn treo mãi ở trạng thái chờ thanh toán.'],
-    ]) {
-      if (!names.has(name)) block(`Khoá bí mật ${name} chưa đặt`, why);
+    // SESSION_SECRET và IP_HASH_SALT không cần chặn: scripts/cf-deploy.mjs tự
+    // sinh ở bước ngay sau đây nếu chưa có.
+
+    // SEPAY_WEBHOOK_API_KEY chỉ CẢNH BÁO, không chặn.
+    //
+    // Ranh giới ở đây là: khách còn trả tiền được hay không.
+    //   · Thiếu số tài khoản → khách bấm mua, thấy trang trống, KHÔNG trả được.
+    //     Đó là hỏng, và phải chặn.
+    //   · Thiếu khoá webhook → khách vẫn chuyển khoản bình thường, tiền vẫn về
+    //     tài khoản ngân hàng. Chỉ là hệ không tự nhận ra, phải vào CMS gán tay
+    //     — màn hình "Giao dịch chưa khớp" có sẵn cho đúng việc này.
+    // Một bên là mất khách, một bên là thêm việc tay. Chặn cả hai như nhau thì
+    // rào cản chặn luôn cả việc dựng hệ lên xem nó chạy.
+    if (!names.has('SEPAY_WEBHOOK_API_KEY')) {
+      warn('SEPAY_WEBHOOK_API_KEY chưa đặt — tiền về mà hệ không tự biết',
+        'Khách vẫn chuyển khoản được và tiền vẫn về tài khoản, nhưng đơn nằm mãi ở ' +
+        '"chờ thanh toán" cho tới khi có người vào /admin → Giao dịch chưa khớp gán tay.\n' +
+        '  Lấy khoá ở SePay → Tích hợp → Webhooks, rồi đặt trong Settings → Variables ' +
+        'and Secrets kiểu Secret.');
     }
 
     if (!names.has('RESEND_API_KEY')) {

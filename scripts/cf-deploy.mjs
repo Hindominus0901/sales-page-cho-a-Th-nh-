@@ -14,6 +14,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 
 const argv = process.argv.slice(2);
 const DRY = argv.includes('--dry-run');
@@ -21,7 +22,7 @@ const PREVIEW = argv.includes('--preview');
 const ENV_FLAG = PREVIEW ? ['--env', 'preview'] : [];
 
 let step = 0;
-const heading = (t) => console.log(`\n[${++step}/6] ${t}\n${'─'.repeat(68)}`);
+const heading = (t) => console.log(`\n[${++step}/7] ${t}\n${'─'.repeat(68)}`);
 const say = (t) => console.log('    ' + t);
 const done = (t) => console.log('  ✓ ' + t);
 
@@ -73,7 +74,45 @@ heading('Soát cấu hình');
   }
 }
 
-// ══════════════════════════════════════════ 2. Migration
+// ══════════════════════════════════════════ 2. Khoá bí mật tự sinh
+
+heading('Khoá bí mật tự sinh');
+
+/**
+ * SESSION_SECRET và IP_HASH_SALT chỉ cần là chuỗi ngẫu nhiên đủ dài — con
+ * người không đóng góp gì vào giá trị của chúng, mà bắt gõ tay thì thêm hai
+ * bước dễ sai và một lần mở F12 chẳng để làm gì.
+ *
+ * Đã có thì TUYỆT ĐỐI không sinh lại: đổi SESSION_SECRET là đá văng mọi phiên
+ * đăng nhập đang mở, biến một lần deploy vô hại thành sự cố.
+ */
+if (DRY) {
+  say('(bỏ qua ở chế độ --dry-run)');
+} else {
+  let have = new Set();
+  try {
+    have = new Set(json(wr(['secret', 'list', ...ENV_FLAG], { quiet: true })).map((x) => x.name));
+  } catch {
+    say('Chưa đọc được danh sách khoá (Worker chưa từng deploy) — sẽ đặt mới.');
+  }
+
+  for (const [name, bytes, what] of [
+    ['SESSION_SECRET', 48, 'ký cookie phiên đăng nhập'],
+    ['IP_HASH_SALT', 32, 'băm IP để thống kê mà không lưu IP thô'],
+  ]) {
+    if (have.has(name)) { done(`${name} đã có, giữ nguyên (${what})`); continue; }
+    const res = spawnSync('npx', ['wrangler', 'secret', 'put', name, ...ENV_FLAG], {
+      input: randomBytes(bytes).toString('base64') + '\n',
+      encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    if (res.status !== 0) {
+      fatal(`Không đặt được khoá ${name}.`, (res.stderr ?? '').trim().slice(0, 400));
+    }
+    done(`Đã sinh ${name} (${what})`);
+  }
+}
+
+// ══════════════════════════════════════════ 3. Migration
 
 heading('Migration D1');
 
@@ -86,7 +125,7 @@ try {
     + `  Chi tiết: ${String(err.message).split('\n')[0]}`);
 }
 
-// ══════════════════════════════════════════ 3. Dữ liệu nền
+// ══════════════════════════════════════════ 4. Dữ liệu nền
 
 heading('Dữ liệu nền');
 
@@ -113,14 +152,14 @@ if (count('products') === 0) {
   done('Database đã có dữ liệu — bỏ qua bước nạp nền');
 }
 
-// ══════════════════════════════════════════ 4. Deploy
+// ══════════════════════════════════════════ 5. Deploy
 
 heading('Deploy');
 
 wr(['deploy', ...ENV_FLAG]);
 done('Đã deploy');
 
-// ══════════════════════════════════════════ 5. Tài khoản quản trị
+// ══════════════════════════════════════════ 6. Tài khoản quản trị
 
 heading('Tài khoản quản trị');
 
@@ -177,7 +216,7 @@ if (DRY) {
   done(`Đã tạo tài khoản owner đầu tiên: ${adminEmail}`);
 }
 
-// ══════════════════════════════════════════ 6. Việc tiếp theo
+// ══════════════════════════════════════════ 7. Việc tiếp theo
 
 heading('Xong');
 
