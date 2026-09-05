@@ -230,7 +230,51 @@ thầm thì họ chỉ thấy hoa hồng biến mất mà không hiểu vì sao.
 
 ---
 
-## 8. Cấu trúc
+## 8. Học viên: bài nộp, coin, XP, thứ hạng
+
+Thử thách 21 ngày sống hay chết ở chỗ học viên có nộp bài mỗi ngày hay không.
+Phần này biến việc đó thành thứ nhìn thấy được — cho học viên và cho anh Thành.
+
+**Duyệt bài** (`/admin/duyet-bai`). Mỗi bài nộp gắn với một enrollment và một
+ngày 1–21, `UNIQUE(enrollment_id, day)` nên một ngày chỉ có một bài. Duyệt là
+thao tác **cộng thưởng**, và cộng đúng một lần: câu lệnh duyệt là
+`UPDATE ... WHERE id = ? AND status != 'approved'`, bấm duyệt lần hai không đổi
+gì. Tiến độ `posts_done` chỉ đếm bài **đã duyệt**, không đếm bài chờ.
+
+**Coin và XP.** Mặc định 50 coin + 100 XP mỗi bài được duyệt. Sổ cái
+`coin_ledger` là nguồn sự thật duy nhất; `students.coin` chỉ là số dư đã cộng
+sẵn để đọc nhanh, và bộ test khẳng định hai con số luôn khớp. Muốn cộng/trừ tay
+thì vào chi tiết học viên — mọi lần điều chỉnh đều ghi vào sổ cái kèm lý do,
+không có đường nào sửa số dư mà không để lại dấu vết.
+
+**Chuỗi ngày (streak).** Tính theo **ngày nộp bài, không phải ngày duyệt** —
+anh Thành duyệt dồn cuối tuần thì học viên không mất chuỗi. Nộp liền ngày hôm
+sau thì chuỗi +1, cách quãng thì về 1. Chuỗi cho hệ số thưởng coin
+`1 + (chuỗi − 1) × 10%`, chặn trần ở ×2.00.
+
+**Thứ hạng** theo XP tích luỹ: 🌱 Mới bắt đầu 0 · 🌿 Đều đặn 300 · 🌳 Bền bỉ 900
+· 🏅 Về đích 1.600 · 👑 Gương sáng 2.100. Bậc cuối đặt đúng bằng 21 bài × 100 XP
+— đi trọn thử thách thì chạm được, không đi trọn thì không.
+
+**Quà tặng** (`/admin/qua-tang`). Học viên đổi coin lấy quà; đổi xong là
+**trừ coin và trừ tồn kho ngay**, nếu admin từ chối thì **hoàn lại cả hai**.
+Bộ test khẳng định hoàn đúng một lần dù bấm từ chối nhiều lần.
+
+**Cơ chế** (`/admin/co-che`). Toàn bộ con số trên nằm trong `settings`, sửa
+được trong CMS, không phải sửa mã. Màn hình này tính thẳng cho anh Thành thấy
+hệ quả của con số vừa đổi: đi trọn 21 ngày được bao nhiêu coin, bao nhiêu XP,
+có đủ chạm bậc cao nhất không.
+
+**Bảng vàng** (`/admin/bang-vang`) xếp theo XP, kèm bản đồ nhiệt 8 tuần để nhìn
+ra ai đang đuối trước khi họ bỏ cuộc.
+
+> Hiện chưa có màn hình cho học viên tự nộp bài — bài vào hệ thống qua trang
+> quản trị. Đây là phần tiếp theo cần làm nếu anh Thành muốn học viên nộp thẳng
+> trên web thay vì gửi qua nhóm Zalo.
+
+---
+
+## 9. Cấu trúc
 
 ```
 build/               Pipeline sinh 5 trang HTML tĩnh từ file thiết kế .dc.html
@@ -238,7 +282,7 @@ build/               Pipeline sinh 5 trang HTML tĩnh từ file thiết kế .dc
   partials/          CSS, JS, và mảnh HTML của từng trang
 design/              File thiết kế gốc (.dc.html) — nguồn của mọi trang public
 site.config.json     Toàn bộ chữ trên trang. Trường trống thì khối tự ẩn.
-migrations/          7 file schema D1 + seed
+migrations/          8 file schema D1 + seed
 src/
   worker.ts          Điểm vào Hono
   routes/
@@ -252,6 +296,7 @@ src/
     payments/        Mã đơn, VietQR, fulfillOrder dùng chung
     affiliate/       Quy kết, máy trạng thái hoa hồng, chi trả
     auth/            Phiên đăng nhập, CSRF, phân quyền
+    game/            Chuỗi ngày, thứ hạng, cộng thưởng khi duyệt bài
 admin/               SPA quản trị (React + Vite) → public/admin/
 affiliate/           SPA portal CTV → public/aff/
 scripts/             Tạo tài khoản admin, hai bộ test đầu-cuối
@@ -264,7 +309,7 @@ cũng cho LCP tốt hơn hẳn trên 3G/4G Việt Nam.
 
 ---
 
-## 9. Sửa nội dung trang
+## 10. Sửa nội dung trang
 
 Sửa `site.config.json` rồi `npm run build:pages`. Script in ra danh sách những
 gì còn thiếu và những khối đang bị ẩn.
@@ -274,7 +319,7 @@ theo dạng `"câu gốc": "câu mới"`. Không tìm thấy câu gốc thì bui
 
 ---
 
-## 10. Việc chạy hằng đêm
+## 11. Việc chạy hằng đêm
 
 Cron 03:00 giờ Việt Nam (`0 20 * * *` UTC):
 

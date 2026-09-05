@@ -69,7 +69,18 @@ Chưa điền thì sau khi để lại thông tin, khách chỉ thấy lời c�
 Trang `/workshop` tự lấy buổi sắp diễn ra gần nhất. Chưa có link Zoom thì khách
 đăng ký xong không thấy nút vào phòng.
 
-## 8. Nên cân nhắc thêm
+## 8. Vận hành thử thách 21 ngày
+
+- [ ] `/admin` → Cơ chế → xác nhận các con số thưởng: 50 coin + 100 XP mỗi bài
+      duyệt, thưởng chuỗi 10%/ngày (trần ×2). Màn hình tính sẵn tổng cả chặng
+      21 ngày để anh Thành nhìn thấy hệ quả trước khi đổi.
+- [ ] `/admin` → Quà tặng → thay 4 phần quà mẫu bằng quà thật, điền số lượng
+      tồn. Quà hết tồn thì tự ẩn, không cần xoá.
+- [ ] Chốt cách học viên nộp bài: hiện **chưa có màn hình cho học viên tự nộp**,
+      bài vào hệ thống qua trang quản trị. Nếu muốn học viên nộp thẳng trên web
+      thì đây là phần cần làm tiếp.
+
+## 9. Nên cân nhắc thêm
 
 Hiện **không có email hay SMS xác nhận** — theo quyết định "không cần thông
 báo, xem trong CMS". Hệ quả: link Zoom và xác nhận mua hàng chỉ tồn tại trên

@@ -45,7 +45,9 @@ adminDashboardRoutes.get('/api/admin/stats', async (c) => {
         (SELECT COUNT(*) FROM commissions WHERE status = 'held')                       held_commissions,
         (SELECT COUNT(*) FROM payouts WHERE status = 'requested')                      pending_payouts,
         (SELECT COUNT(*) FROM affiliates WHERE status = 'pending')                     pending_affiliates,
-        (SELECT COUNT(*) FROM leads WHERE status = 'new' AND score_band = 'hot')        hot_uncontacted`,
+        (SELECT COUNT(*) FROM leads WHERE status = 'new' AND score_band = 'hot')        hot_uncontacted,
+        (SELECT COUNT(*) FROM submissions WHERE status = 'pending')                     pending_submissions,
+        (SELECT COUNT(*) FROM reward_redemptions WHERE status = 'requested')            pending_redemptions`,
     ),
 
     c.env.DB.prepare(
@@ -55,7 +57,11 @@ adminDashboardRoutes.get('/api/admin/stats', async (c) => {
         (SELECT COUNT(*) FROM orders WHERE status IN ('paid','overpaid'))         paid_orders,
         (SELECT COALESCE(SUM(amount_total),0) FROM orders WHERE status IN ('paid','overpaid')) revenue,
         (SELECT COUNT(*) FROM orders WHERE status = 'pending')                    pending_orders,
-        (SELECT COALESCE(SUM(amount),0) FROM commissions WHERE status IN ('pending','approved','payout_requested')) commission_owed`,
+        (SELECT COALESCE(SUM(amount),0) FROM commissions WHERE status IN ('pending','approved','payout_requested')) commission_owed,
+        (SELECT COUNT(*) FROM submissions WHERE status = 'approved'
+           AND reviewed_at > unixepoch() - 86400)                                       approved_today,
+        (SELECT COUNT(DISTINCT student_id) FROM submissions
+           WHERE created_at > unixepoch() - 86400)                                      active_today`,
     ),
 
     c.env.DB.prepare(

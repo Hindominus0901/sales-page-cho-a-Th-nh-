@@ -238,6 +238,95 @@ if (orderIds.length >= 2) {
 }
 console.log('');
 
+// ---------------------------------------------------------------- duyệt bài
+console.log('Duyệt bài, coin và chuỗi ngày');
+{
+  const prod = db.prepare("SELECT id FROM products LIMIT 1").get()?.id;
+  const stId = 'st-game-test';
+  const enId = 'en-game-test';
+  db.prepare('DELETE FROM submissions WHERE student_id = ?').run(stId);
+  db.prepare('DELETE FROM coin_ledger WHERE student_id = ?').run(stId);
+  db.prepare('DELETE FROM enrollments WHERE id = ?').run(enId);
+  db.prepare('DELETE FROM students WHERE id = ?').run(stId);
+  db.prepare(`INSERT INTO students (id, full_name, phone, phone_norm, xp, coin,
+    streak_current, streak_best, last_submit_date, created_at, updated_at)
+    VALUES (?, 'Học Viên Kiểm Thử', '0900111222', '84900111222', 0, 0, 0, 0, NULL, unixepoch(), unixepoch())`)
+    .run(stId);
+  db.prepare(`INSERT INTO enrollments (id, student_id, product_id, status, created_at, updated_at)
+    VALUES (?, ?, ?, 'active', unixepoch(), unixepoch())`).run(enId, stId, prod);
+
+  const mkSub = (id, day, daysAgo) => {
+    const ts = Math.floor(Date.now() / 1000) - daysAgo * 86400;
+    db.prepare(`INSERT INTO submissions (id, enrollment_id, student_id, day, post_url, status, created_at, updated_at)
+      VALUES (?,?,?,?, 'https://vidu.com/b', 'pending', ?, ?)`).run(id, enId, stId, day, ts, ts);
+  };
+  mkSub('sub-1', 1, 2);
+  mkSub('sub-2', 2, 1);
+
+  const st = () => db.prepare('SELECT xp, coin, streak_current, streak_best FROM students WHERE id = ?').get(stId);
+
+  ok('trước khi duyệt: chưa có coin', st().coin, 0);
+
+  const r1 = await admin.post('/api/admin/submissions/sub-1/review', { action: 'approve' });
+  ok('duyệt bài đầu thành công', r1.body.ok, true);
+  ok('cộng đúng coin cơ bản', st().coin, 50);
+  ok('cộng đúng XP', st().xp, 100);
+  ok('chuỗi bắt đầu từ 1', st().streak_current, 1);
+
+  // Bấm duyệt lần hai: không được cộng thêm lần nào nữa.
+  const r2 = await admin.post('/api/admin/submissions/sub-1/review', { action: 'approve' });
+  ok('duyệt lại vẫn trả 200', r2.status, 200);
+  ok('KHÔNG cộng coin lần hai', st().coin, 50);
+  ok('KHÔNG cộng XP lần hai', st().xp, 100);
+
+  await admin.post('/api/admin/submissions/sub-2/review', { action: 'approve' });
+  ok('chuỗi tăng khi nộp ngày liền kề', st().streak_current, 2);
+  ok('coin có thưởng chuỗi ở ngày thứ hai', st().coin, 50 + 55);
+
+  ok('sổ cái ghi đủ số lần cộng',
+    db.prepare("SELECT COUNT(*) n FROM coin_ledger WHERE student_id=? AND reason='submission'").get(stId).n, 2);
+  ok('số dư khớp tổng sổ cái',
+    db.prepare('SELECT COALESCE(SUM(delta),0) n FROM coin_ledger WHERE student_id=?').get(stId).n, st().coin);
+
+  ok('tiến độ đếm bài ĐÃ DUYỆT',
+    db.prepare('SELECT posts_done FROM enrollments WHERE id=?').get(enId).posts_done, 2);
+
+  mkSub('sub-3', 3, 0);
+  const r3 = await admin.post('/api/admin/submissions/sub-3/review', { action: 'needs_work' });
+  ok('yêu cầu sửa mà thiếu nhận xét bị chặn', r3.status, 400);
+  const r4 = await admin.post('/api/admin/submissions/sub-3/review',
+    { action: 'needs_work', feedback: 'Hook chưa rõ, viết lại câu mở đầu giúp em.' });
+  ok('có nhận xét thì cho qua', r4.status, 200);
+  ok('yêu cầu sửa KHÔNG cộng coin', st().coin, 105);
+}
+console.log('');
+
+// ---------------------------------------------------------------- đổi quà
+console.log('Đổi quà');
+{
+  const stId = 'st-game-test';
+  db.prepare('DELETE FROM reward_redemptions WHERE student_id = ?').run(stId);
+  db.prepare('UPDATE students SET coin = 1000 WHERE id = ?').run(stId);
+  db.prepare(`INSERT INTO reward_redemptions (id, student_id, reward_id, reward_name,
+    cost_coin, status, created_at, updated_at)
+    VALUES ('rd-test', ?, 'rw_hook', 'Bộ 100 Hook bản mở rộng', 300, 'requested', unixepoch(), unixepoch())`)
+    .run(stId);
+  // Coin đã bị trừ lúc đặt đổi (giữ chỗ) — mô phỏng đúng như luồng thật.
+  db.prepare('UPDATE students SET coin = coin - 300 WHERE id = ?').run(stId);
+  const coin = () => db.prepare('SELECT coin FROM students WHERE id = ?').get(stId).coin;
+  ok('coin đã bị giữ chỗ', coin(), 700);
+
+  const rj = await admin.post('/api/admin/redemptions/rd-test/reject', { note: 'Hết hàng' });
+  ok('từ chối thành công', rj.status, 200);
+  ok('HOÀN LẠI coin cho học viên', coin(), 1000);
+  ok('trạng thái chuyển sang đã từ chối',
+    db.prepare("SELECT status FROM reward_redemptions WHERE id='rd-test'").get().status, 'rejected');
+  const again = await admin.post('/api/admin/redemptions/rd-test/reject', {});
+  ok('từ chối lần hai bị chặn, không hoàn coin thêm', again.status, 400);
+  ok('coin không bị hoàn hai lần', coin(), 1000);
+}
+console.log('');
+
 // ---------------------------------------------------------------- đăng xuất
 console.log('Đăng xuất');
 ok('đăng xuất được', (await admin.post('/api/admin/logout')).status, 200);

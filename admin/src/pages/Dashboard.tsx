@@ -1,5 +1,5 @@
 import { api, vnd, relativeTime, displayPhone } from '../api';
-import { Stat, ScoreBadge, LeadStatus, Loading, ErrorBox, useLoad } from '../ui';
+import { Kpi, Bars, ScoreBadge, LeadStatus, Loading, ErrorBox, useLoad } from '../ui';
 
 interface Stats {
   totals: Record<string, number | null>;
@@ -20,7 +20,9 @@ const SOURCE_LABEL: Record<string, string> = {
  * dòng này là tiền đang kẹt và khách đang chờ.
  */
 const TODO: { key: string; label: string; href: string }[] = [
-  { key: 'unmatched_payments', label: 'giao dịch chưa khớp đơn',        href: '#/thanh-toan' },
+  { key: 'unmatched_payments',  label: 'giao dịch chưa khớp đơn',       href: '#/thanh-toan' },
+  { key: 'pending_submissions', label: 'bài nộp chờ duyệt',             href: '#/duyet-bai' },
+  { key: 'pending_redemptions', label: 'yêu cầu đổi quà chờ duyệt',     href: '#/qua-tang' },
   { key: 'hot_uncontacted',    label: 'lead NÓNG chưa ai gọi',          href: '#/leads?band=hot&status=new' },
   { key: 'overpaid_orders',    label: 'đơn khách chuyển thừa tiền',     href: '#/don-hang?status=overpaid' },
   { key: 'partial_orders',     label: 'đơn khách mới chuyển một phần',  href: '#/don-hang?status=partially_paid' },
@@ -38,6 +40,8 @@ export default function Dashboard() {
   const t = data.totals;
   const todo = TODO.filter((x) => (data.todo[x.key] ?? 0) > 0);
   const band = (b: string) => data.bands.find((x) => x.score_band === b)?.n ?? 0;
+  const tongLead = data.sources.reduce((a, s) => a + s.n, 0);
+  const leadWon = data.sources.reduce((a, s) => a + s.won, 0);
 
   // Gộp phễu 30 ngày để ra tỉ lệ chuyển đổi — con số nói được phễu rò ở đâu.
   const sum = data.funnel.reduce(
@@ -48,6 +52,17 @@ export default function Dashboard() {
     { views: 0, leads: 0, orders: 0, paid: 0, revenue: 0 },
   );
   const pct = (num: number, den: number) => den > 0 ? `${((num / den) * 100).toFixed(1)}%` : '—';
+
+  // Gom doanh thu theo tuần: 30 cột ngày quá dày để đọc ra xu hướng.
+  const tuan: { label: string; value: number }[] = [];
+  for (let i = 0; i < 8; i++) {
+    const from = data.funnel.length - (8 - i) * 7;
+    const slice = data.funnel.slice(Math.max(0, from), Math.max(0, from + 7));
+    tuan.push({
+      label: `T${i + 1}`,
+      value: slice.reduce((a, r) => a + r.revenue, 0),
+    });
+  }
 
   return (
     <div className="stack">
@@ -68,18 +83,34 @@ export default function Dashboard() {
       )}
 
       <div className="grid grid-4">
-        <Stat tone="accent" value={t.seatsLeft ?? '—'}
-              label={`chỗ còn lại / ${t.seatsTotal ?? '—'}`} />
-        <Stat tone="good" value={vnd(t.revenue ?? 0)} label="doanh thu đã xác nhận" />
-        <Stat value={t.paid_orders ?? 0} label="đơn đã thanh toán" />
-        <Stat value={t.students ?? 0} label="học viên" />
+        <Kpi tone="dark" label={`Chỗ còn lại / ${t.seatsTotal ?? '—'}`} value={t.seatsLeft ?? '—'}
+             delta={t.startDate ? `khai giảng ${t.startDate}` : 'chưa đặt ngày khai giảng'}
+             deltaTone={t.startDate ? 'mute' : 'warn'} />
+        <Kpi tone="accent" label="Doanh thu đã xác nhận" value={vnd(t.revenue ?? 0)}
+             delta={`${t.paid_orders ?? 0} đơn đã thanh toán`} deltaTone="good" />
+        <Kpi label="Học viên" value={t.students ?? 0}
+             delta={`${t.active_today ?? 0} người nộp bài hôm nay`}
+             deltaTone={(t.active_today ?? 0) > 0 ? 'good' : 'warn'} />
+        <Kpi label="Bài đã duyệt hôm nay" value={t.approved_today ?? 0}
+             delta={`${data.todo.pending_submissions ?? 0} bài còn chờ`}
+             deltaTone={(data.todo.pending_submissions ?? 0) > 0 ? 'warn' : 'good'} />
       </div>
 
       <div className="grid grid-4">
-        <Stat value={t.leads ?? 0} label="tổng số lead" />
-        <Stat value={band('hot')} label="lead nóng đang mở" />
-        <Stat value={t.pending_orders ?? 0} label="đơn chờ chuyển khoản" />
-        <Stat value={vnd(t.commission_owed ?? 0)} label="hoa hồng còn nợ CTV" />
+        <Kpi label="Tổng số lead" value={t.leads ?? 0}
+             delta={`${band('hot')} lead nóng đang mở`}
+             deltaTone={band('hot') > 0 ? 'bad' : 'mute'} />
+        <Kpi label="Đơn chờ chuyển khoản" value={t.pending_orders ?? 0}
+             delta="tự huỷ sau 48 giờ nếu không có tiền về" />
+        <Kpi label="Hoa hồng còn nợ CTV" value={vnd(t.commission_owed ?? 0)}
+             delta={`${data.todo.pending_payouts ?? 0} yêu cầu rút chờ duyệt`}
+             deltaTone={(data.todo.pending_payouts ?? 0) > 0 ? 'warn' : 'mute'} />
+        {/* Tính trên chính bảng lead (đã chốt / tổng lead), KHÔNG lấy số đơn chia
+            số lead: đơn có thể tồn tại mà không gắn lead nào, và tỉ lệ khi đó
+            vọt lên trên 100% — vô nghĩa. */}
+        <Kpi label="Lead đã chốt"
+             value={tongLead ? `${Math.round((leadWon / tongLead) * 100)}%` : '—'}
+             delta={`${leadWon}/${tongLead} lead`} deltaTone="mute" />
       </div>
 
       <div className="card card-pad">
@@ -87,12 +118,19 @@ export default function Dashboard() {
         <p className="note" style={{ margin: '0 0 14px' }}>
           Tỉ lệ tính trên bước liền trước, để thấy phễu rò ở đâu.
         </p>
-        <div className="grid grid-4">
-          <Stat value={sum.views} label="lượt xem trang" />
-          <Stat value={`${sum.leads} · ${pct(sum.leads, sum.views)}`} label="lead thu được" />
-          <Stat value={`${sum.orders} · ${pct(sum.orders, sum.leads)}`} label="đơn được tạo" />
-          <Stat value={`${sum.paid} · ${pct(sum.paid, sum.orders)}`} label="đơn trả tiền" />
+        <div className="grid grid-4" style={{ marginBottom: 18 }}>
+          <Kpi label="Lượt xem trang" value={sum.views} />
+          <Kpi label="Lead thu được" value={sum.leads} delta={`${pct(sum.leads, sum.views)} số người xem`} />
+          <Kpi label="Đơn được tạo" value={sum.orders} delta={`${pct(sum.orders, sum.leads)} số lead`} />
+          <Kpi label="Đơn trả tiền" value={sum.paid} delta={`${pct(sum.paid, sum.orders)} số đơn`}
+               deltaTone="good" />
         </div>
+
+        <div className="spread" style={{ marginBottom: 10 }}>
+          <h3>Doanh thu 8 tuần gần nhất</h3>
+          <span className="note">{vnd(sum.revenue)} trong 30 ngày</span>
+        </div>
+        <Bars data={tuan} />
         {sum.views === 0 && (
           <p className="note" style={{ marginTop: 12 }}>
             Chưa có lượt xem nào được ghi nhận — số liệu sẽ xuất hiện sau khi trang chạy thật.
