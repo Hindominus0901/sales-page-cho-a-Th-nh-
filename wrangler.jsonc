@@ -1,6 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "goc-creator",
+  // Tên này phải khớp CHÍNH XÁC tên Worker mà Cloudflare tạo lúc nối repo.
+  // Lệch nhau thì `wrangler deploy` đẩy sang một Worker khác: build báo thành
+  // công, mà project trong dashboard vẫn trống — không có gì chỉ ra chỗ sai.
+  "name": "goc-creator-challenge",
   "main": "src/worker.ts",
   "compatibility_date": "2025-01-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -31,7 +34,7 @@
   // ─────────────────────────────────────────────────────────────────────────
   "vars": {
     "APP_ENV": "production",
-    "PUBLIC_BASE_URL": "https://goc-creator.workers.dev",
+    "PUBLIC_BASE_URL": "https://goc-creator-challenge.workers.dev",
     // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán
     "SEPAY_BANK_CODE": "TCB",
     "SEPAY_BANK_NAME": "Techcombank",
@@ -74,7 +77,7 @@
     "preview": {
       "vars": {
         "APP_ENV": "preview",
-        "PUBLIC_BASE_URL": "https://goc-creator-preview.workers.dev",
+        "PUBLIC_BASE_URL": "https://goc-creator-challenge-preview.workers.dev",
         "SEPAY_BANK_CODE": "TCB",
         "SEPAY_BANK_NAME": "Techcombank",
         "SEPAY_ACCOUNT_NO": "",
