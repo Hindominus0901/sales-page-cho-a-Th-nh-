@@ -55,7 +55,7 @@ Hai đường, chọn một.
 
 ### Đường 1 — Nối repo trong dashboard, không cần terminal
 
-Đây là đường anh Thành đang dùng. Toàn bộ làm trên trình duyệt: tạo D1/KV/R2,
+Đây là đường anh Thành đang dùng. Toàn bộ làm trên trình duyệt: tạo D1 và KV,
 nối repo GitHub, điền hai ô build. Từ đó mỗi lần đẩy mã là Cloudflare tự deploy.
 
 **Xem [`DEPLOY_CLOUDFLARE.md`](DEPLOY_CLOUDFLARE.md)** — đi từng bước, ghi rõ ô
@@ -84,7 +84,7 @@ nguyên, không sinh lại khoá, không nạp đè dữ liệu:
 
 | Bước | Script làm gì |
 |---|---|
-| Tài nguyên | Tạo D1, KV, R2 nếu chưa có. Đã có thì dùng lại. |
+| Tài nguyên | Tạo D1 và KV nếu chưa có. Đã có thì dùng lại. |
 | `wrangler.jsonc` | Tự điền `database_id` và id KV vào đúng khối môi trường, giữ nguyên chú thích trong file. |
 | Khoá bí mật | Sinh `SESSION_SECRET` và `IP_HASH_SALT` **chỉ khi chưa có** — sinh lại là đá văng mọi người đang đăng nhập. Đẩy qua stdin, không ghi ra file. |
 | Soát cấu hình | Chạy `scripts/preflight.mjs`, **dừng hẳn** nếu thiếu thứ khiến hệ không nhận được tiền. |
@@ -370,7 +370,7 @@ src/
 admin/               SPA quản trị (React + Vite) → public/admin/
 affiliate/           SPA portal CTV → public/aff/
 scripts/             Tạo tài khoản admin, ba bộ test đầu-cuối
-  deploy-cloudflare.mjs  Dựng D1/KV/R2 và deploy bằng một lệnh
+  deploy-cloudflare.mjs  Dựng D1/KV và deploy bằng một lệnh
   cf-deploy.mjs          Lệnh deploy cho Workers Builds (đường dashboard)
   preflight.mjs          Chặn deploy thiếu thông tin nhận tiền
 ```

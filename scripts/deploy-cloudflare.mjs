@@ -149,8 +149,10 @@ if (already.length === 1) {
   done(`Đã tạo KV ${fresh[0].title}`);
 }
 
-// ---- R2: tên do mình đặt. `r2 bucket list` của wrangler 3 in ra chữ thường,
-// không có --json, nên tìm tên trong output.
+// ---- R2: hiện wrangler.jsonc KHÔNG khai báo r2_buckets (chưa mã nào dùng tới,
+// và bật R2 đòi thêm một bước đăng ký gói trên tài khoản Cloudflare). Vẫn tạo
+// sẵn bucket ở đây nếu tài khoản đã bật R2, để lúc cần chỉ việc thêm binding.
+// Không tạo được cũng không sao — deploy vẫn chạy bình thường.
 try {
   const buckets = wr(['r2', 'bucket', 'list']);
   if (buckets.includes(NAMES.r2)) {
@@ -164,8 +166,8 @@ try {
 } catch (err) {
   // R2 chưa bật trên tài khoản là chuyện thường và KHÔNG chặn: ảnh hiện đang
   // nằm trong ./public đi kèm Worker, R2 chỉ dùng cho ảnh tải lên từ CMS sau này.
-  say(`⚠ Không thao tác được R2: ${String(err.message).split('\n')[0]}`);
-  say('  Ảnh trang web vẫn chạy bình thường (nằm trong ./public). Bật R2 sau cũng được.');
+  say(`Bỏ qua R2: ${String(err.message).split('\n')[0]}`);
+  say('  Không sao — wrangler.jsonc chưa dùng R2. Ảnh trang nằm trong ./public.');
 }
 
 // ═══════════════════════════════════════════════ 3. Ghi id vào wrangler.jsonc

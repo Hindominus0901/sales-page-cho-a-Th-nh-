@@ -1,7 +1,12 @@
 export interface Env {
   DB: D1Database;
   CACHE: KVNamespace;
-  MEDIA: R2Bucket;
+  /**
+   * Chưa gắn. Sẽ cần khi làm chức năng tải ảnh lên từ trang quản trị; tới lúc
+   * đó thêm r2_buckets vào wrangler.jsonc. Để optional nên quên bật R2 thì
+   * TypeScript nhắc ngay tại chỗ dùng, chứ không đổ lỗi lúc chạy thật.
+   */
+  MEDIA?: R2Bucket;
   ASSETS: Fetcher;
 
   // vars (công khai)

@@ -47,18 +47,25 @@
     {
       "binding": "DB",
       "database_name": "goc-creator",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "aab67b83-6f86-4429-b7e8-215c6d4c5c2a",
       "migrations_dir": "migrations"
     }
   ],
 
   "kv_namespaces": [
-    { "binding": "CACHE", "id": "0000000000000000000000000000000000" }
+    { "binding": "CACHE", "id": "d105a8bcb2ba465996f280ba60573bfb" }
   ],
 
-  "r2_buckets": [
-    { "binding": "MEDIA", "bucket_name": "goc-creator-media" }
-  ],
+  // CỐ Ý KHÔNG CÓ R2.
+  //
+  // Ảnh của trang nằm trong ./public và đi kèm Worker, nên R2 chỉ cần khi nào
+  // muốn tải ảnh mới lên từ trang quản trị — mà tính năng đó chưa có. Bật R2
+  // đòi thêm một bước đăng ký gói (kèm thẻ thanh toán) trên tài khoản
+  // Cloudflare, và bắt trả cái giá đó cho một binding chưa dòng mã nào đụng
+  // tới là không đáng.
+  //
+  // Cần dùng sau này: tạo bucket rồi thêm lại
+  //   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "goc-creator-media" }]
 
   // 03:00 giờ Việt Nam = 20:00 UTC hôm trước
   "triggers": { "crons": ["0 20 * * *"] },
@@ -82,7 +89,6 @@
         { "binding": "DB", "database_name": "goc-creator-preview", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
       ],
       "kv_namespaces": [{ "binding": "CACHE", "id": "0000000000000000000000000000000000" }],
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "goc-creator-media-preview" }],
       "triggers": { "crons": ["0 20 * * *"] }
     }
   }

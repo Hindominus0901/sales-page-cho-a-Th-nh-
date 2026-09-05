@@ -11,7 +11,7 @@ Ai đã quen terminal thì mục 3 của `README.md` có cách nhanh hơn (`npm 
 
 ---
 
-## Bước 1 — Tạo ba chỗ chứa dữ liệu
+## Bước 1 — Tạo hai chỗ chứa dữ liệu
 
 Vào <https://dash.cloudflare.com>, tìm mục **Storage & Databases** (có nơi ghi
 là *Workers & Pages → D1 / KV*).
@@ -28,11 +28,9 @@ là *Workers & Pages → D1 / KV*).
 - Tên: `goc-creator-cache`
 - Chép **Namespace ID** (chuỗi 32 ký tự chữ và số).
 
-**c. R2 bucket** — chỗ chứa ảnh tải lên sau này.
-
-- Vào **R2 Object Storage** → **Create bucket**
-- Tên: `goc-creator-media`
-- Cái này không có id, chỉ cần đúng tên.
+**Không cần R2.** Cloudflare sẽ mời đăng ký gói R2 (kèm thẻ thanh toán) — bỏ
+qua. Ảnh của trang nằm ngay trong mã nguồn và đi cùng Worker; R2 chỉ cần khi nào
+làm chức năng tải ảnh mới lên từ trang quản trị, mà tính năng đó chưa có.
 
 > **Gửi hai chuỗi id vừa chép cho Claude** để điền vào `wrangler.jsonc`. Dán tay
 > vào file cũng được, nhưng đây là chỗ dễ sai nhất, mà sai thì thông báo lỗi
