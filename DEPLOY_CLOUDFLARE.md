@@ -153,6 +153,19 @@ thiếu gì. Thường là số tài khoản ngân hàng chưa điền, hoặc i
 `database_id` trong `wrangler.jsonc` không khớp với database thật, hoặc D1 chưa
 được tạo. Mở lại D1 trong dashboard, chép lại Database ID.
 
+**Build lỗi ở bước `npm install` hoặc `npm run build`**
+
+Bản build của trang đã nằm sẵn trong repo, nên không cần build cũng deploy được.
+Vào Settings → Build → đổi **Build command** thành:
+
+```
+echo bo qua build, dung ban co san trong repo
+```
+
+rồi Retry deployment. Trang lên đúng như bản đã kiểm ở máy. Nhược điểm: từ đó
+mỗi lần đổi nội dung phải chạy `npm run build` rồi commit — nên chỉ dùng khi
+build trên Cloudflare thật sự không chạy được.
+
 **Trang mở được nhưng bấm gì cũng lỗi**
 
 Migration chưa chạy — Worker lên rồi nhưng database chưa có bảng nào. Xem lại

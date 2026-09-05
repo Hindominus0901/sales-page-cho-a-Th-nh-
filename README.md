@@ -375,6 +375,16 @@ scripts/             Tạo tài khoản admin, ba bộ test đầu-cuối
   preflight.mjs          Chặn deploy thiếu thông tin nhận tiền
 ```
 
+**Bản build nằm trong git.** `public/*.html`, `public/admin/` và `public/aff/`
+được commit, dù chúng là sản phẩm của `npm run build`. Có chủ đích: nhờ vậy
+`wrangler deploy` chạy được ngay từ bản checkout sạch, không phụ thuộc vào việc
+`npm install` và vite chạy trót lọt trên máy chủ build của Cloudflare — thứ
+không thử trước được từ đây. Cloudflare vẫn build lại trước mỗi lần deploy nên
+bản trong git luôn bị ghi đè; nó là lưới đỡ, không phải nguồn sự thật.
+
+> Sửa `site.config.json` hoặc `build/` thì nhớ chạy `npm run build` rồi commit
+> kèm, không thì bản trong git lệch với mã nguồn.
+
 **Trang public không dùng React.** Chúng đã tồn tại dưới dạng HTML tĩnh sinh từ
 file thiết kế gốc; viết lại thành component là cách chắc chắn nhất làm hỏng
 thiết kế, và không được lợi gì vì đó là trang đọc-và-bấm-nút. Zero JS framework
