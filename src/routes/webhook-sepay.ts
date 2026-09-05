@@ -3,6 +3,7 @@ import type { HonoEnv, Env } from '../types';
 import type { SepayWebhookPayload } from '../lib/payments/sepay';
 import { extractOrderCode } from '../lib/payments/order-code';
 import { applyPayment, fulfillOrder, type OrderRow } from '../lib/payments/fulfill';
+import { drainOutbox } from '../lib/email/outbox';
 import { timingSafeEqual } from '../lib/security/hash';
 import { phoneLast4 } from '../lib/validation/phone';
 import { normalizeTransferContent } from '../lib/payments/order-code';
@@ -112,6 +113,13 @@ webhookRoutes.post('/api/webhooks/sepay', async (c) => {
         pageKey: 'sales_21d', orderId: applied.order.id,
         affiliateId: applied.order.affiliate_id, value: applied.order.amount_total,
       });
+
+      // Gửi mail SAU khi đã trả lời SePay, không phải trước. waitUntil chạy tiếp
+      // khi phản hồi đã đi rồi, nên nhà cung cấp mail chậm cũng không kéo dài
+      // thời gian trả lời webhook — mà webhook trả lời chậm là SePay gửi lại.
+      c.executionCtx.waitUntil(
+        drainOutbox(env).catch((err) => console.error('[email] lượt gửi lỗi', err)),
+      );
     }
 
     await logWebhook(env, { status: 200, outcome: 'processed', body: bodyText, ip, key: txId });

@@ -7,7 +7,9 @@ import { track, bumpDailyStats } from '../lib/db/events';
 import { rateLimit } from '../lib/security/ratelimit';
 import { verifyTurnstile } from '../lib/security/turnstile';
 import { uuid } from '../lib/util/id';
-import { now } from '../lib/util/datetime';
+import { queueMail } from '../lib/email/outbox';
+import { workshopMail } from '../lib/email/templates';
+import { now, ictDateTime } from '../lib/util/datetime';
 
 export const publicRoutes = new Hono<HonoEnv>();
 
@@ -107,6 +109,19 @@ publicRoutes.post('/api/workshop/register', async (c) => {
     JSON.stringify({ field: form.field, stuck: form.stuck, goal_text: form.goal_text }),
     visitor.affiliateId, now(),
   ).run();
+
+  // Khoá chống trùng là (buổi, số điện thoại) chứ không phải id dòng đăng ký:
+  // dòng đó dùng ON CONFLICT DO NOTHING nên đăng ký lại không sinh id mới, và
+  // lấy id ra để làm khoá thì phải truy vấn thêm một lượt chẳng để làm gì.
+  await queueMail(c.env, workshopMail(c.env, {
+    id: `${session.id}:${phoneNorm}`,
+    name: form.name,
+    email: form.email || null,
+    sessionTitle: session.title,
+    whenText: session.starts_at ? ictDateTime(session.starts_at) : null,
+    zoomUrl: session.zoom_url || null,
+    zaloUrl: session.zalo_group_url || null,
+  }));
 
   await track(c.env, 'lead_created', visitor, { pageKey: 'workshop', leadId: lead.id });
   await bumpDailyStats(c.env, 'workshop', visitor.affiliateId, { leads: 1 });

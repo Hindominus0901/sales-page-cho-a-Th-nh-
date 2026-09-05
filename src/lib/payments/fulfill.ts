@@ -5,6 +5,8 @@ import { commissionOf } from '../util/money';
 import { auditStmt } from '../db/audit';
 import { bumpDailyStats } from '../db/events';
 import { assessSelfReferral } from '../affiliate/self-referral';
+import { orderPaidMail } from '../email/templates';
+import { queueMailStmt } from '../email/outbox';
 
 export interface OrderRow {
   id: string;
@@ -181,6 +183,15 @@ export async function fulfillOrder(
       ));
     }
   }
+
+  // Email xác nhận đi vào CHÍNH batch atomic này. Xếp hàng chứ không gửi: nhà
+  // cung cấp email chậm hay lỗi thì webhook chậm hay lỗi theo, mà webhook lỗi
+  // là SePay gửi lại — lỗi gửi mail hoá thành lỗi ghi nhận thanh toán.
+  const mail = orderPaidMail(env, {
+    id: order.id, code: order.order_code, name: order.full_name,
+    email: order.email, amount: order.amount_total,
+  });
+  if (mail) statements.push(queueMailStmt(env, mail));
 
   statements.push(auditStmt(env, {
     actorType: actor.type, actorId: actor.id, actorLabel: actor.label,

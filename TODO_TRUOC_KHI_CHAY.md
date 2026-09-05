@@ -18,11 +18,12 @@ chạy build sau khi điền để kiểm tra lại.
 - [ ] `legal` trong `site.config.json`: tên công ty (CÔNG TY TNHH THƯƠNG MẠI &
       DỊCH VỤ ANLIFE GROUP), mã số thuế, địa chỉ, hotline, email, và
       `mocNotified` khi đã thông báo Bộ Công Thương.
-- [ ] `policies` — link ba trang chính sách: bảo mật, điều khoản, **hoàn tiền**.
+- [x] Ba trang chính sách đã có: `/chinh-sach-bao-mat`, `/dieu-khoan`,
+      `/chinh-sach-hoan-tien`. Còn phải **đọc và xác nhận** — xem mục 9.
 
-Trang đang in cam kết **"14 ngày hoàn 100%, không cần lý do"**. Đây là điều
-khoản ràng buộc chứ không phải câu quảng cáo — phải có trang chính sách thật
-đứng sau, và anh Thành xác nhận đúng ý trước khi chạy quảng cáo.
+Cam kết hoàn tiền trên trang nay là **14 ngày, đã nộp ít nhất 3 bài** và nói
+cùng một điều kiện ở cả ba chỗ: dòng dưới giá, câu FAQ, và trang chính sách.
+Đây là điều khoản ràng buộc chứ không phải câu quảng cáo.
 
 ## 3. Nội dung thật còn thiếu
 
@@ -83,13 +84,23 @@ Trang `/workshop` tự lấy buổi sắp diễn ra gần nhất. Chưa có link
       xem được tiến độ và đổi quà của người đó. Lỡ đăng rồi thì bấm **Cấp lại**,
       mã cũ chết ngay.
 
-## 9. Nên cân nhắc thêm
+## 9. Email xác nhận và ba trang chính sách
 
-Hiện **không có email hay SMS xác nhận** — theo quyết định "không cần thông
-báo, xem trong CMS". Hệ quả: link Zoom và xác nhận mua hàng chỉ tồn tại trên
-trang cảm ơn, ai đóng tab sau khi chuyển khoản là mất dấu vết đơn hàng của
-mình. Schema cố ý chưa có bảng gửi email, nhưng thêm vào là thuần bổ sung,
-không phá gì đang chạy.
+- [ ] Đọc lại ba trang `/chinh-sach-bao-mat`, `/dieu-khoan`, `/chinh-sach-hoan-tien`.
+      Nội dung do máy soạn theo điều kiện đã chốt (14 ngày, đã nộp 3 bài). Đồng ý
+      với từng câu thì đổi `policies.confirmed` thành `true` trong
+      `site.config.json`. Còn `false` thì preflight vẫn cảnh báo mỗi lần deploy.
+- [ ] Điền `contact.zalo` và `contact.email` trong `site.config.json` — trang
+      chính sách hoàn tiền đang bảo khách "nhắn Zalo theo số ở chân trang", mà
+      chân trang chưa có số nào.
+- [ ] Đặt `RESEND_API_KEY` nếu muốn khách nhận email xác nhận đơn. Không đặt thì
+      hệ vẫn chạy, chỉ là khách phải dùng `/tra-cuu` để tìm lại đơn.
+
+## 10. Nên cân nhắc thêm
+
+**Zalo ZNS chưa làm.** Zalo yêu cầu doanh nghiệp xác minh và duyệt từng mẫu tin,
+mất vài ngày làm việc. Email xác nhận đã có; muốn thêm Zalo thì bảng
+`email_outbox` đã để sẵn chỗ, chỉ cần viết thêm một bộ gửi.
 
 Ngoài ra nên tắt bản deploy cũ trên Vercel sau khi cắt sang Cloudflare — gói
 Hobby của Vercel không được dùng cho mục đích thương mại.

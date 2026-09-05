@@ -26,10 +26,29 @@ const ok = (label, actual, expected) => {
 };
 const count = (sql, ...args) => db.prepare(sql).get(...args).n;
 
-function reset() {
-  for (const t of ['events', 'orders', 'leads', 'workshop_registrations', 'affiliate_clicks',
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Xoá sạch giữa các kịch bản.
+ *
+ * Thử lại khi gặp "database is locked": webhook nay gọi ctx.waitUntil() để gửi
+ * email SAU khi đã trả lời, nên Worker vẫn còn ghi vào D1 một nhịp sau khi
+ * request kết thúc. Đó là hành vi ĐÚNG của sản phẩm — chờ nó xong là việc của
+ * bộ kiểm chứng, không phải lý do để bỏ waitUntil đi.
+ */
+async function reset() {
+  const tables = ['events', 'orders', 'leads', 'workshop_registrations', 'affiliate_clicks',
     'payments', 'commissions', 'students', 'enrollments', 'daily_stats', 'audit_log',
-    'webhook_events', 'payout_items', 'payouts']) db.exec(`DELETE FROM ${t}`);
+    'webhook_events', 'payout_items', 'payouts', 'email_outbox'];
+  for (let attempt = 0; ; attempt++) {
+    try {
+      for (const t of tables) db.exec(`DELETE FROM ${t}`);
+      return;
+    } catch (err) {
+      if (attempt >= 20 || !/locked/i.test(String(err.message))) throw err;
+      await sleep(100);
+    }
+  }
 }
 
 const post = (path, body, headers = {}) =>
@@ -195,11 +214,57 @@ test('Quy kết chạm đầu: CTV thứ hai không cướp được hoa hồng'
     count("SELECT COUNT(*) n FROM affiliate_clicks WHERE affiliate_id='aff2' AND is_first_touch=1"), 0);
 });
 
+test('Email xác nhận vào hàng đợi đúng một lần dù webhook gửi lại', async () => {
+  const code = await createOrder();
+  const payload = { id: nextTx(), transferType: 'in', transferAmount: 2000000, content: code };
+  await hook(payload);
+  await hook(payload);
+  await hook({ ...payload, id: nextTx() });   // giao dịch khác, cùng đơn → overpaid
+
+  ok('số email trong hàng đợi', count("SELECT COUNT(*) n FROM email_outbox WHERE template='order_paid'"), 1);
+
+  const mail = db.prepare("SELECT * FROM email_outbox WHERE template='order_paid'").get();
+  ok('gửi đúng địa chỉ khách', mail.to_email, 'binh@vidu.com');
+  ok('tiêu đề có mã đơn', mail.subject.includes(code), true);
+  ok('nội dung có link tra cứu', mail.body_text.includes('/tra-cuu'), true);
+
+  // Chưa cấu hình nhà cung cấp thì phải là 'skipped', KHÔNG phải 'failed':
+  // 'failed' đọc như "có gì đó hỏng cần sửa", còn sự thật là tính năng chưa bật.
+  ok('trạng thái khi chưa có RESEND_API_KEY', mail.status, 'skipped');
+  ok('không thử lại vô ích', mail.attempts, 0);
+});
+
+test('Workshop: có email thì gửi một lần, không email thì không xếp hàng rỗng', async () => {
+  const dangKy = (phone, email) => post('/api/workshop/register', {
+    name: 'Lê Thị Hoa', phone, email,
+    field: 'Bán đồ handmade', stuck: 'Không biết bắt đầu từ đâu',
+    goal_text: 'Muốn có khách đều', daily_time: '1_2h',
+    channel: 'none_yet', goal: 'sell_products', website: '',
+  }, { 'cf-connecting-ip': scenarioIp });
+
+  await dangKy('0912000111', 'hoa@vidu.com');
+  ok('xếp hàng một email', count("SELECT COUNT(*) n FROM email_outbox WHERE template='workshop_registered'"), 1);
+
+  // Đăng ký lại cùng số cho cùng buổi: bản ghi là no-op, mail cũng phải no-op.
+  await dangKy('0912000111', 'hoa@vidu.com');
+  ok('đăng ký lại không gửi thêm', count("SELECT COUNT(*) n FROM email_outbox WHERE template='workshop_registered'"), 1);
+
+  const mail = db.prepare("SELECT * FROM email_outbox WHERE template='workshop_registered'").get();
+  ok('mail có link phòng Zoom', mail.body_text.includes('https://zoom.us/j/123'), true);
+
+  // Email là tuỳ chọn ở form workshop — không điền thì không có gì để gửi, và
+  // hàng đợi không được chứa dòng rỗng chỉ để rồi thất bại lúc gửi.
+  await dangKy('0912000222', '');
+  ok('không email thì không xếp hàng',
+    count("SELECT COUNT(*) n FROM email_outbox WHERE template='workshop_registered'"), 1);
+  ok('nhưng vẫn ghi nhận đăng ký', count('SELECT COUNT(*) n FROM workshop_registrations'), 2);
+});
+
 // ------------------------------------------------------------------ chạy
 
 console.log(`\nKiểm chứng luồng thanh toán — ${BASE}\n`);
 for (const [i, [name, fn]] of scenarios.entries()) {
-  reset();
+  await reset();
   scenarioIp = `10.0.0.${i + 1}`;
   console.log(name);
   try {

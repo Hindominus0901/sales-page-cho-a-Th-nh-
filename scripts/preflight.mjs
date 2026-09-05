@@ -116,6 +116,13 @@ if (!SKIP_SECRETS) {
       if (!names.has(name)) block(`Khoá bí mật ${name} chưa đặt`, why);
     }
 
+    if (!names.has('RESEND_API_KEY')) {
+      warn('RESEND_API_KEY chưa đặt — email xác nhận sẽ không được gửi',
+        'Đơn vẫn thanh toán bình thường và email vẫn vào hàng đợi, nhưng đánh dấu ' +
+        '"bỏ qua" thay vì gửi đi. Hệ quả: khách chuyển khoản xong đóng tab thì chỉ ' +
+        'còn đường /tra-cuu để tìm lại đơn.');
+    }
+
     if (!names.has('TURNSTILE_SECRET_KEY')) {
       warn('TURNSTILE_SECRET_KEY chưa đặt',
         'Form công khai chỉ còn honeypot và rate limit chặn bot. Chấp nhận được ' +

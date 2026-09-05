@@ -14,3 +14,9 @@ SEPAY_WEBHOOK_API_KEY=
 # Cloudflare Turnstile (chống bot cho form công khai). Để trống = tắt kiểm tra.
 TURNSTILE_SECRET_KEY=
 TURNSTILE_SITE_KEY=
+
+# Gửi email xác nhận đơn và link workshop (Resend). Để trống = không gửi:
+# email vẫn vào hàng đợi nhưng đánh dấu "bỏ qua", hệ vẫn chạy bình thường.
+# Lấy khoá ở resend.com → API Keys. EMAIL_FROM phải là tên miền đã xác minh.
+RESEND_API_KEY=
+EMAIL_FROM=Góc Creator <no-reply@vidu.com>

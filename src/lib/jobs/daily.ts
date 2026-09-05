@@ -1,5 +1,6 @@
 import type { Env } from '../../types';
 import { now } from '../util/datetime';
+import { drainOutbox } from '../email/outbox';
 import { audit } from '../db/audit';
 
 /**
@@ -10,6 +11,9 @@ export async function runDailyJobs(env: Env): Promise<void> {
   await safely('hết hạn đơn chờ', () => expireStaleOrders(env));
   await safely('tự duyệt hoa hồng', () => autoApproveCommissions(env));
   await safely('dọn phiên hết hạn', () => pruneSessions(env));
+  // Lưới đỡ cho hộp thư đi. Việc gửi chính đã chạy ngay sau webhook; lượt này
+  // nhặt những cái lúc đó lỗi, để một mail hỏng lúc 2h sáng không nằm im mãi.
+  await safely('gửi lại email còn tồn', () => drainOutbox(env, 100));
 }
 
 async function safely(label: string, fn: () => Promise<unknown>): Promise<void> {

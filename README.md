@@ -38,7 +38,7 @@ node scripts/create-admin.mjs --email thanh@goccreator.vn --name "Đỗ Mạnh T
 ```bash
 npm run typecheck     # TypeScript
 npm test              # 73 unit test: chấm điểm lead, trích mã đơn, so tên, chuỗi ngày, thứ hạng
-npm run test:flows    # 11 kịch bản thanh toán thật qua HTTP (cần npm run dev)
+npm run test:flows    # 13 kịch bản thanh toán thật qua HTTP (cần npm run dev)
 npm run test:admin -- --email <email> --password <mật khẩu>
 npm run test:student  # cổng học viên: nộp bài, nộp lại, khoá bài đã duyệt, đổi quà
 ```
@@ -341,12 +341,12 @@ không lọt lên Google hay rò qua Referer, và mã dài 128 bit nên không d
 ## 9. Cấu trúc
 
 ```
-build/               Pipeline sinh 6 trang HTML tĩnh từ file thiết kế .dc.html
+build/               Pipeline sinh 10 trang HTML tĩnh từ file thiết kế .dc.html
   build.mjs          Đọc design/ + site.config.json → public/*.html
   partials/          CSS, JS, và mảnh HTML của từng trang
 design/              File thiết kế gốc (.dc.html) — nguồn của mọi trang public
 site.config.json     Toàn bộ chữ trên trang. Trường trống thì khối tự ẩn.
-migrations/          9 file schema D1 + seed
+migrations/          10 file schema D1 + seed
 src/
   worker.ts          Điểm vào Hono
   routes/
@@ -362,6 +362,7 @@ src/
     affiliate/       Quy kết, máy trạng thái hoa hồng, chi trả
     auth/            Phiên đăng nhập, CSRF, phân quyền
     game/            Chuỗi ngày, thứ hạng, cộng thưởng khi duyệt bài, cổng học viên
+    email/           Hộp thư đi: xếp hàng, nội dung mail, bộ gửi Resend
 admin/               SPA quản trị (React + Vite) → public/admin/
 affiliate/           SPA portal CTV → public/aff/
 scripts/             Tạo tài khoản admin, ba bộ test đầu-cuối
@@ -386,7 +387,42 @@ theo dạng `"câu gốc": "câu mới"`. Không tìm thấy câu gốc thì bui
 
 ---
 
-## 11. Việc chạy hằng đêm
+## 11. Email xác nhận
+
+Khách chuyển khoản xong đóng tab là mất dấu đơn của mình. Hai đường chữa:
+trang `/tra-cuu` (không cần cấu hình gì) và email xác nhận (cần một khoá).
+
+```bash
+npx wrangler secret put RESEND_API_KEY --env production
+# EMAIL_FROM đặt trong wrangler.jsonc → vars, ví dụ: "Góc Creator <no-reply@tenmien.vn>"
+```
+
+**Không có khoá thì hệ vẫn chạy bình thường** — email vào hàng đợi rồi đánh dấu
+`skipped`, không phải `failed`. Hai chữ này đọc khác hẳn nhau trong trang quản
+trị: `failed` nghĩa là có gì đó hỏng cần sửa, `skipped` nghĩa là tính năng chưa
+bật, đúng như thực tế.
+
+**Vì sao là hàng đợi chứ không gửi thẳng.** Gửi thẳng trong webhook SePay nghĩa
+là nhà cung cấp email chậm thì webhook chậm theo, mà webhook trả lời chậm hoặc
+lỗi là SePay gửi lại — tức là **lỗi gửi mail biến thành lỗi ghi nhận thanh
+toán**. Thay vào đó email được xếp vào `email_outbox` ngay trong chính
+`db.batch()` atomic đang ghi nhận đơn, rồi gửi ở một lượt riêng sau khi đã trả
+lời SePay.
+
+`UNIQUE(template, ref_id)` bảo đảm webhook gửi lại bao nhiêu lần cũng chỉ một
+email đi ra — cùng cách `UNIQUE(order_id)` chặn trả hoa hồng kép.
+
+Gửi ở hai nơi: ngay sau webhook (khách nhận mail trong vài giây) và một lượt
+quét trong việc chạy hằng đêm để nhặt những cái lỗi. Thử tối đa 4 lần rồi
+chuyển sang `failed` để nó hiện ra, thay vì nằm im trong hàng đợi.
+
+**Zalo ZNS chưa làm.** Zalo yêu cầu doanh nghiệp xác minh và duyệt từng mẫu tin,
+mất vài ngày làm việc. Bảng `email_outbox` có sẵn cột `template` nên sau này
+thêm một bộ gửi Zalo là đủ, không phải sửa lại luồng.
+
+---
+
+## 12. Việc chạy hằng đêm
 
 Cron 03:00 giờ Việt Nam (`0 20 * * *` UTC):
 

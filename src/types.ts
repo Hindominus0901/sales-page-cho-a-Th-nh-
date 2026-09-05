@@ -22,6 +22,9 @@ export interface Env {
   SEPAY_WEBHOOK_API_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
   TURNSTILE_SITE_KEY?: string;
+  /** Chưa đặt thì email vào hàng đợi rồi đánh dấu 'skipped' — hệ vẫn chạy bình thường. */
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
 }
 
 /** Ngữ cảnh gắn vào mọi request công khai bởi middleware attribution. */
