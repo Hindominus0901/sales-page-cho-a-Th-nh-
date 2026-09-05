@@ -30,7 +30,7 @@
   ],
   "testimonialIndustry": "",
   "legal": {
-    "company": "",
+    "company": "CÔNG TY TNHH THƯƠNG MẠI & DỊCH VỤ ANLIFE GROUP",
     "taxId": "",
     "address": "",
     "hotline": "",
@@ -230,7 +230,7 @@
     "highlight": "Học viên trong CLB nhiều người là chuyên gia trong nghề của mình, và họ chia sẻ lại miễn phí cho cả nhóm. Anh chị vào học một khoá, nhưng học được từ rất nhiều người."
   },
   "_huongDanPlaceholder": "Ô nào chưa có nội dung sẽ hiện khung gạch đứt màu cam kèm nhãn mô tả, để anh nhìn là biết cần bỏ gì vào. Điền xong thì khung tự biến mất. Khi chạy thật, đặt showPlaceholders = false để giấu hết các khung còn trống.",
-  "showPlaceholders": true,
+  "showPlaceholders": false,
   "logo": {
     "_ghiChu": "Bỏ file logo vào public/media/ rồi ghi tên file vào đây, vd: logo.png",
     "src": "",

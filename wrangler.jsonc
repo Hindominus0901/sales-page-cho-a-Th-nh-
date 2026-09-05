@@ -34,7 +34,7 @@
   // ─────────────────────────────────────────────────────────────────────────
   "vars": {
     "APP_ENV": "production",
-    "PUBLIC_BASE_URL": "https://goc-creator-challenge.workers.dev",
+    "PUBLIC_BASE_URL": "https://goc-creator-challenge.nhipsongsoserenitylife.workers.dev",
     // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán.
     //
     // SEPAY_ACCOUNT_NO CỐ Ý KHÔNG có ở đây. `wrangler deploy` ghi đè toàn bộ
