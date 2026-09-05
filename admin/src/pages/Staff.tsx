@@ -65,7 +65,11 @@ export default function Staff() {
   }
 
   async function resetPassword(p: Person) {
-    if (!confirm(`Đặt lại mật khẩu cho ${p.name}? Phiên đăng nhập hiện tại của họ sẽ bị đăng xuất.`)) return;
+    const laToi = p.id === data?.me;
+    const hoi = laToi
+      ? 'Đặt lại mật khẩu của chính anh? Lần đăng nhập sau phải dùng mật khẩu mới.'
+      : `Đặt lại mật khẩu cho ${p.name}? Phiên đăng nhập hiện tại của họ sẽ bị đăng xuất.`;
+    if (!confirm(hoi)) return;
     setBusy(p.id);
     try {
       const res = await api.post<{ password: string }>(`/api/admin/staff/${p.id}/mat-khau`);
@@ -98,8 +102,11 @@ export default function Staff() {
             {fresh.password}
           </div>
           <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-            Gửi cho họ ngay bây giờ. Đóng thẻ này là không xem lại được nữa —
-            hệ thống chỉ lưu bản băm, không lưu mật khẩu. Quên thì đặt lại cái mới.
+            {fresh.email === data?.staff.find((s) => s.id === data.me)?.email
+              ? 'Chép ra chỗ an toàn ngay. Lần đăng nhập sau anh dùng mật khẩu này — '
+              : 'Gửi cho họ ngay bây giờ. '}
+            Đóng thẻ này là không xem lại được nữa — hệ thống chỉ lưu bản băm,
+            không lưu mật khẩu. Quên thì đặt lại cái mới.
           </p>
           <button className="btn sm" style={{ marginTop: 10 }} onClick={() => setFresh(null)}>
             Đã gửi, ẩn đi

@@ -175,9 +175,17 @@ adminStaffRoutes.post('/api/admin/staff/:id/mat-khau', async (c) => {
   await c.env.DB.prepare(`UPDATE admin_users SET password_hash = ?, updated_at = ? WHERE id = ?`)
     .bind(await hashPassword(password), now(), id).run();
 
-  // Đổi mật khẩu mà phiên cũ vẫn dùng được thì việc đổi không chặn được ai.
-  await c.env.DB.prepare(`DELETE FROM sessions WHERE subject_type = 'admin' AND subject_id = ?`)
-    .bind(id).run();
+  // Thu hồi phiên của NGƯỜI KHÁC: đổi mật khẩu mà phiên cũ vẫn dùng được thì
+  // việc đổi không chặn được ai.
+  //
+  // Nhưng KHÔNG thu hồi phiên của chính mình. Người vừa bấm nút đã chứng minh
+  // họ đang đăng nhập hợp lệ ngay giây trước đó; đá họ ra ngoài không tăng
+  // được chút an toàn nào, chỉ khiến màn hình hiện "Chưa đăng nhập" đỏ lòm
+  // ngay bên dưới mật khẩu mới — đọc như hỏng, trong khi mọi thứ vừa chạy đúng.
+  if (id !== me.id) {
+    await c.env.DB.prepare(`DELETE FROM sessions WHERE subject_type = 'admin' AND subject_id = ?`)
+      .bind(id).run();
+  }
 
   await audit(c.env, {
     actorType: 'admin', actorId: me.id, actorLabel: me.email,

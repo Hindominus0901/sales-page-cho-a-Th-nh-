@@ -367,6 +367,14 @@ console.log('Nhân sự');
     ok('nhân viên tự nâng mình lên owner → 403',
       (await nv.patch(`/api/admin/staff/${nvId}`, { role: 'owner' })).status, 403);
 
+    // Tự đặt lại mật khẩu của CHÍNH MÌNH thì KHÔNG bị đăng xuất. Người vừa bấm
+    // nút đã chứng minh họ đang đăng nhập hợp lệ giây trước đó; đá họ ra không
+    // an toàn thêm chút nào, chỉ khiến màn hình hiện lỗi đỏ ngay dưới mật khẩu
+    // mới — đọc như hỏng trong khi mọi thứ vừa chạy đúng.
+    const tuDat = await admin.post(`/api/admin/staff/${meRow.me}/mat-khau`);
+    ok('tự đặt lại mật khẩu của mình được', tuDat.status, 200);
+    ok('và KHÔNG bị đăng xuất', (await admin.get('/api/admin/me')).status, 200);
+
     // Tắt xong thì phiên của người đó phải chết ngay, không đợi hết hạn —
     // tắt tài khoản mà họ vẫn thao tác được thì việc tắt gần như vô nghĩa.
     ok('tắt được tài khoản', (await admin.patch(`/api/admin/staff/${nvId}`, { isActive: false })).status, 200);
