@@ -1,0 +1,72 @@
+<div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
+
+  <div style="max-width:960px;margin:0 auto;padding:32px 24px 72px">
+
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#55555c;text-decoration:none;margin-bottom:28px">← Về trang Thử thách 21 ngày</a>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:40px;align-items:start" class="fc2-leadgrid">
+
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:14px;text-transform:uppercase;letter-spacing:.04em">{{EYEBROW}}</div>
+        <h1 style="font-size:44px;font-weight:800;line-height:1.12;letter-spacing:-.02em;margin:0 0 18px">{{HEADLINE}}</h1>
+        <p style="font-size:19px;line-height:1.65;color:#333;margin:0 0 16px">{{SUBHEADLINE}}</p>
+        <p style="font-size:15px;line-height:1.7;color:#55555c;margin:0 0 26px">{{LEAD}}</p>
+
+        <ul style="list-style:none;padding:0;margin:0;display:grid;gap:14px">{{BULLETS}}</ul>
+      </div>
+
+      <div class="fc2-shadow" style="background:#fff;border-radius:28px;padding:28px;position:sticky;top:24px">
+
+        <form id="fc2-lead-form" novalidate autocomplete="on" style="display:grid;gap:14px">
+          <div>
+            <label for="fc2-lead-name" class="fc2-label">Họ và tên <span style="color:#d33">*</span></label>
+            <input id="fc2-lead-name" name="name" type="text" required autocomplete="name" placeholder="Nguyễn Văn A" class="fc2-input">
+            <div class="fc2-err" data-err="name"></div>
+          </div>
+
+          <div>
+            <label for="fc2-lead-phone" class="fc2-label">Số điện thoại (Zalo) <span style="color:#d33">*</span></label>
+            <input id="fc2-lead-phone" name="phone" type="tel" required autocomplete="tel" inputmode="numeric" placeholder="0912345678" class="fc2-input">
+            <div class="fc2-err" data-err="phone"></div>
+          </div>
+
+          <div>
+            <label for="fc2-lead-email" class="fc2-label">Email (không bắt buộc)</label>
+            <input id="fc2-lead-email" name="email" type="email" autocomplete="email" placeholder="email@cua-anh-chi.com" class="fc2-input">
+            <div class="fc2-err" data-err="email"></div>
+          </div>
+
+          <!-- bẫy bot: người thật không nhìn thấy ô này -->
+          <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
+            <label for="fc2-lead-website">Website</label>
+            <input id="fc2-lead-website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div class="fc2-formerr" data-err="_form"></div>
+
+          <button type="submit" id="fc2-lead-submit" class="fc2-cta"
+                  style="display:inline-flex;align-items:center;justify-content:center;height:58px;padding:0 28px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border-radius:16px;border:0;cursor:pointer;width:100%">
+            <span data-label>{{DOWNLOAD_LABEL}}</span>
+          </button>
+
+          <p style="font-size:12px;color:#77777d;line-height:1.6;margin:0">{{FORM_NOTE}}</p>
+        </form>
+
+        <div id="fc2-lead-thanks" hidden style="text-align:center">
+          <div style="font-size:34px;margin-bottom:10px">✅</div>
+          <h2 style="font-size:22px;font-weight:800;margin:0 0 10px">{{THANKS_HEADLINE}}</h2>
+          <p style="font-size:15px;line-height:1.7;color:#55555c;margin:0 0 22px">{{THANKS_TEXT}}</p>
+          <div style="display:grid;gap:10px">
+            <a data-download-btn hidden class="fc2-cta" target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;background:#2f7a4d;color:#fff;font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">{{DOWNLOAD_LABEL}}</a>
+            <a data-zalo-btn hidden target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;background:rgba(47,122,77,.1);color:#2f7a4d;font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">{{ZALO_LABEL}}</a>
+          </div>
+        </div>
+
+        <div id="fc2-lead-fallback" hidden style="background:rgba(211,51,51,.07);border:1px solid rgba(211,51,51,.25);border-radius:16px;padding:16px 18px;font-size:14px;line-height:1.65;color:#333;margin-top:14px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>

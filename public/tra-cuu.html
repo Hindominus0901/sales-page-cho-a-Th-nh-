@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tìm lại đơn — Góc Creator</title>
+<meta name="description" content="Nhập số điện thoại để tìm lại đơn đăng ký của anh chị.">
+<meta name="robots" content="noindex, nofollow">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tìm lại đơn — Góc Creator">
+<meta property="og:description" content="Nhập số điện thoại để tìm lại đơn đăng ký của anh chị.">
+<meta property="og:image" content="/media/hero.jpg">
+<meta property="og:locale" content="vi_VN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3ead9">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap">
+<style>
+
+.fc2 *{font-family:'Inter',system-ui,-apple-system,sans-serif}
+.fc2 h1,.fc2 h2,.fc2 h3{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0;font-weight:600}
+.fc2-hl{background:rgba(139,195,74,.35);padding:0 3px;border-radius:2px;text-decoration:underline;text-decoration-color:#2f7a4d;text-underline-offset:3px}
+.fc2-shadow{box-shadow:0px 60px 80px rgba(15,15,15,.08),0px 25px 33px rgba(15,15,15,.057),0px 13px 18px rgba(15,15,15,.048),0px 7px 10px rgba(15,15,15,.04),0px 4px 5px rgba(15,15,15,.032),0px 2px 2px rgba(15,15,15,.022)}
+@keyframes fc2-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.fc2-track{display:flex;width:200%;animation:fc2-marquee 26s linear infinite;white-space:nowrap}
+.fc2-track span{padding:0 18px}
+.fc2-scroll{display:flex;overflow-x:auto;gap:16px;padding-bottom:8px;scrollbar-width:none}
+.fc2-scroll::-webkit-scrollbar{display:none}
+.fc2 details summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;font-size:17px;font-weight:600}
+.fc2 details summary::-webkit-details-marker{display:none}
+.fc2 details summary::after{content:'+';font-size:22px;color:#8a8a8f;flex-shrink:0}
+.fc2 details[open] summary::after{content:'–'}
+.fc2 details{border:1px solid rgba(25,25,25,.12);border-radius:14px;background:rgba(25,25,25,.03);margin-bottom:12px;transition:background .15s}
+.fc2 details[open]{background:rgba(25,25,25,.055)}
+.fc2 details p{padding:0 18px}
+.fc2-cardmarquee{overflow:hidden}
+.fc2-cardtrack{display:flex;gap:16px;width:max-content;animation:fc2-cardscroll 34s linear infinite}
+.fc2-cardtrack:hover{animation-play-state:paused}
+@keyframes fc2-cardscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.fc2-cta{position:relative;overflow:hidden;isolation:isolate}
+.fc2-cta::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:fc2-glow 2.6s ease-in-out infinite}
+
+.fc2-priceglow{position:relative;animation:fc2-pulse 2.2s ease-in-out infinite}
+
+.fc2-pricebox{position:relative;overflow:hidden;isolation:isolate;border-radius:14px}
+.fc2-pricebox::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(168,217,141,.6),transparent);transform:skewX(-20deg);animation:fc2-glow 3s ease-in-out infinite}
+.fc2 a[href="/dang-ky"]{transition:transform .15s ease,box-shadow .15s ease}
+.fc2 a[href="/dang-ky"]:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(47,122,77,.35)}
+.fc2 a[href="/dang-ky"]:active{transform:translateY(0) scale(.97)}
+.fc2-hover{transition:transform .2s ease,box-shadow .2s ease}
+.fc2-hover:hover{transform:translateY(-4px)}
+.fc2-reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fc2-reveal.fc2-in{opacity:1;transform:translateY(0)}
+.fc2-stickybar{position:fixed;left:0;right:0;bottom:-100px;z-index:60;display:flex;justify-content:center;align-items:center;gap:14px;padding:14px 20px;background:rgba(243,234,217,.95);backdrop-filter:blur(6px);border-top:1px solid rgba(25,25,25,.12);transition:bottom .3s ease}
+.fc2-stickybar.fc2-show{bottom:0}
+</style>
+<style>
+/* Thuộc tính hidden phải thắng cả display viết thẳng trong thẻ,
+   nếu không khối QR sẽ hiện sẵn với các ô trống trước khi khách bấm đăng ký. */
+[hidden]{display:none !important}
+
+/* ---------- Cột nội dung ----------
+   Bản thiết kế để khung ngoài rộng 1400px còn khối chữ bên trong chỉ 700–760px,
+   nên tiêu đề nằm sát mép trái còn đoạn văn thì thụt vào — nhìn lệch nhau.
+   Cách sửa: thu khung ngoài thành một cột hẹp và cho khối bên trong chiếm trọn
+   cột đó, để tiêu đề và nội dung dùng chung một lề trái. */
+.fc2 > div[style*="max-width:1400px"],
+.fc2 > div[style*="max-width:760px"]{max-width:1040px !important;margin-left:auto !important;margin-right:auto !important}
+.fc2 > div > div[style*="max-width:720px"],
+.fc2 > div > div[style*="max-width:760px"],
+.fc2 > div > div[style*="max-width:800px"],
+.fc2 > div > div[style*="max-width:900px"],
+.fc2 > div > div[style*="max-width:700px"],
+.fc2 > div > ul[style*="max-width:720px"]{max-width:100% !important}
+.fc2 > footer > div{max-width:1040px !important;margin:0 auto}
+
+/* Thanh cố định dưới đáy không được che mất chân trang.
+   Dùng dấu > : `<footer>` còn được dùng làm khối ghi tên người nói trong card
+   trích dẫn, và quy tắc rộng sẽ nhồi 104px khoảng trắng vào từng card. */
+.fc2 > footer{padding-bottom:104px !important}
+
+/* ---------- Cỡ chữ ----------
+   Bản thiết kế đặt cỡ chữ thẳng trong thẻ và hơi nhỏ so với bề rộng cột. */
+.fc2 p[style*="font-size:16px"],
+.fc2 li[style*="font-size:16px"]{font-size:18px !important;line-height:1.7 !important}
+.fc2 p[style*="font-size:15px"],
+.fc2 li[style*="font-size:15px"]{font-size:17px !important;line-height:1.7 !important}
+.fc2 p[style*="font-size:14px"],
+.fc2 li[style*="font-size:14px"]{font-size:16px !important;line-height:1.7 !important}
+.fc2 div[style*="font-size:14px"]:not([style*="width:"]){font-size:16px !important;line-height:1.65 !important}
+.fc2 div[style*="font-size:15px"]:not([style*="width:"]){font-size:17px !important}
+.fc2 div[style*="font-size:16px"]:not([style*="width:"]){font-size:18px !important}
+.fc2 details summary{font-size:18px !important}
+.fc2 h2{font-size:40px !important;line-height:1.15}
+.fc2 h1{font-size:50px !important;line-height:1.08}
+
+/* Cột chữ rộng nhưng không để dòng dài quá — trên ~85 ký tự là mắt khó bắt dòng.
+   Tiêu đề và thẻ vẫn chiếm trọn bề ngang nên trang không bị cảm giác trống. */
+.fc2 > div > p,
+.fc2 > div > ul,
+.fc2 > div > div > p:not([style*="text-align:center"]),
+.fc2 > div > div > ul{max-width:74ch}
+
+/* ---------- Tương phản màu ----------
+   Bản thiết kế dùng vài mức xám quá nhạt trên nền kem, đọc không rõ.
+   Chỉnh đậm lên cho đạt mức tối thiểu 4.5:1. */
+.fc2 [style*="color:#77777d"]{color:#61616a !important}
+.fc2 [style*="color:#9a9aa0"]{color:#67676f !important}
+.fc2 [style*="color:#55555c"]{color:#4a4a52 !important}
+.fc2 [style*="color:#f0a500"]{color:#8a5a00 !important}
+.fc2 [style*="color:#2f7a4d"]{color:#26643f !important}
+/* Dòng miễn trừ ở chân trang: 12px quá nhỏ để đọc màu xám */
+.fc2 > footer span[style*="font-size:12px"]{font-size:14px !important;color:#5c5c64 !important}
+
+/* Trên nền tối thì giữ nguyên màu sáng của bản thiết kế */
+.fc2 [style*="background:#1a1a1a"] [style*="color:#77777d"],
+.fc2 [style*="background:#1a1a1a"] [style*="color:#9a9aa0"]{color:rgba(255,255,255,.7) !important}
+
+/* Ảnh Thành ở mục "Tại sao anh chị nên nghe Thành" */
+@media (max-width:900px){
+  .fc2-why{grid-template-columns:1fr !important;gap:24px !important}
+  .fc2-why > img{max-width:320px;margin:0 auto}
+}
+
+/* ---------- Form đăng ký ---------- */
+.fc2-label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:6px}
+.fc2-input{width:100%;box-sizing:border-box;font-family:'Inter',system-ui,sans-serif;font-size:15px;color:#191919;
+  background:#fff;border:1.5px solid rgba(25,25,25,.18);border-radius:12px;padding:13px 14px;
+  transition:border-color .15s,box-shadow .15s}
+.fc2-input::placeholder{color:#a3a3a8}
+.fc2-input:focus{outline:0;border-color:#2f7a4d;box-shadow:0 0 0 3px rgba(47,122,77,.15)}
+.fc2-input[aria-invalid="true"]{border-color:#d33;box-shadow:0 0 0 3px rgba(211,51,51,.12)}
+.fc2-err{font-size:13px;color:#d33;margin-top:5px;display:none}
+.fc2-err.fc2-on{display:block}
+.fc2-formerr{font-size:14px;color:#d33;font-weight:600;display:none}
+.fc2-formerr.fc2-on{display:block}
+#fc2-submit[disabled]{opacity:.6;cursor:progress}
+#fc2-submit[disabled]::after{display:none}
+
+.fc2-copy{font-family:'Inter',system-ui,sans-serif;font-size:12px;font-weight:600;color:#2f7a4d;background:rgba(47,122,77,.1);
+  border:0;border-radius:8px;padding:5px 10px;cursor:pointer;transition:background .15s;flex-shrink:0}
+.fc2-copy:hover{background:rgba(47,122,77,.2)}
+.fc2-copy.fc2-done{background:#2f7a4d;color:#fff}
+
+.fc2-paylabel{font-size:12px;color:#77777d;margin-bottom:3px}
+.fc2-payvalue{font-size:16px;font-weight:700;color:#191919;word-break:break-word}
+
+/* ---------- Dải video tự chạy ---------- */
+.fc2-vmarquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+.fc2-vtrack{display:flex;gap:16px;width:max-content;animation:fc2-vscroll linear infinite}
+.fc2-vtrack:hover{animation-play-state:paused}
+@keyframes fc2-vscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ---------- Thumbnail video ---------- */
+.fc2-vthumb{transition:transform .25s ease,filter .25s ease}
+.fc2-vthumb:hover{transform:scale(1.04);filter:brightness(1.05)}
+.fc2-vthumb:focus-visible{outline:3px solid #2f7a4d;outline-offset:3px}
+
+/* ---------- Lightbox ---------- */
+.fc2-lb{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+  background:rgba(12,12,12,.9);backdrop-filter:blur(8px);padding:20px}
+.fc2-lb.fc2-open{display:flex}
+.fc2-lb video{max-width:min(440px,92vw);max-height:86vh;width:auto;border-radius:20px;background:#000;display:block;
+  box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.fc2-lb-yt{width:min(440px,92vw);aspect-ratio:9/16;max-height:86vh;border-radius:20px;overflow:hidden;background:#000;
+  box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.fc2-lb-yt iframe{width:100%;height:100%;display:block;border:0}
+.fc2-lb-img{max-width:min(760px,92vw);max-height:86vh;width:auto;border-radius:16px;background:#fff;display:block;
+  box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.fc2-imgthumb{transition:transform .25s ease}
+.fc2-imgthumb:hover{transform:scale(1.02)}
+.fc2-imgthumb:focus-visible{outline:3px solid #2f7a4d;outline-offset:3px}
+.fc2-lb-close{position:absolute;top:18px;right:18px;width:46px;height:46px;border-radius:9999px;border:0;cursor:pointer;
+  background:rgba(255,255,255,.15);color:#fff;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);transition:background .15s}
+.fc2-lb-close:hover{background:rgba(255,255,255,.3)}
+.fc2-lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:9999px;border:0;cursor:pointer;
+  background:rgba(255,255,255,.15);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);transition:background .15s}
+.fc2-lb-nav:hover{background:rgba(255,255,255,.3)}
+.fc2-lb-prev{left:18px}
+.fc2-lb-next{right:18px}
+.fc2-lb-cap{position:absolute;left:0;right:0;bottom:22px;text-align:center;color:#fff;font-size:14px;font-weight:600;
+  padding:0 80px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+
+/* ---------- Trang lead magnet /ban-do-21-ngay ---------- */
+@media (max-width:860px){
+  .fc2-leadgrid{grid-template-columns:1fr !important}
+}
+
+/* ---------- Trang workshop /workshop ----------
+   Dải chữ chạy dùng chung keyframes fc2-marquee của bản thiết kế. Nội dung
+   được nhân đôi trong build nên dịch -50% là quay đúng về đầu, liền mạch. */
+.fc2-ticker{animation:fc2-marquee 26s linear infinite;will-change:transform}
+
+@media (max-width:860px){
+  /* Xuống một cột: form nằm SAU nội dung, và bỏ sticky — trên màn hình cao
+     ~840px, một card sticky cao hơn viewport sẽ kẹt lại và che mất nội dung. */
+  .fc2-wsgrid{grid-template-columns:1fr !important;gap:32px !important}
+  .fc2-wsform{position:static !important}
+  .fc2-wshost{grid-template-columns:1fr !important}
+  .fc2-wshost > div:first-child{max-width:220px}
+}
+
+/* ---------- Đáp ứng màn hình nhỏ ---------- */
+@media (max-width:720px){
+  .fc2 h1{font-size:32px !important}
+  .fc2 h2{font-size:26px !important}
+  .fc2-payrow{grid-template-columns:1fr !important;justify-items:center}
+  .fc2-payrow img[data-qr]{margin:0 auto}
+  .fc2 [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important}
+  .fc2 [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr) !important}
+  .fc2 [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr !important}
+  /* Ba ô số của cổng học viên là ba con số ngắn — xếp dọc thì chúng chiếm
+     trọn màn hình điện thoại mà chẳng nói thêm được gì. Giữ ba cột. */
+  .fc2 .fc2-hocstats[style]{grid-template-columns:repeat(3,1fr) !important;gap:8px !important}
+  .fc2 .fc2-hocstats > div{padding:13px 12px !important}
+  .fc2 .fc2-hocstats [data-coin],.fc2-hocstats [data-streak],.fc2-hocstats [data-done]{font-size:19px !important}
+  .fc2-lb-nav{width:40px;height:40px}
+  .fc2-lb-prev{left:8px}
+  .fc2-lb-next{right:8px}
+  .fc2-lb-cap{padding:0 60px;font-size:13px}
+}
+
+
+
+/* ---------- Các khối nội dung mới ---------- */
+@media (max-width:860px){
+  .fc2-steps{grid-template-columns:1fr !important}
+  .fc2 [data-case]{grid-template-columns:1fr !important;gap:22px !important;padding:30px 26px !important}
+  .fc2 [data-case] > div:first-child{display:flex;align-items:baseline;gap:12px}
+  .fc2 [data-case] > div:first-child > div:first-child{font-size:44px !important}
+}
+
+/* ---------- Nút dừng dải tự chạy ----------
+   WCAG 2.2.2: nội dung tự chuyển động quá 5 giây phải có cách dừng.
+   Dừng khi hover là chưa đủ — bàn phím và màn hình cảm ứng không hover được. */
+.fc2-marqwrap{position:relative}
+.fc2-pause{position:absolute;top:-42px;right:0;z-index:5;display:inline-flex;align-items:center;gap:7px;
+  min-height:44px;padding:8px 16px;border:1.5px solid rgba(25,25,25,.2);border-radius:9999px;
+  background:rgba(255,255,255,.85);color:#26643f;cursor:pointer;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:600;transition:background .18s,border-color .18s}
+.fc2-pause:hover{background:#fff;border-color:#26643f}
+.fc2-pause:focus-visible{outline:3px solid #2f7a4d;outline-offset:2px}
+.fc2-marqwrap[data-paused] .fc2-vtrack,
+.fc2-marqwrap[data-paused] .fc2-cardtrack,
+.fc2-marqwrap:focus-within .fc2-vtrack,
+.fc2-marqwrap:focus-within .fc2-cardtrack{animation-play-state:paused}
+@media (max-width:720px){
+  .fc2-pause{top:-40px;padding:7px 13px;font-size:13px}
+}
+
+/* ---------- Vùng bấm tối thiểu 44x44 trên màn hình chạm ----------
+   Nút "Sao chép" vốn cao ~26px, ngón tay bấm hụt. */
+@media (pointer:coarse){
+  .fc2-copy{min-height:44px;padding:0 16px;font-size:13px}
+}
+
+/* Thông báo lỗi phải được đọc lên, không chỉ hiện màu đỏ */
+.fc2-errsummary{display:none;background:rgba(211,51,51,.08);border:1.5px solid rgba(211,51,51,.35);
+  border-radius:14px;padding:16px 18px;margin-bottom:4px}
+.fc2-errsummary.fc2-on{display:block}
+.fc2-errsummary h2{font-family:'Inter',system-ui,sans-serif !important;font-size:16px !important;font-weight:700;
+  color:#a02020;margin:0 0 8px;text-transform:none !important}
+.fc2-errsummary ul{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.fc2-errsummary a{color:#a02020;font-size:14px;font-weight:600}
+.fc2-errsummary:focus-visible{outline:3px solid #d33;outline-offset:2px}
+
+/* ==========================================================================
+   Animation — theo bộ chuẩn của Emil Kowalski
+   ========================================================================== */
+
+/* Easing dựng sẵn của CSS quá yếu; dùng đường cong mạnh hơn. */
+:root{
+  --ease-out:cubic-bezier(.23,1,.32,1);
+  --ease-in-out:cubic-bezier(.77,0,.175,1);
+}
+
+/* --- Chỉ animate transform và opacity ---
+   Bản thiết kế cho vệt sáng CTA chạy bằng thuộc tính `left` (gây layout lại
+   mỗi khung hình) và cho viền giá nhấp nháy bằng `box-shadow` (gây vẽ lại).
+   Đổi sang transform/opacity để chạy trên GPU. */
+.fc2-cta::after,
+.fc2-pricebox::after{
+  left:-60% !important;
+  animation-name:fc2-sweep !important;
+  will-change:transform;
+}
+@keyframes fc2-sweep{
+  from{transform:translateX(0) skewX(-20deg)}
+  to{transform:translateX(475%) skewX(-20deg)}
+}
+
+.fc2-priceglow{animation:none !important}
+.fc2-priceglow::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  border:2px solid rgba(47,122,77,.55);opacity:0;
+  animation:fc2-ring 2.2s var(--ease-in-out) infinite;
+}
+@keyframes fc2-ring{0%,100%{opacity:0}50%{opacity:1}}
+
+/* --- Vào màn hình: ease-out, không phải ease --- */
+.fc2-reveal{transition:opacity .5s var(--ease-out),transform .5s var(--ease-out)}
+
+/* --- Phản hồi khi nhấn ---
+   Bản thiết kế gắn hiệu ứng vào a[href="#dang-ky"]; nút giờ trỏ sang /dang-ky
+   nên quy tắc cũ không còn khớp và 7 nút CTA mất hẳn phản hồi khi bấm. */
+.fc2 a[href="/dang-ky"],
+.fc2 button[type="submit"],
+.fc2-pause,
+.fc2-copy{transition:transform .16s var(--ease-out),box-shadow .16s var(--ease-out),background .16s ease}
+.fc2 a[href="/dang-ky"]:active,
+.fc2 button[type="submit"]:active,
+.fc2-copy:active{transform:scale(.97)}
+
+/* --- Hover chỉ dành cho chuột ---
+   Trên màn hình cảm ứng, chạm sinh ra hover giả và hiệu ứng bị kẹt lại. */
+@media (hover:hover) and (pointer:fine){
+  .fc2 a[href="/dang-ky"]:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(47,122,77,.3)}
+  .fc2-vthumb:hover{transform:scale(1.03);filter:brightness(1.04)}
+  .fc2-imgthumb:hover{transform:scale(1.02)}
+}
+.fc2-vthumb,.fc2-imgthumb{transition:transform .2s var(--ease-out),filter .2s var(--ease-out)}
+
+/* --- Lightbox mở ra: 0.96 chứ không phải 0 ---
+   Không có gì trong đời thực hiện ra từ hư không.
+   Phần tử đi từ display:none nên transition bị bỏ qua nếu đổi cùng lúc;
+   JS gắn .fc2-in ở khung hình kế tiếp để trình duyệt có trạng thái khởi điểm. */
+.fc2-lb{opacity:0;transition:opacity .2s var(--ease-out)}
+.fc2-lb.fc2-in{opacity:1}
+.fc2-lb video,.fc2-lb-yt,.fc2-lb-img{
+  transform:scale(.96);opacity:0;
+  transition:transform .26s var(--ease-out),opacity .26s var(--ease-out);
+}
+.fc2-lb.fc2-in video,.fc2-lb.fc2-in .fc2-lb-yt,.fc2-lb.fc2-in .fc2-lb-img{
+  transform:scale(1);opacity:1;
+}
+
+/* --- Giảm chuyển động: bớt và nhẹ đi, không phải tắt sạch ---
+   Giữ lại fade vì nó giúp hiểu chuyện gì đang xảy ra; bỏ phần dịch chuyển. */
+@media (prefers-reduced-motion:reduce){
+  .fc2-track,.fc2-cardtrack,.fc2-vtrack{animation:none !important}
+  .fc2-cta::after,.fc2-pricebox::after,.fc2-priceglow::before{animation:none !important;opacity:0 !important}
+  .fc2-reveal{opacity:1 !important;transform:none !important;transition:opacity .2s ease}
+  .fc2-vthumb:hover,.fc2-imgthumb:hover,.fc2 a[href="/dang-ky"]:hover{transform:none}
+  .fc2-lb video,.fc2-lb-yt,.fc2-lb-img{transform:none;transition:opacity .2s ease}
+  .fc2-lb.fc2-in video,.fc2-lb.fc2-in .fc2-lb-yt,.fc2-lb.fc2-in .fc2-lb-img{transform:none}
+}
+
+/* ---------- Câu chốt: vệt bút dạ thay cho nét gạch nguệch ngoạc ---------- */
+.fc2-mark{position:relative;display:inline-block;z-index:0}
+.fc2-mark::before{
+  content:'';position:absolute;z-index:-1;
+  left:-.14em;right:-.14em;bottom:.06em;height:.40em;
+  background:linear-gradient(180deg,rgba(168,217,141,.95),rgba(168,217,141,.72));
+  /* bốn góc bo lệch nhau một chút cho ra dáng nét bút, không phải khối chữ nhật */
+  border-radius:.34em .5em .28em .46em;
+  transform:rotate(-.6deg);
+}
+@media (max-width:720px){
+  .fc2-mark::before{height:.36em}
+}
+
+/* ---------- Nút dừng dải tự chạy: ẩn khỏi mắt, vẫn còn cho bàn phím ----------
+   Nút hiện thường trực trông rối, nhưng bỏ hẳn thì người dùng bàn phím không có
+   cách nào dừng (WCAG 2.2.2). Giải pháp: chỉ hiện khi tab tới. Chuột và chạm
+   vẫn dừng được bằng cách rê vào dải; máy bật "giảm chuyển động" thì dừng sẵn. */
+.fc2-pause{
+  position:absolute;width:1px;height:1px;padding:0;margin:0;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0;top:0;right:0;
+}
+.fc2-pause:focus-visible{
+  width:auto;height:auto;padding:8px 16px;margin:0;overflow:visible;clip:auto;
+  top:-42px;min-height:44px;
+  display:inline-flex;align-items:center;gap:7px;
+  border:1.5px solid #26643f;border-radius:9999px;background:#fff;color:#26643f;
+  font-family:'Inter',system-ui,sans-serif;font-size:14px;font-weight:600;
+  outline:3px solid #2f7a4d;outline-offset:2px;
+}
+
+/* ---------- Lưới ảnh feedback: một hàng ngang, cỡ nhỏ ----------
+   Trước đây là lưới 2 cột, ảnh cao 4:5 nên chiếm rất nhiều chiều dọc. */
+.fc2-fbgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:start}
+.fc2-fbgrid > div > div:first-child{aspect-ratio:3/4 !important;border-radius:12px !important}
+.fc2-fbgrid > div > div:last-child{padding:7px 2px !important;font-size:12px !important;
+  line-height:1.4 !important;color:#4a4a52}
+
+@media (max-width:900px){
+  /* Chia 5 cột trên màn hình nhỏ thì ảnh bé quá — cho trượt ngang thay vì ép nhỏ */
+  .fc2-fbgrid{display:flex;overflow-x:auto;gap:12px;scroll-snap-type:x mandatory;
+    padding-bottom:6px;scrollbar-width:none}
+  .fc2-fbgrid::-webkit-scrollbar{display:none}
+  .fc2-fbgrid > div{flex:0 0 148px;scroll-snap-align:start}
+}
+
+/* ---------- Footer 3 cột ---------- */
+@media (max-width:820px){
+  .fc2-footcols{grid-template-columns:1fr !important;gap:28px !important}
+}
+
+
+/* ================= Trang workshop ================= */
+
+/* Ảnh chụp tin nhắn: một hàng cuộn ngang. Đây là bằng chứng phụ, không nên
+   chiếm hai hàng giữa trang — và cuộn ngang thì thêm ảnh mới không phá bố cục. */
+.fc2-wsproof{
+  display:flex;gap:16px;align-items:flex-start;
+  overflow-x:auto;padding-bottom:10px;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+}
+.fc2-wsproof > figure{scroll-snap-align:start}
+.fc2-wsproof::-webkit-scrollbar{height:8px}
+.fc2-wsproof::-webkit-scrollbar-thumb{background:rgba(25,25,25,.2);border-radius:99px}
+.fc2-wsproof::-webkit-scrollbar-track{background:rgba(25,25,25,.05);border-radius:99px}
+
+/* Câu trả lời FAQ nằm thẳng trong <details> nên không có lề trái của summary */
+.fc2-wsfaq details > p{padding:0 18px}
+
+/* Thanh dính đáy: nút giữ chỗ luôn trong tầm tay sau khi khách cuộn qua form.
+   Chỉ hiện khi đã cuộn khỏi hero — hiện ngay từ đầu thì che mất nội dung mở đầu. */
+.fc2-wssticky{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;
+  padding:12px 18px;
+  background:rgba(243,234,217,.92);backdrop-filter:blur(10px);
+  border-top:1px solid rgba(25,25,25,.14);
+  box-shadow:0 -6px 24px rgba(0,0,0,.07);
+  font-size:14.5px;font-weight:600;color:#191919;
+  transform:translateY(110%);transition:transform .32s var(--ease-out);
+}
+.fc2-wssticky[data-show]{transform:translateY(0)}
+.fc2-wsstickybtn{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:44px;padding:0 24px;border-radius:13px;
+  background:#2f7a4d;color:#fff;font-weight:700;font-size:15px;text-decoration:none;
+}
+@media (max-width:560px){
+  .fc2-wssticky{gap:10px;padding:10px 14px;font-size:13.5px}
+  .fc2-wssticky > span{flex:1 1 100%;text-align:center}
+  .fc2-wsstickybtn{width:100%}
+}
+
+/* Chân trang không bị thanh dính đáy che mất (chỉ chân trang thật, xem ghi chú trên) */
+.fc2-wspage > footer{padding-bottom:96px !important}
+
+/* --- Hover và phản hồi khi nhấn cho nút của trang workshop ---
+   Quy tắc sẵn có chỉ nhắm a[href="/dang-ky"] của trang bán, nên các nút ở đây
+   không có phản hồi nào. */
+.fc2 .fc2-wsstickybtn,
+.fc2 #fc2-ws-submit,
+.fc2 #fc2-lead-submit,
+.fc2 #fc2-ws-thanks a{
+  transition:transform .16s var(--ease-out),box-shadow .16s var(--ease-out),background .16s ease;
+}
+.fc2 .fc2-wsstickybtn:active,
+.fc2 #fc2-ws-submit:active,
+.fc2 #fc2-lead-submit:active{transform:scale(.97)}
+
+@media (hover:hover) and (pointer:fine){
+  .fc2 .fc2-wsstickybtn:hover,
+  .fc2 #fc2-ws-submit:hover:not(:disabled),
+  .fc2 #fc2-lead-submit:hover:not(:disabled){
+    transform:translateY(-2px);box-shadow:0 10px 24px rgba(47,122,77,.32);background:#26643f;
+  }
+  .fc2 #fc2-ws-thanks a:hover{transform:translateY(-2px)}
+  /* Card trong lưới nhấc nhẹ khi rê chuột, để thấy chúng là một nhóm */
+  .fc2-wspage .fc2-shadow{transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out)}
+}
+
+/* Trượt lên khi cuộn tới. Cố ý KHÔNG hạ opacity: hỏng cách mấy cũng chỉ lệch
+   14px, chữ luôn đọc được — khác với .fc2-reveal của bản thiết kế vốn đặt
+   opacity:0 và phụ thuộc vào một script chỉ có ở trang bán. */
+.fc2-slidein{transition:transform .5s var(--ease-out)}
+
+@media (prefers-reduced-motion:reduce){
+  .fc2-wssticky{transition:none}
+  .fc2-slidein{transform:none !important;transition:none}
+}
+
+</style>
+</head>
+<body style="margin:0;background:#f3ead9;color:#191919">
+<div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
+  <div style="max-width:640px;margin:0 auto;padding:32px 22px 72px">
+
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#55555c;text-decoration:none;margin-bottom:26px">← Về trang chủ</a>
+
+    <h1 style="font-size:32px;font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px">Tìm lại đơn của anh chị</h1>
+    <p style="font-size:16px;line-height:1.7;color:#55555c;margin:0 0 28px">
+      Lỡ đóng tab sau khi chuyển khoản, hoặc quên mất mã đơn? Nhập số điện thoại
+      đã dùng lúc đăng ký, em tìm lại giúp.
+    </p>
+
+    <form data-form class="fc2-shadow" style="background:#fff;border-radius:24px;padding:24px;display:grid;gap:14px;margin-bottom:26px">
+      <label style="display:grid;gap:6px">
+        <span style="font-size:13px;font-weight:600">Số điện thoại đã đăng ký</span>
+        <input name="phone" type="tel" inputmode="tel" autocomplete="tel" required
+               placeholder="0912 345 678"
+               style="height:52px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 14px;font:inherit;font-size:16px">
+      </label>
+      <button type="submit" class="fc2-cta"
+              style="height:54px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border:0;border-radius:16px;cursor:pointer">
+        Tìm đơn
+      </button>
+      <p data-msg style="font-size:14px;line-height:1.6;margin:0"></p>
+    </form>
+
+    <div data-results style="display:grid;gap:12px"></div>
+
+    <div data-help hidden class="fc2-shadow" style="background:#fff;border-radius:20px;padding:22px;margin-top:8px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px">Không thấy đơn nào</div>
+      <p style="font-size:15px;line-height:1.75;color:#55555c;margin:0 0 14px">
+        Có thể anh chị đăng ký bằng số khác, hoặc chưa hoàn tất bước điền form.
+        Anh chị thử lại với số kia, hoặc nhắn Zalo cho em kèm ảnh chụp giao dịch —
+        em tra tay giúp trong ít phút.
+      </p>
+      <a href="/dang-ky" class="fc2-cta"
+         style="display:inline-flex;align-items:center;height:48px;padding:0 22px;background:#2f7a4d;color:#fff;font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">
+        Đăng ký lại từ đầu
+      </a>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* Tiện ích dùng chung cho cả ba trang. */
+var $ = function (sel, root) { return (root || document).querySelector(sel); };
+var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+var vnd = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+
+function formatDate(iso) {
+  if (!iso) return '';
+  var p = String(iso).split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso;
+}
+
+/** Điền số chỗ còn lại và ngày khai giảng vào mọi chỗ đánh dấu trên trang. */
+function renderSeats(c) {
+  var left = c.course.seatsLeft;
+  var total = c.course.seatsTotal;
+  var day = formatDate(c.course.startDate);
+
+  $$('[data-seats-line]').forEach(function (el) {
+    el.innerHTML = 'Còn <b>' + left + '</b>/' + total + ' chỗ' + (day ? ' · Khai giảng <b>' + day + '</b>' : '');
+  });
+  $$('[data-seats-badge]').forEach(function (el) {
+    el.textContent = left > 0
+      ? 'Còn ' + left + '/' + total + ' chỗ' + (day ? ' · khai giảng ' + day : '')
+      : 'Lớp đã đủ chỗ — anh chị để lại thông tin để được xếp khoá kế tiếp.';
+  });
+  $$('[data-price]').forEach(function (el) { el.textContent = vnd(c.course.price); });
+}
+
+/** Bản demo: báo rõ ngay trên trang để không ai tưởng đơn đã được lưu. */
+function showDemoBanner() {
+  if (document.getElementById('fc2-demo-banner')) return;
+  var bar = document.createElement('div');
+  bar.id = 'fc2-demo-banner';
+  bar.textContent = 'BẢN DEMO — đơn đăng ký không được lưu lại và số tài khoản chỉ là ví dụ. Đừng chuyển khoản thật.';
+  bar.style.cssText = 'position:relative;z-index:70;background:#8a5a00;color:#fff;font-family:Inter,system-ui,sans-serif;'
+    + 'font-size:14px;font-weight:600;line-height:1.5;text-align:center;padding:11px 18px';
+  document.body.insertBefore(bar, document.body.firstChild);
+}
+
+/** Cất đơn vừa tạo để trang thanh toán dùng lại, không cần hỏi máy chủ. */
+function stashOrder(code, data) {
+  try { sessionStorage.setItem('fc2:order:' + code, JSON.stringify(data)); } catch (e) { /* bỏ qua */ }
+}
+
+function takeStashedOrder(code) {
+  try {
+    var raw = sessionStorage.getItem('fc2:order:' + code);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function loadSiteConfig(then) {
+  return fetch('/api/config')
+    .then(function (r) { return r.json(); })
+    .then(function (c) {
+      if (c && c.ok) {
+        renderSeats(c);
+        if (c.demo) showDemoBanner();
+        if (then) then(c);
+      }
+      return c;
+    })
+    .catch(function () { /* API chưa chạy: trang vẫn hiển thị bình thường */ });
+}
+
+/** Gắn xử lý cho các nút "Sao chép" bên trong một khối. */
+function wireCopyButtons(scope) {
+  if (!scope) return;
+  scope.addEventListener('click', function (e) {
+    var btn = e.target.closest('.fc2-copy');
+    if (!btn) return;
+    var target = $('[data-' + btn.getAttribute('data-copy-target') + ']', scope);
+    if (!target) return;
+    var text = target.textContent.trim();
+    var done = function () {
+      var old = btn.textContent;
+      btn.textContent = 'Đã chép';
+      btn.classList.add('fc2-done');
+      setTimeout(function () { btn.textContent = old; btn.classList.remove('fc2-done'); }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { /* bỏ qua */ });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) { /* bỏ qua */ }
+      document.body.removeChild(ta);
+    }
+  });
+}
+
+/**
+ * Nút dừng cho các dải tự chạy (WCAG 2.2.2 — Pause, Stop, Hide).
+ * Hover đã dừng sẵn bằng CSS, nhưng bàn phím và màn hình cảm ứng thì không hover được.
+ */
+function wireMarqueePause() {
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('[data-pause]');
+    if (!btn) return;
+    var wrap = btn.closest('.fc2-marqwrap');
+    if (!wrap) return;
+    var paused = wrap.hasAttribute('data-paused');
+    if (paused) wrap.removeAttribute('data-paused');
+    else wrap.setAttribute('data-paused', '');
+    btn.setAttribute('aria-pressed', String(!paused));
+    var label = btn.querySelector('[data-pause-label]');
+    if (label) label.textContent = paused ? 'Tạm dừng' : 'Chạy tiếp';
+  });
+
+  // Người dùng đã bật "giảm chuyển động" thì dừng sẵn, không cần bấm
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      $$('.fc2-marqwrap').forEach(function (w) {
+        w.setAttribute('data-paused', '');
+        var b = w.querySelector('[data-pause]');
+        if (b) {
+          b.setAttribute('aria-pressed', 'true');
+          var l = b.querySelector('[data-pause-label]');
+          if (l) l.textContent = 'Chạy tiếp';
+        }
+      });
+    }
+  } catch (e) { /* bỏ qua */ }
+}
+
+/* Trang /tra-cuu — tìm lại đơn bằng số điện thoại. */
+(function () {
+  'use strict';
+
+  var form = $('[data-form]');
+  if (!form) return;
+
+  var LABEL = {
+    pending:        { text: 'Chờ chuyển khoản',      color: '#8a5a00', bg: 'rgba(240,165,0,.14)' },
+    partially_paid: { text: 'Đã nhận một phần',      color: '#8a5a00', bg: 'rgba(240,165,0,.14)' },
+    paid:           { text: 'Đã thanh toán',         color: '#1f6b3c', bg: 'rgba(47,122,77,.14)' },
+    overpaid:       { text: 'Đã thanh toán (thừa)',  color: '#1f6b3c', bg: 'rgba(47,122,77,.14)' },
+    expired:        { text: 'Đã quá hạn giữ chỗ',    color: '#55555c', bg: 'rgba(25,25,25,.07)' },
+    cancelled:      { text: 'Đã huỷ',                color: '#55555c', bg: 'rgba(25,25,25,.07)' }
+  };
+
+  var vndFmt = function (n) { return Number(n || 0).toLocaleString('vi-VN') + 'đ'; };
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = form.querySelector('button[type="submit"]');
+    var msg = $('[data-msg]');
+    var old = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = 'Đang tìm…';
+    msg.textContent = '';
+    $('[data-results]').innerHTML = '';
+    $('[data-help]').hidden = true;
+
+    fetch('/api/tra-cuu', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ phone: form.phone.value })
+    })
+      .then(function (r) { return r.json(); })
+      .catch(function () { return { ok: false, error: 'Mất kết nối. Anh chị thử lại giúp em.' }; })
+      .then(function (res) {
+        btn.disabled = false;
+        btn.textContent = old;
+
+        if (!res.ok) {
+          msg.style.color = '#c8123a';
+          msg.textContent = res.error || 'Chưa tìm được, anh chị thử lại giúp em.';
+          return;
+        }
+        if (!res.orders.length) {
+          $('[data-help]').hidden = false;
+          return;
+        }
+        render(res.orders);
+      });
+  });
+
+  function render(orders) {
+    $('[data-results]').innerHTML = orders.map(function (o) {
+      var s = LABEL[o.status] || { text: o.status, color: '#55555c', bg: 'rgba(25,25,25,.07)' };
+      /* Đơn chưa trả xong thì nút dẫn thẳng sang trang thanh toán — ở đó đã có
+         sẵn QR cho đúng phần còn thiếu. Đơn đã xong thì vẫn cho mở lại để xem. */
+      var chuaXong = o.status === 'pending' || o.status === 'partially_paid';
+      return '<div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:20px 22px">'
+        + '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">'
+        +   '<span style="font-size:22px;font-weight:800;letter-spacing:.05em">' + o.code + '</span>'
+        +   '<span style="font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px;color:'
+        +     s.color + ';background:' + s.bg + '">' + s.text + '</span>'
+        + '</div>'
+        + '<div style="font-size:15px;color:#55555c;margin-top:8px">'
+        +   vndFmt(o.amount)
+        +   (o.remaining > 0 && o.amountPaid > 0
+              ? ' · đã nhận ' + vndFmt(o.amountPaid) + ', còn thiếu <b style="color:#8a5a00">' + vndFmt(o.remaining) + '</b>'
+              : '')
+        + '</div>'
+        + '<a href="/thanh-toan/' + encodeURIComponent(o.code) + '" class="fc2-cta" style="display:inline-flex;'
+        +   'align-items:center;height:46px;padding:0 20px;margin-top:14px;background:'
+        +   (chuaXong ? '#2f7a4d' : 'transparent') + ';color:' + (chuaXong ? '#fff' : '#26643f')
+        +   ';border:' + (chuaXong ? '0' : '1px solid rgba(47,122,77,.4)')
+        +   ';font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">'
+        +   (chuaXong ? 'Chuyển khoản nốt' : 'Xem đơn') + '</a>'
+        + '</div>';
+    }).join('');
+  }
+})();
+
+</script>
+</body>
+</html>

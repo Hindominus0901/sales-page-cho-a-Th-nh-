@@ -1,0 +1,201 @@
+<div class="fc2 fc2-wspage" style="background:#f3ead9;color:#191919;min-height:100vh">
+
+  <!-- Dải chữ chạy — cùng hệ với trang bán, giữ nhận diện thương hiệu -->
+  <div style="background:#1a1a1a;overflow:hidden;padding:11px 0">
+    <div class="fc2-ticker" style="display:flex;gap:44px;white-space:nowrap;color:#a8d98d;font-size:13px;font-weight:600">
+      {{TICKER}}
+    </div>
+  </div>
+
+  <div style="max-width:1040px;margin:0 auto;padding:44px 24px 72px">
+
+    <div style="display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:44px;align-items:start" class="fc2-wsgrid">
+
+      <!-- ------------------------------------------------ cột nội dung -->
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:14px;text-transform:uppercase;letter-spacing:.04em">{{EYEBROW}}</div>
+        <h1 style="font-size:46px;font-weight:800;line-height:1.1;letter-spacing:-.02em;margin:0 0 18px">{{HEADLINE}}</h1>
+        <p style="font-size:19px;line-height:1.65;color:#333;margin:0 0 22px">{{SUBHEADLINE}}</p>
+
+        <!-- Ngày giờ lấy từ site.config.json, một nguồn duy nhất -->
+        <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:20px 22px;margin-bottom:28px;display:grid;gap:10px">
+          {{WHEN_ROWS}}
+        </div>
+
+        <div class="fc2-shadow" style="position:relative;border-radius:24px;overflow:hidden;margin-bottom:20px;aspect-ratio:16/9;background:#e7dcc6">
+          {{HERO_MEDIA}}
+        </div>
+
+        <!-- Dải tin cậy: sao + số học viên, mượn từ hero trang bán -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:26px;flex-wrap:wrap">
+          <div style="display:flex" aria-hidden="true">{{TRUST_DOTS}}</div>
+          <div>
+            <div style="color:#8a5a00;font-size:14px;letter-spacing:1px">
+              <span aria-hidden="true">★★★★★</span>
+              <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Đánh giá 5 trên 5 sao</span>
+            </div>
+            <div style="font-size:13px;color:#4a4a52">{{TRUST_TEXT}}</div>
+          </div>
+        </div>
+
+        <p style="font-size:16px;line-height:1.75;color:#4a4a52;margin:0 0 30px">{{LEAD}}</p>
+
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 16px">{{PAIN_HEADING}}</h2>
+        <ul style="list-style:none;padding:0;margin:0 0 34px;display:grid;gap:13px">{{PAINS}}</ul>
+
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 8px">{{AGENDA_HEADING}}</h2>
+        <p style="font-size:16px;line-height:1.7;color:#4a4a52;margin:0 0 22px">{{AGENDA_LEAD}}</p>
+        <div style="display:grid;gap:16px;margin-bottom:34px">{{AGENDA}}</div>
+
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 16px">{{TAKEAWAY_HEADING}}</h2>
+        <ul style="list-style:none;padding:0;margin:0 0 34px;display:grid;gap:13px">{{TAKEAWAYS}}</ul>
+
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 16px">{{AUDIENCE_HEADING}}</h2>
+        <ul style="list-style:none;padding:0;margin:0 0 34px;display:grid;gap:13px">{{AUDIENCE}}</ul>
+
+        <!-- Người dẫn: khách cần biết đang nghe ai trước khi bỏ ra hai tiếng buổi tối -->
+        <div style="display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:22px;align-items:start;margin-bottom:34px" class="fc2-wshost">
+          <div class="fc2-shadow" style="border-radius:18px;overflow:hidden;aspect-ratio:4/5;background:#e7dcc6">
+            <img src="{{PORTRAIT_IMG}}" alt="Đỗ Mạnh Thành" width="540" height="675" loading="lazy"
+                 style="width:100%;height:100%;object-fit:cover;display:block">
+          </div>
+          <div>
+            <h2 style="font-size:26px;font-weight:800;margin:0 0 10px">{{HOST_HEADING}}</h2>
+            <p style="font-size:16px;line-height:1.75;color:#4a4a52;margin:0 0 14px">{{HOST_TEXT}}</p>
+            <div style="display:flex;gap:26px;flex-wrap:wrap">{{HOST_STATS}}</div>
+          </div>
+        </div>
+
+        {{CLOSING}}
+      </div>
+
+      <!-- ------------------------------------------------ cột form -->
+      <div class="fc2-shadow fc2-wsform" style="background:#fff;border-radius:28px;padding:28px;position:sticky;top:24px">
+
+        <div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">{{FORM_EYEBROW}}</div>
+        <h2 style="font-size:23px;font-weight:800;margin:0 0 6px;line-height:1.25">{{FORM_HEADING}}</h2>
+        <p style="font-size:14px;line-height:1.6;color:#4a4a52;margin:0 0 20px">{{FORM_SUB}}</p>
+
+        <form id="fc2-ws-form" novalidate autocomplete="on" style="display:grid;gap:14px">
+          <div>
+            <label for="fc2-ws-name" class="fc2-label">Họ và tên <span style="color:#d33">*</span></label>
+            <input id="fc2-ws-name" name="name" type="text" required autocomplete="name" placeholder="Nguyễn Văn A" class="fc2-input">
+            <div class="fc2-err" data-err="name"></div>
+          </div>
+
+          <div>
+            <label for="fc2-ws-phone" class="fc2-label">Số điện thoại (Zalo) <span style="color:#d33">*</span></label>
+            <input id="fc2-ws-phone" name="phone" type="tel" required autocomplete="tel" inputmode="numeric" placeholder="0912345678" class="fc2-input">
+            <div class="fc2-err" data-err="phone"></div>
+          </div>
+
+          <div>
+            <label for="fc2-ws-email" class="fc2-label">Email (không bắt buộc)</label>
+            <input id="fc2-ws-email" name="email" type="email" autocomplete="email" placeholder="email@cua-anh-chi.com" class="fc2-input">
+            <div class="fc2-err" data-err="email"></div>
+          </div>
+
+          <div>
+            <label for="fc2-ws-field" class="fc2-label">Anh chị đang làm lĩnh vực gì?</label>
+            <input id="fc2-ws-field" name="field" type="text" placeholder="Ví dụ: thiết kế nội thất, spa, dạy học…" class="fc2-input">
+            <div class="fc2-err" data-err="field"></div>
+          </div>
+
+          <!-- Ba ô dưới đây nuôi phần chấm điểm lead: chúng là thứ cho biết
+               nên gọi ai trước, nên đặt ngay trong form chứ không để hỏi sau. -->
+          <div>
+            <label for="fc2-ws-channel" class="fc2-label">Kênh của anh chị hiện tại</label>
+            <select id="fc2-ws-channel" name="channel" class="fc2-input">
+              <option value="">— Chọn —</option>
+              <option value="none_yet">Chưa có kênh</option>
+              <option value="has_under_1k">Đã có, dưới 1.000 người theo dõi</option>
+              <option value="has_1k_10k">Đã có, 1.000 – 10.000 người theo dõi</option>
+              <option value="has_over_10k">Đã có, trên 10.000 người theo dõi</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fc2-ws-time" class="fc2-label">Mỗi ngày anh chị dành được bao nhiêu thời gian?</label>
+            <select id="fc2-ws-time" name="daily_time" class="fc2-input">
+              <option value="">— Chọn —</option>
+              <option value="under_1h">Dưới 1 giờ</option>
+              <option value="1_2h">1 – 2 giờ</option>
+              <option value="over_2h">Trên 2 giờ</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fc2-ws-goal" class="fc2-label">Điều anh chị mong nhất khi xây kênh</label>
+            <select id="fc2-ws-goal" name="goal" class="fc2-input">
+              <option value="">— Chọn —</option>
+              <option value="get_clients">Thu hút khách hàng</option>
+              <option value="sell_products">Bán sản phẩm / dịch vụ</option>
+              <option value="build_personal_brand">Xây thương hiệu cá nhân</option>
+              <option value="just_curious">Tìm hiểu thêm đã</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="fc2-ws-stuck" class="fc2-label">Điều anh chị đang mắc kẹt nhất khi xây kênh</label>
+            <textarea id="fc2-ws-stuck" name="stuck" rows="3" placeholder="Viết vài chữ cũng được — Thành đọc hết." class="fc2-input" style="resize:vertical;min-height:82px;padding-top:12px"></textarea>
+            <div class="fc2-err" data-err="stuck"></div>
+          </div>
+
+          <!-- bẫy bot: người thật không nhìn thấy ô này -->
+          <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
+            <label for="fc2-ws-website">Website</label>
+            <input id="fc2-ws-website" name="website" type="text" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div class="fc2-formerr" data-err="_form"></div>
+
+          <button type="submit" id="fc2-ws-submit" class="fc2-cta"
+                  style="display:inline-flex;align-items:center;justify-content:center;height:58px;padding:0 28px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border-radius:16px;border:0;cursor:pointer;width:100%">
+            <span data-label>{{CTA_LABEL}}</span>
+          </button>
+
+          <p style="font-size:12px;color:#77777d;line-height:1.6;margin:0">{{FORM_NOTE}}</p>
+        </form>
+
+        <!-- Trạng thái sau khi gửi: thay chỗ form, cùng một card -->
+        <div id="fc2-ws-thanks" hidden>
+          <div style="font-size:34px;margin-bottom:10px;text-align:center">✅</div>
+          <h2 style="font-size:22px;font-weight:800;margin:0 0 10px;text-align:center">{{THANKS_HEADLINE}}</h2>
+          <p style="font-size:15px;line-height:1.7;color:#4a4a52;margin:0 0 18px;text-align:center">{{THANKS_TEXT}}</p>
+
+          <div data-zoom-box hidden style="background:rgba(47,122,77,.07);border:1px solid rgba(47,122,77,.22);border-radius:16px;padding:16px 18px;margin-bottom:14px;font-size:15px;line-height:1.7">
+            <div style="font-weight:700;margin-bottom:6px">Thông tin buổi học</div>
+            <div data-zoom-when style="color:#4a4a52"></div>
+            <div data-zoom-id hidden style="color:#4a4a52"></div>
+            <div data-zoom-pass hidden style="color:#4a4a52"></div>
+          </div>
+
+          <div style="display:grid;gap:10px">
+            <a data-zoom-btn hidden class="fc2-cta" target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;background:#2f7a4d;color:#fff;font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">Vào phòng Zoom</a>
+            <a data-zalo-btn hidden target="_blank" rel="noopener"
+               style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;background:rgba(47,122,77,.1);color:#2f7a4d;font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">Vào nhóm Zalo nhắc lịch</a>
+            <!-- Bán tiếp: người vừa đăng ký workshop là tệp ấm nhất cho khoá 21 ngày -->
+            <a href="/" style="display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;border:1.5px solid rgba(25,25,25,.18);color:#191919;font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">Xem Thử thách 21 ngày →</a>
+          </div>
+        </div>
+
+        <div id="fc2-ws-fallback" hidden style="background:rgba(211,51,51,.07);border:1px solid rgba(211,51,51,.25);border-radius:16px;padding:16px 18px;font-size:14px;line-height:1.65;color:#333;margin-top:14px"></div>
+      </div>
+
+    </div>
+
+    {{VIDEOS}}
+
+    {{QUOTES}}
+
+    {{PROOF}}
+
+    {{FAQ}}
+
+  </div>
+
+  {{FOOTER}}
+</div>
+
+{{STICKY}}

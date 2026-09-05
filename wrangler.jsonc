@@ -1,0 +1,95 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "goc-creator",
+  "main": "src/worker.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Trang public là HTML tĩnh do `npm run build:pages` sinh ra.
+  // run_worker_first: Worker xử lý trước để bắt attribution ?ref= và render
+  // các trang động (/thanh-toan/:ma), rồi mới rơi về file tĩnh.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+
+  "observability": { "enabled": true },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TẦNG MẶC ĐỊNH NÀY LÀ BẢN CHẠY THẬT.
+  //
+  // Workers Builds (nối repo trong dashboard Cloudflare) chạy `wrangler deploy`
+  // KHÔNG kèm --env, nên nó luôn deploy tầng này. Để tầng mặc định trỏ vào tài
+  // nguyên "-dev" thì bấm nối repo xong là deploy nhầm chỗ mà không báo gì.
+  //
+  // Chạy thử máy nhà không bị ảnh hưởng: `wrangler dev` dùng D1/KV/R2 giả lập
+  // cục bộ, không đụng tới id thật ghi ở đây.
+  //
+  // env.preview và env.production bên dưới dành cho đường chạy bằng lệnh
+  // (`npm run cf:preview` / `cf:prod`).
+  // ─────────────────────────────────────────────────────────────────────────
+  "vars": {
+    "APP_ENV": "production",
+    "PUBLIC_BASE_URL": "https://goc-creator.workers.dev",
+    // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán
+    "SEPAY_BANK_CODE": "TCB",
+    "SEPAY_BANK_NAME": "Techcombank",
+    "SEPAY_ACCOUNT_NO": "",
+    "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+    "ORDER_CODE_PREFIX": "GC",
+    "AFFILIATE_DEFAULT_RATE_BP": "2000",
+    "AFFILIATE_COOKIE_DAYS": "90",
+    "COMMISSION_HOLD_DAYS": "7"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "goc-creator",
+      "database_id": "aab67b83-6f86-4429-b7e8-215c6d4c5c2a",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "d105a8bcb2ba465996f280ba60573bfb" }
+  ],
+
+  // CỐ Ý KHÔNG CÓ R2.
+  //
+  // Ảnh của trang nằm trong ./public và đi kèm Worker, nên R2 chỉ cần khi nào
+  // muốn tải ảnh mới lên từ trang quản trị — mà tính năng đó chưa có. Bật R2
+  // đòi thêm một bước đăng ký gói (kèm thẻ thanh toán) trên tài khoản
+  // Cloudflare, và bắt trả cái giá đó cho một binding chưa dòng mã nào đụng
+  // tới là không đáng.
+  //
+  // Cần dùng sau này: tạo bucket rồi thêm lại
+  //   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "goc-creator-media" }]
+
+  // 03:00 giờ Việt Nam = 20:00 UTC hôm trước
+  "triggers": { "crons": ["0 20 * * *"] },
+
+  "env": {
+    "preview": {
+      "vars": {
+        "APP_ENV": "preview",
+        "PUBLIC_BASE_URL": "https://goc-creator-preview.workers.dev",
+        "SEPAY_BANK_CODE": "TCB",
+        "SEPAY_BANK_NAME": "Techcombank",
+        "SEPAY_ACCOUNT_NO": "",
+        "SEPAY_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+        "ORDER_CODE_PREFIX": "GC",
+        "AFFILIATE_DEFAULT_RATE_BP": "2000",
+        "AFFILIATE_COOKIE_DAYS": "90",
+        "COMMISSION_HOLD_DAYS": "7"
+      },
+      "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+      "d1_databases": [
+        { "binding": "DB", "database_name": "goc-creator-preview", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+      ],
+      "kv_namespaces": [{ "binding": "CACHE", "id": "0000000000000000000000000000000000" }],
+      "triggers": { "crons": ["0 20 * * *"] }
+    }
+  }
+}

@@ -1,0 +1,122 @@
+<div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
+  <div style="max-width:760px;margin:0 auto;padding:28px 20px 96px">
+
+    <!-- Đang tải -->
+    <div data-state="loading" class="fc2-shadow" style="background:#fff;border-radius:28px;padding:40px;text-align:center;color:#77777d">
+      Đang mở hành trình của anh chị…
+    </div>
+
+    <!-- Link hỏng -->
+    <div data-state="error" hidden class="fc2-shadow" style="background:#fff;border-radius:28px;padding:32px">
+      <div style="font-size:19px;font-weight:800;margin-bottom:10px">Không mở được đường link này</div>
+      <p data-error-message style="font-size:15px;line-height:1.7;color:#55555c;margin:0 0 18px"></p>
+      <p style="font-size:14px;line-height:1.7;color:#55555c;margin:0">
+        Anh chị nhắn Zalo cho team để được gửi lại link mới giúp em.
+      </p>
+    </div>
+
+    <div data-state="app" hidden>
+
+      <!-- Đầu trang: tên, bậc, ba con số -->
+      <header style="margin-bottom:22px">
+        <div style="font-size:13px;font-weight:700;color:#2f7a4d;letter-spacing:.04em;margin-bottom:8px">HÀNH TRÌNH 21 NGÀY</div>
+        <h1 style="font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px">
+          Chào <span data-name></span>
+        </h1>
+        <p data-cohort style="font-size:14px;color:#55555c;margin:0"></p>
+      </header>
+
+      <div class="fc2-shadow fc2-hocrank" style="background:#fff;border-radius:24px;padding:22px 24px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span data-rank-icon style="font-size:34px;line-height:1"></span>
+          <div style="min-width:0;flex:1">
+            <div data-rank-name style="font-size:19px;font-weight:800"></div>
+            <div data-rank-next style="font-size:13px;color:#55555c;margin-top:2px"></div>
+          </div>
+        </div>
+        <div style="height:8px;background:rgba(25,25,25,.08);border-radius:999px;margin-top:14px;overflow:hidden">
+          <div data-rank-bar style="height:100%;width:0;background:#2f7a4d;border-radius:999px;transition:width .6s cubic-bezier(.22,1,.36,1)"></div>
+        </div>
+      </div>
+
+      <div class="fc2-hocstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px">
+        <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:16px 18px">
+          <div style="font-size:12px;color:#55555c;margin-bottom:4px">Coin đang có</div>
+          <div data-coin style="font-size:24px;font-weight:800;font-variant-numeric:tabular-nums">0</div>
+        </div>
+        <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:16px 18px">
+          <div style="font-size:12px;color:#55555c;margin-bottom:4px">Chuỗi ngày</div>
+          <div data-streak style="font-size:24px;font-weight:800;font-variant-numeric:tabular-nums">0</div>
+        </div>
+        <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:16px 18px">
+          <div style="font-size:12px;color:#55555c;margin-bottom:4px">Bài đã duyệt</div>
+          <div data-done style="font-size:24px;font-weight:800;font-variant-numeric:tabular-nums">0<span style="font-size:15px;font-weight:600;color:#77777d">/21</span></div>
+        </div>
+      </div>
+
+      <!-- 21 ô ngày -->
+      <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 12px">Chặng đường</h2>
+      <div data-grid class="fc2-hocgrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:12px"></div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#55555c;margin-bottom:30px">
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2f7a4d;margin-right:5px"></i>Đã duyệt</span>
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#e2a33c;margin-right:5px"></i>Chờ duyệt</span>
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#c8123a;margin-right:5px"></i>Cần sửa</span>
+        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(25,25,25,.12);margin-right:5px"></i>Chưa nộp</span>
+      </div>
+
+      <!-- Nộp bài -->
+      <div class="fc2-shadow" style="background:#fff;border-radius:28px;padding:26px;margin-bottom:30px">
+        <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 4px">Nộp bài</h2>
+        <p data-submit-hint style="font-size:14px;color:#55555c;line-height:1.65;margin:0 0 18px"></p>
+
+        <!-- Nhận xét của team cho ngày đang chọn -->
+        <div data-feedback hidden style="border-left:3px solid #e2a33c;background:rgba(226,163,60,.09);border-radius:0 14px 14px 0;padding:14px 16px;margin-bottom:18px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Nhận xét của team</div>
+          <div data-feedback-text style="font-size:14px;line-height:1.7;color:#3a3a42"></div>
+        </div>
+
+        <form data-form style="display:grid;gap:14px">
+          <label style="display:grid;gap:6px">
+            <span style="font-size:13px;font-weight:600">Ngày</span>
+            <select name="day" style="height:48px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 12px;font:inherit;background:#fff"></select>
+          </label>
+          <label style="display:grid;gap:6px">
+            <span style="font-size:13px;font-weight:600">Link bài đăng</span>
+            <input name="postUrl" type="url" inputmode="url" placeholder="https://…" required
+                   style="height:48px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 14px;font:inherit">
+          </label>
+          <label style="display:grid;gap:6px">
+            <span style="font-size:13px;font-weight:600">Đăng ở đâu</span>
+            <select name="channel" style="height:48px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 12px;font:inherit;background:#fff">
+              <option value="facebook">Facebook</option>
+              <option value="tiktok">TikTok</option>
+              <option value="youtube">YouTube</option>
+              <option value="khac">Nơi khác</option>
+            </select>
+          </label>
+          <label style="display:grid;gap:6px">
+            <span style="font-size:13px;font-weight:600">Anh chị muốn team góp ý điều gì? <span style="font-weight:400;color:#77777d">(không bắt buộc)</span></span>
+            <textarea name="content" rows="3" placeholder="Ví dụ: em thấy phần mở đầu hơi dài, anh chị xem giúp em…"
+                      style="border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:12px 14px;font:inherit;resize:vertical"></textarea>
+          </label>
+          <button type="submit" class="fc2-cta"
+                  style="height:54px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border:0;border-radius:16px;cursor:pointer">
+            Nộp bài
+          </button>
+          <p data-form-msg style="font-size:14px;line-height:1.6;margin:0"></p>
+        </form>
+      </div>
+
+      <!-- Đổi quà -->
+      <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 4px">Đổi quà</h2>
+      <p style="font-size:14px;color:#55555c;line-height:1.65;margin:0 0 14px">Coin tích được đổi lấy phần quà bên dưới. Đổi xong team sẽ nhắn Zalo để gửi quà.</p>
+      <div data-rewards style="display:grid;gap:12px;margin-bottom:26px"></div>
+
+      <div data-redemptions hidden style="margin-bottom:20px">
+        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px">Quà đã đổi</h3>
+        <div data-redemptions-list style="display:grid;gap:8px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>

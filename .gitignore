@@ -1,0 +1,25 @@
+node_modules/
+.wrangler/
+.dev.vars
+dist/
+*.log
+.DS_Store
+
+# Bản build của trang (public/*.html, public/admin/, public/aff/) CÓ trong git.
+#
+# Thường thì không commit sản phẩm build. Ở đây commit là có chủ đích: nó biến
+# `wrangler deploy` thành một lệnh chạy được ngay từ bản checkout sạch, không
+# phụ thuộc vào `npm install` và vite chạy trót lọt trên máy chủ build của
+# Cloudflare — thứ không ai ở đây thử trước được.
+#
+# Cloudflare vẫn chạy `npm run build` trước khi deploy nên bản trong git luôn
+# được ghi đè bằng bản mới. Nó là lưới đỡ, không phải nguồn sự thật.
+#
+# Sửa site.config.json hay build/ thì nhớ chạy `npm run build` rồi commit kèm,
+# nếu không bản trong git lệch với mã nguồn.
+
+# Video gốc không nằm trong repo (dùng YouTube unlisted), chỉ giữ poster
+public/videos/*.mp4
+
+# File tạm lúc kiểm chứng — không bao giờ commit
+*.tmp.mjs

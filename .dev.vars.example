@@ -1,0 +1,22 @@
+# Chép file này thành .dev.vars (đã bị .gitignore bỏ qua) để chạy máy nhà.
+# Khi deploy thật thì đặt bằng: wrangler secret put <TÊN> --env production
+
+# Khoá ký cookie phiên đăng nhập. Sinh bằng: openssl rand -base64 48
+SESSION_SECRET=doi-thanh-chuoi-ngau-nhien-that-truoc-khi-chay
+
+# Muối băm IP (để thống kê mà không lưu IP thô). openssl rand -base64 32
+IP_HASH_SALT=doi-thanh-chuoi-ngau-nhien-khac
+
+# Khoá SePay gửi kèm webhook, header: Authorization: Apikey <giá trị này>
+# Lấy trong SePay → Tích hợp webhook → API Key
+SEPAY_WEBHOOK_API_KEY=
+
+# Cloudflare Turnstile (chống bot cho form công khai). Để trống = tắt kiểm tra.
+TURNSTILE_SECRET_KEY=
+TURNSTILE_SITE_KEY=
+
+# Gửi email xác nhận đơn và link workshop (Resend). Để trống = không gửi:
+# email vẫn vào hàng đợi nhưng đánh dấu "bỏ qua", hệ vẫn chạy bình thường.
+# Lấy khoá ở resend.com → API Keys. EMAIL_FROM phải là tên miền đã xác minh.
+RESEND_API_KEY=
+EMAIL_FROM=Góc Creator <no-reply@vidu.com>
