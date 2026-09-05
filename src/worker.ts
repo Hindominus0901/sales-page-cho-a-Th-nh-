@@ -4,6 +4,13 @@ import { attribution } from './lib/affiliate/attribution';
 import { publicRoutes } from './routes/public';
 import { checkoutRoutes } from './routes/checkout';
 import { webhookRoutes } from './routes/webhook-sepay';
+import { adminAuthRoutes } from './routes/admin/auth';
+import { adminDashboardRoutes } from './routes/admin/dashboard';
+import { adminLeadRoutes } from './routes/admin/leads';
+import { adminOrderRoutes } from './routes/admin/orders';
+import { adminAffiliateRoutes } from './routes/admin/affiliates';
+import { adminContentRoutes } from './routes/admin/content';
+import { affiliateRoutes } from './routes/affiliate/portal';
 import { runDailyJobs } from './lib/jobs/daily';
 
 const app = new Hono<HonoEnv>();
@@ -18,6 +25,18 @@ app.use('*', attribution);
 
 app.route('/', publicRoutes);
 app.route('/', checkoutRoutes);
+
+/**
+ * Đăng nhập/đăng xuất đứng TRƯỚC các route có guard: chúng phải gọi được khi
+ * chưa có phiên. Các route quản trị còn lại tự gắn requireAdmin bên trong.
+ */
+app.route('/', adminAuthRoutes);
+app.route('/', adminDashboardRoutes);
+app.route('/', adminLeadRoutes);
+app.route('/', adminOrderRoutes);
+app.route('/', adminAffiliateRoutes);
+app.route('/', adminContentRoutes);
+app.route('/', affiliateRoutes);
 
 /** Trang quản trị và portal CTV không bao giờ được index. */
 app.use('/admin/*', async (c, next) => { c.header('X-Robots-Tag', 'noindex, nofollow'); await next(); });
@@ -36,6 +55,15 @@ app.get('/cam-on/:code', async (c) => {
   c.header('X-Robots-Tag', 'noindex, nofollow');
   return c.env.ASSETS.fetch(new Request(new URL('/cam-on.html', c.req.url)));
 });
+
+/**
+ * SPA quản trị và portal CTV: mọi đường dẫn con đều trả về cùng một file
+ * index.html để router phía trình duyệt tự xử lý.
+ */
+app.get('/admin/*', (c) => c.env.ASSETS.fetch(new Request(new URL('/admin/index.html', c.req.url))));
+app.get('/admin',   (c) => c.env.ASSETS.fetch(new Request(new URL('/admin/index.html', c.req.url))));
+app.get('/aff/*',   (c) => c.env.ASSETS.fetch(new Request(new URL('/aff/index.html', c.req.url))));
+app.get('/aff',     (c) => c.env.ASSETS.fetch(new Request(new URL('/aff/index.html', c.req.url))));
 
 // Mọi đường dẫn còn lại rơi về file tĩnh do `npm run build:pages` sinh ra.
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));
