@@ -16,6 +16,7 @@ import Settings from './pages/Settings';
 import AuditLog from './pages/AuditLog';
 import Staff from './pages/Staff';
 import MatKhau from './pages/MatKhau';
+import Lich from './pages/Lich';
 import Submissions from './pages/Submissions';
 import Leaderboard from './pages/Leaderboard';
 import Rewards from './pages/Rewards';
@@ -52,6 +53,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     { href: '/don-hang',   label: 'Đơn hàng',   icon: 'orders' },
     { href: '/thanh-toan', label: 'Giao dịch chưa khớp', icon: 'payments', badge: 'unmatched_payments' },
     { href: '/workshop',   label: 'Workshop',   icon: 'workshop' },
+    { href: '/lich',       label: 'Lịch',       icon: 'workshop' },
   ]},
   { section: 'Học viên', items: [
     { href: '/hoc-vien',   label: 'Học viên',   icon: 'students' },
@@ -171,6 +173,7 @@ function Route({ path, query }: { path: string; query: URLSearchParams }) {
   if (path === '/qua-tang') return <Rewards />;
   if (path === '/co-che') return <Mechanics />;
   if (path === '/nhan-su') return <Staff />;
+  if (path === '/lich') return <Lich />;
   if (path === '/mat-khau') return <MatKhau />;
   if (path === '/nhat-ky') return <AuditLog />;
   return <div className="card card-pad">Không có trang này. <a href="#/">Về tổng quan</a></div>;

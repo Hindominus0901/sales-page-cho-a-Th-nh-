@@ -3,7 +3,7 @@ import type { HonoEnv } from '../../types';
 import { requireAdmin, requireRole, adminUserOf } from '../../lib/auth/guards';
 import { audit } from '../../lib/db/audit';
 import { uuid, accessToken } from '../../lib/util/id';
-import { now, ictDateTime } from '../../lib/util/datetime';
+import { now, ictDate, ictDateTime, ICT_OFFSET_SEC } from '../../lib/util/datetime';
 
 export const adminContentRoutes = new Hono<HonoEnv>();
 adminContentRoutes.use('/api/admin/*', requireAdmin);
@@ -275,4 +275,82 @@ adminContentRoutes.get('/api/admin/audit', async (c) => {
       ...r, createdAtText: ictDateTime(r.created_at as number),
     })),
   });
+});
+
+// ---------------------------------------------------------------- lịch
+
+/**
+ * Lịch tháng: buổi workshop và ngày khai giảng.
+ *
+ * Nhận tháng dạng 'YYYY-MM' và trả về các sự kiện GẮN VỚI NGÀY GIỜ VIỆT NAM,
+ * không phải UTC. Buổi 20h ngày 5 theo giờ Việt Nam là 13h ngày 5 UTC — nhưng
+ * buổi 8h sáng ngày 1 lại là 1h sáng ngày 1 UTC, và một buổi 6h sáng sẽ rơi
+ * sang ngày HÔM TRƯỚC nếu tính bằng UTC. Lịch mà đặt sự kiện sai ô ngày thì
+ * còn tệ hơn không có lịch.
+ *
+ * Ngày khai giảng nằm ở products.start_date, đã là chuỗi 'YYYY-MM-DD' theo giờ
+ * Việt Nam nên không phải quy đổi gì.
+ */
+adminContentRoutes.get('/api/admin/lich', async (c) => {
+  const thang = String(c.req.query('thang') ?? '').trim();
+  if (!/^\d{4}-\d{2}$/.test(thang)) {
+    return c.json({ ok: false, error: 'Tham số "thang" phải dạng YYYY-MM.' }, 400);
+  }
+
+  // Khoảng unix bao trọn tháng theo giờ Việt Nam: từ 00:00 ngày 1 tới 00:00
+  // ngày 1 tháng sau, cả hai quy về UTC bằng cách trừ đi 7 giờ.
+  const [y, m] = thang.split('-').map(Number) as [number, number];
+  const dau = Math.floor(Date.UTC(y, m - 1, 1) / 1000) - ICT_OFFSET_SEC;
+  const cuoi = Math.floor(Date.UTC(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1) / 1000) - ICT_OFFSET_SEC;
+
+  const ws = await c.env.DB.prepare(
+    `SELECT w.id, w.slug, w.title, w.starts_at, w.duration_min, w.status,
+            w.zoom_url, w.capacity,
+            (SELECT COUNT(*) FROM workshop_registrations WHERE session_id = w.id) registrations
+     FROM workshop_sessions w
+     WHERE w.starts_at >= ? AND w.starts_at < ?
+     ORDER BY w.starts_at`,
+  ).bind(dau, cuoi).all<{
+    id: string; slug: string; title: string; starts_at: number; duration_min: number;
+    status: string; zoom_url: string | null; capacity: number | null; registrations: number;
+  }>();
+
+  interface SuKien {
+    kind: 'workshop' | 'khai_giang';
+    id: string; date: string; time: string; title: string; status: string;
+    zoomUrl: string | null; registrations: number; capacity: number | null;
+  }
+
+  const events: SuKien[] = (ws.results ?? []).map((w) => ({
+    kind: 'workshop',
+    id: w.id,
+    date: ictDate(w.starts_at),
+    time: ictDateTime(w.starts_at).slice(0, 5),
+    title: w.title,
+    status: w.status,
+    zoomUrl: w.zoom_url,
+    registrations: w.registrations,
+    capacity: w.capacity,
+  }));
+
+  const sp = await c.env.DB.prepare(
+    `SELECT start_date FROM products WHERE slug = 'thu-thach-21-ngay'`,
+  ).first<{ start_date: string | null }>();
+
+  if (sp?.start_date && sp.start_date.startsWith(thang)) {
+    events.push({
+      kind: 'khai_giang',
+      id: 'khai-giang',
+      date: sp.start_date,
+      time: '',
+      title: 'Khai giảng Thử Thách 21 Ngày',
+      status: 'upcoming',
+      zoomUrl: null,
+      registrations: 0,
+      capacity: null,
+    });
+  }
+
+  events.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  return c.json({ ok: true, thang, events });
 });

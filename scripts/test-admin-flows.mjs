@@ -248,6 +248,42 @@ if (orderIds.length >= SO_DON) {
 }
 console.log('');
 
+// ---------------------------------------------------------------- lịch
+console.log('Lịch tháng');
+{
+  // Ba buổi đặt đúng vào những chỗ múi giờ hay làm sai:
+  //   · 06:00 giờ VN ngày 1  → 23:00 UTC ngày TRƯỚC ĐÓ, tháng trước.
+  //   · 23:30 giờ VN ngày cuối tháng → 16:30 UTC cùng ngày.
+  // Tính bằng UTC là buổi thứ nhất rơi ra ngoài tháng và biến mất khỏi lịch.
+  const thang = '2026-11';
+  const unix = (iso) => Math.floor(Date.parse(iso) / 1000);
+  const dat = (id, title, iso) => db.prepare(`INSERT OR REPLACE INTO workshop_sessions
+      (id, slug, title, starts_at, duration_min, zoom_url, status, created_at, updated_at)
+    VALUES (?,?,?,?,135,?, 'upcoming', unixepoch(), unixepoch())`)
+    .run(id, id, title, unix(iso), 'https://zoom.us/j/lich');
+
+  dat('lich-a', 'Buổi sáng sớm', '2026-11-01T06:00:00+07:00');
+  dat('lich-b', 'Buổi tối muộn', '2026-11-30T23:30:00+07:00');
+  dat('lich-c', 'Buổi tháng khác', '2026-12-05T20:00:00+07:00');
+
+  const res = await admin.get(`/api/admin/lich?thang=${thang}`);
+  ok('lấy được lịch', res.status, 200);
+  const ids = (res.body.events ?? []).map((e) => e.id);
+  ok('buổi 6h sáng ngày 1 nằm ĐÚNG trong tháng', ids.includes('lich-a'), true);
+  ok('buổi 23h30 ngày cuối tháng vẫn trong tháng', ids.includes('lich-b'), true);
+  ok('buổi tháng khác KHÔNG lọt vào', ids.includes('lich-c'), false);
+
+  const a = (res.body.events ?? []).find((e) => e.id === 'lich-a');
+  ok('ngày theo giờ Việt Nam, không phải UTC', a?.date, '2026-11-01');
+  ok('giờ hiển thị đúng', a?.time, '06:00');
+  ok('có đếm số người đăng ký', typeof a?.registrations, 'number');
+
+  ok('tham số tháng sai bị từ chối', (await admin.get('/api/admin/lich?thang=11-2026')).status, 400);
+
+  db.prepare("DELETE FROM workshop_sessions WHERE id LIKE 'lich-%'").run();
+}
+console.log('');
+
 // ---------------------------------------------------------------- duyệt bài
 console.log('Duyệt bài, coin và chuỗi ngày');
 {
