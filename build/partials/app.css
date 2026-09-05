@@ -15,10 +15,12 @@
 .fc2 > div > div[style*="max-width:900px"],
 .fc2 > div > div[style*="max-width:700px"],
 .fc2 > div > ul[style*="max-width:720px"]{max-width:100% !important}
-.fc2 footer > div{max-width:1040px !important;margin:0 auto}
+.fc2 > footer > div{max-width:1040px !important;margin:0 auto}
 
-/* Thanh cố định dưới đáy không được che mất chân trang */
-.fc2 footer{padding-bottom:104px !important}
+/* Thanh cố định dưới đáy không được che mất chân trang.
+   Dùng dấu > : `<footer>` còn được dùng làm khối ghi tên người nói trong card
+   trích dẫn, và quy tắc rộng sẽ nhồi 104px khoảng trắng vào từng card. */
+.fc2 > footer{padding-bottom:104px !important}
 
 /* ---------- Cỡ chữ ----------
    Bản thiết kế đặt cỡ chữ thẳng trong thẻ và hơi nhỏ so với bề rộng cột. */
@@ -51,7 +53,7 @@
 .fc2 [style*="color:#f0a500"]{color:#8a5a00 !important}
 .fc2 [style*="color:#2f7a4d"]{color:#26643f !important}
 /* Dòng miễn trừ ở chân trang: 12px quá nhỏ để đọc màu xám */
-.fc2 footer span[style*="font-size:12px"]{font-size:14px !important;color:#5c5c64 !important}
+.fc2 > footer span[style*="font-size:12px"]{font-size:14px !important;color:#5c5c64 !important}
 
 /* Trên nền tối thì giữ nguyên màu sáng của bản thiết kế */
 .fc2 [style*="background:#1a1a1a"] [style*="color:#77777d"],
@@ -142,7 +144,6 @@
   .fc2-wsform{position:static !important}
   .fc2-wshost{grid-template-columns:1fr !important}
   .fc2-wshost > div:first-child{max-width:220px}
-  .fc2-wsproof{grid-template-columns:1fr !important}
 }
 
 /* ---------- Đáp ứng màn hình nhỏ ---------- */
@@ -334,4 +335,77 @@
 /* ---------- Footer 3 cột ---------- */
 @media (max-width:820px){
   .fc2-footcols{grid-template-columns:1fr !important;gap:28px !important}
+}
+
+
+/* ================= Trang workshop ================= */
+
+/* Ảnh chụp tin nhắn: một hàng cuộn ngang. Đây là bằng chứng phụ, không nên
+   chiếm hai hàng giữa trang — và cuộn ngang thì thêm ảnh mới không phá bố cục. */
+.fc2-wsproof{
+  display:flex;gap:16px;align-items:flex-start;
+  overflow-x:auto;padding-bottom:10px;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
+}
+.fc2-wsproof > figure{scroll-snap-align:start}
+.fc2-wsproof::-webkit-scrollbar{height:8px}
+.fc2-wsproof::-webkit-scrollbar-thumb{background:rgba(25,25,25,.2);border-radius:99px}
+.fc2-wsproof::-webkit-scrollbar-track{background:rgba(25,25,25,.05);border-radius:99px}
+
+/* Câu trả lời FAQ nằm thẳng trong <details> nên không có lề trái của summary */
+.fc2-wsfaq details > p{padding:0 18px}
+
+/* Thanh dính đáy: nút giữ chỗ luôn trong tầm tay sau khi khách cuộn qua form.
+   Chỉ hiện khi đã cuộn khỏi hero — hiện ngay từ đầu thì che mất nội dung mở đầu. */
+.fc2-wssticky{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;
+  padding:12px 18px;
+  background:rgba(243,234,217,.92);backdrop-filter:blur(10px);
+  border-top:1px solid rgba(25,25,25,.14);
+  box-shadow:0 -6px 24px rgba(0,0,0,.07);
+  font-size:14.5px;font-weight:600;color:#191919;
+  transform:translateY(110%);transition:transform .32s var(--ease-out);
+}
+.fc2-wssticky[data-show]{transform:translateY(0)}
+.fc2-wsstickybtn{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:44px;padding:0 24px;border-radius:13px;
+  background:#2f7a4d;color:#fff;font-weight:700;font-size:15px;text-decoration:none;
+}
+@media (max-width:560px){
+  .fc2-wssticky{gap:10px;padding:10px 14px;font-size:13.5px}
+  .fc2-wssticky > span{flex:1 1 100%;text-align:center}
+  .fc2-wsstickybtn{width:100%}
+}
+
+/* Chân trang không bị thanh dính đáy che mất (chỉ chân trang thật, xem ghi chú trên) */
+.fc2-wspage > footer{padding-bottom:96px !important}
+
+/* --- Hover và phản hồi khi nhấn cho nút của trang workshop ---
+   Quy tắc sẵn có chỉ nhắm a[href="/dang-ky"] của trang bán, nên các nút ở đây
+   không có phản hồi nào. */
+.fc2 .fc2-wsstickybtn,
+.fc2 #fc2-ws-submit,
+.fc2 #fc2-lead-submit,
+.fc2 #fc2-ws-thanks a{
+  transition:transform .16s var(--ease-out),box-shadow .16s var(--ease-out),background .16s ease;
+}
+.fc2 .fc2-wsstickybtn:active,
+.fc2 #fc2-ws-submit:active,
+.fc2 #fc2-lead-submit:active{transform:scale(.97)}
+
+@media (hover:hover) and (pointer:fine){
+  .fc2 .fc2-wsstickybtn:hover,
+  .fc2 #fc2-ws-submit:hover:not(:disabled),
+  .fc2 #fc2-lead-submit:hover:not(:disabled){
+    transform:translateY(-2px);box-shadow:0 10px 24px rgba(47,122,77,.32);background:#26643f;
+  }
+  .fc2 #fc2-ws-thanks a:hover{transform:translateY(-2px)}
+  /* Card trong lưới nhấc nhẹ khi rê chuột, để thấy chúng là một nhóm */
+  .fc2-wspage .fc2-shadow{transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .fc2-wssticky{transition:none}
 }

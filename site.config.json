@@ -365,6 +365,69 @@
         "src": "fb-hanhchi.png",
         "caption": "Học viên khoá 21 ngày"
       }
-    ]
+    ],
+    "videoHeading": "Học viên nói gì",
+    "videoNote": "Bấm vào một ô để xem video. Đây là học viên các khoá trước, không phải diễn viên.",
+    "quoteHeading": "Vài điều học viên kể lại",
+    "quotes": [
+      {
+        "name": "Chị Hạnh Chi",
+        "meta": "Hơn 60 tuổi · chủ 2 trang tin",
+        "text": "Cuối cùng mình đã hoàn thành khoá học liên tục 21 ngày, lại còn nhận được học bổng Gương sáng hiếu học."
+      },
+      {
+        "name": "Anh Trần Thiện",
+        "meta": "Thiết kế và thi công nội thất",
+        "text": "Xuất hiện và chia sẻ cách anh tư duy, cách anh làm việc — từ đó bắt đầu nhận được đơn hàng."
+      },
+      {
+        "name": "Chị Út Nguyễn",
+        "meta": "Chủ cửa hàng",
+        "text": "Đổi câu hỏi từ \"làm sao để viral\" sang \"khách cần gì\" — video đầu tiên sau khi đổi, bán được hai phần ba số hàng trong cửa hàng."
+      },
+      {
+        "name": "Chị Nguyễn Thị Trang",
+        "meta": "Học viên khoá 21 ngày",
+        "text": "138.962 view cho bài về chuối luộc, 73.244 cho bài hạt mít, tổng view tăng 220% trong một tháng."
+      },
+      {
+        "name": "Chị Nhung Tuyết",
+        "meta": "Học viên khoá 21 ngày",
+        "text": "Tôi từng nghĩ mình có gì đâu mà chia sẻ. Nhưng rồi tôi gặp thầy Mạnh Thành. Giờ tôi mở một câu lạc bộ riêng."
+      }
+    ],
+    "faqHeading": "Câu hỏi thường gặp",
+    "faq": [
+      {
+        "q": "Buổi này có mất phí không?",
+        "a": "Không. Workshop miễn phí hoàn toàn. Anh chị chỉ cần đăng ký giữ chỗ để nhận link Zoom."
+      },
+      {
+        "q": "Tôi chưa có kênh, chưa quay video bao giờ thì tham gia được không?",
+        "a": "Được. Buổi này bắt đầu từ chỗ chưa có gì: xác định anh chị mạnh điều gì và muốn phục vụ ai, trước khi bàn tới chuyện quay hay viết."
+      },
+      {
+        "q": "Tôi cần chuẩn bị gì trước buổi học?",
+        "a": "Chỉ cần giấy bút và một khoảng thời gian không bị ngắt quãng. Không cần thiết bị, không cần sẵn người theo dõi, không cần hoàn thiện sản phẩm."
+      },
+      {
+        "q": "Buổi học kéo dài bao lâu, có ghi hình lại không?",
+        "a": "Buổi kéo dài khoảng hai tiếng mười lăm phút. Có phần thực hành ngay trong buổi nên anh chị nên dự trực tiếp thay vì xem lại."
+      },
+      {
+        "q": "Workshop này có phải để bán khoá học không?",
+        "a": "Cuối buổi Thành có giới thiệu chương trình 21 ngày cho ai muốn đi tiếp. Nhưng phần nội dung chính là thứ anh chị dùng được ngay cả khi không tham gia chương trình đó."
+      },
+      {
+        "q": "Tôi bận, không dự đúng giờ được thì sao?",
+        "a": "Anh chị cứ đăng ký giữ chỗ. Bên Thành nhắn nhắc trước giờ học qua Zalo, và sẽ báo lịch buổi kế tiếp nếu lần này anh chị không sắp xếp được."
+      },
+      {
+        "q": "Tôi đăng ký rồi thì nhận link Zoom ở đâu?",
+        "a": "Link hiện ngay trên màn hình sau khi anh chị bấm giữ chỗ. Anh chị lưu lại, và vào nhóm Zalo để được nhắc trước giờ vào phòng."
+      }
+    ],
+    "stickyText": "Workshop miễn phí · Zoom · tối thứ Tư 05/08",
+    "stickyCta": "Giữ chỗ ngay"
   }
 }

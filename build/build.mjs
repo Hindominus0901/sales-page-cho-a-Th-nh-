@@ -617,7 +617,10 @@ insertBeforeSection('90% những ai làm nội dung sẽ thua',
 // ------------------------------------------------------------ 5. Footer
 // Bản thiết kế để footer gần như trống. Dựng lại thành 3 cột: thương hiệu,
 // liên hệ, chính sách — cộng khối pháp lý bắt buộc bên dưới.
-{
+//
+// Tách thành hàm vì MỌI trang công khai đều cần footer này: khối pháp nhân là
+// bắt buộc theo luật thương mại điện tử, không riêng trang có nút mua.
+function buildFooter() {
   const L = cfg.legal || {};
   const P = cfg.policies || {};
   const F = cfg.footer || {};
@@ -639,8 +642,9 @@ insertBeforeSection('90% những ai làm nội dung sẽ thua',
     link('Chính sách hoàn tiền', P.refund),
   ].join('');
   const thieuChinhSach = ['privacy', 'terms', 'refund'].filter((k) => !String(P[k] ?? '').trim());
-  if (thieuChinhSach.length) {
-    emptySlots.push(`Link chính sách: ${thieuChinhSach.join(', ')}`);
+  const ghiChuChinhSach = `Link chính sách: ${thieuChinhSach.join(', ')}`;
+  if (thieuChinhSach.length && !emptySlots.includes(ghiChuChinhSach)) {
+    emptySlots.push(ghiChuChinhSach);
   }
 
   const zalo = String(cfg.contact?.zalo ?? '').trim();
@@ -694,6 +698,11 @@ ${L.mocNotified ? '<div style="margin-top:4px">Đã thông báo với Bộ Công
 </div>
 </footer>`;
 
+  return footerMoi;
+}
+
+{
+  const footerMoi = buildFooter();
   const truoc = body.length;
   body = body.replace(/<footer[\s\S]*<\/footer>/, footerMoi);
   if (body.length === truoc) warnings.push('Không thay được footer.');
@@ -873,23 +882,26 @@ function workshopPage() {
     // KHÔNG ép khung cố định: ảnh chụp màn hình ở đây phần lớn là ảnh ngang
     // (tỉ lệ 1.3–1.7), nhét vào khung dọc 4:5 thì object-fit cắt mất chữ hai bên
     // và bằng chứng thành vô nghĩa. Để mỗi ảnh giữ đúng tỉ lệ của nó.
-    .map((x) => `<figure style="margin:0">
-      <div class="fc2-shadow" style="border-radius:14px;overflow:hidden;background:#e7dcc6;line-height:0">
-        <img src="/media/${esc(x.src)}" alt="${esc(x.caption || 'Ảnh chụp màn hình phản hồi của học viên')}"
-             loading="lazy" style="width:100%;height:auto;display:block">
+    .map((x) => `<figure style="margin:0;flex:0 0 250px">
+      <div class="fc2-shadow" style="border-radius:12px;overflow:hidden;background:#e7dcc6;line-height:0">
+        <img class="fc2-imgthumb" role="button" tabindex="0" data-image="/media/${esc(x.src)}"
+             src="/media/${esc(x.src)}" alt="${esc(x.caption || 'Ảnh chụp màn hình phản hồi của học viên')}"
+             loading="lazy" style="width:100%;height:auto;display:block;cursor:zoom-in">
       </div>
-      ${x.caption ? `<figcaption style="font-size:13px;color:#4a4a52;margin-top:8px">${esc(x.caption)}</figcaption>` : ''}
+      ${x.caption ? `<figcaption style="font-size:12.5px;color:#4a4a52;margin-top:7px;line-height:1.5">${esc(x.caption)}</figcaption>` : ''}
     </figure>`).join('\n');
 
   if ((w.proofImages || []).length && !proofImgs) {
     warnings.push('Trang workshop: không tìm thấy ảnh nào trong "workshop.proofImages" — đã ẩn khối bằng chứng.');
   }
 
+  // Một hàng cuộn ngang: ảnh chụp tin nhắn là bằng chứng phụ, không nên chiếm
+  // hai hàng giữa trang. Bấm vào mở ảnh đầy đủ trong lightbox.
   const proofBlock = proofImgs
-    ? `<div style="margin:8px 0 40px">
+    ? `<div style="margin:8px 0 44px">
         <h2 style="font-size:28px;font-weight:800;margin:0 0 8px">${esc(w.proofHeading || '')}</h2>
         ${w.proofNote ? `<p style="font-size:15px;line-height:1.7;color:#4a4a52;margin:0 0 18px">${esc(w.proofNote)}</p>` : ''}
-        <div class="fc2-wsproof" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start">${proofImgs}</div>
+        <div class="fc2-wsproof">${proofImgs}</div>
       </div>`
     : '';
 
@@ -899,6 +911,74 @@ function workshopPage() {
       + `<div style="font-size:14px;color:#4a4a52">${esc(x.label || '')}</div></div>`)
     .join('\n');
 
+  /**
+   * Dải video học viên — dùng lại đúng thumbnail, lightbox và nút tạm dừng của
+   * trang bán, nên bấm vào là mở trình phát y như bên đó.
+   * Nhân đôi danh sách để marquee lặp liền mạch; bản sao đánh dấu data-clone
+   * để mũi tên qua lại không đếm trùng.
+   */
+  const wsVideos = videos.slice(0, 10).map((id) => VID(id));
+  const vthumb = (v, clone) => `<div${clone ? ' aria-hidden="true"' : ''} style="flex-shrink:0;width:240px;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#e7dcc6">`
+    + `<img class="fc2-vthumb"${clone ? ' data-clone="1"' : ''} role="button" tabindex="0"${videoAttrs(v)}`
+    + ` src="${v.poster}" alt="${esc(v.caption || 'Video feedback của học viên')}"`
+    + ` loading="lazy" width="540" height="960"`
+    + ` style="${THUMB_STYLE}"></div>`;
+
+  const videoBlock = wsVideos.length
+    ? `<div style="margin:8px 0 46px">
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 8px">${esc(w.videoHeading || 'Học viên nói gì')}</h2>
+        ${w.videoNote ? `<p style="font-size:15px;line-height:1.7;color:#4a4a52;margin:0 0 40px">${esc(w.videoNote)}</p>` : ''}
+        <div class="fc2-marqwrap">${pauseButton()}
+          <div class="fc2-vmarquee"><div class="fc2-vtrack" style="animation-duration:${Math.max(28, wsVideos.length * 7)}s">
+${wsVideos.map((v) => vthumb(v, false)).join('\n')}
+${wsVideos.map((v) => vthumb(v, true)).join('\n')}
+          </div></div>
+        </div>
+      </div>`
+    : '';
+
+  // Trích dẫn dạng chữ: cuộn ngang tự chạy như trang bán, nhưng dùng thẻ
+  // <blockquote> để trình đọc màn hình hiểu đây là lời của người khác.
+  const quotes = (w.quotes || []).filter((q) => String(q?.text ?? '').trim());
+  const qcard = (q, clone) => `<blockquote${clone ? ' aria-hidden="true"' : ''} class="fc2-shadow" style="flex-shrink:0;width:340px;margin:0;background:#fff;border-radius:18px;padding:22px 24px;display:flex;flex-direction:column;gap:14px">`
+    + `<p style="margin:0;font-size:15.5px;line-height:1.7;color:#333">\u201C${esc(q.text)}\u201D</p>`
+    + `<footer style="margin-top:auto;border:0;padding:0;background:none">`
+    + `<div style="font-weight:700;font-size:15px">${esc(q.name || '')}</div>`
+    + (q.meta ? `<div style="font-size:13px;color:#67676f">${esc(q.meta)}</div>` : '')
+    + `</footer></blockquote>`;
+
+  const quoteBlock = quotes.length
+    ? `<div style="margin:8px 0 46px">
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 40px">${esc(w.quoteHeading || '')}</h2>
+        <div class="fc2-marqwrap">${pauseButton()}
+          <div class="fc2-vmarquee"><div class="fc2-vtrack" style="animation-duration:${Math.max(34, quotes.length * 9)}s;align-items:stretch">
+${quotes.map((q) => qcard(q, false)).join('\n')}
+${quotes.map((q) => qcard(q, true)).join('\n')}
+          </div></div>
+        </div>
+      </div>`
+    : '';
+
+  // FAQ: dùng <details> nên mở được cả khi JavaScript không chạy.
+  const faqItems = (w.faq || []).filter((x) => String(x?.q ?? '').trim() && String(x?.a ?? '').trim());
+  const faqBlock = faqItems.length
+    ? `<div style="margin:8px 0 52px">
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 20px">${esc(w.faqHeading || 'Câu hỏi thường gặp')}</h2>
+        <div class="fc2-wsfaq">
+${faqItems.map((x, i) => `<details${i === 0 ? ' open=""' : ''}>`
+  + `<summary>${esc(x.q)}</summary>`
+  + `<p style="font-size:15.5px;line-height:1.75;color:#4a4a52;margin:0 0 18px">${esc(x.a)}</p>`
+  + '</details>').join('\n')}
+        </div>
+      </div>`
+    : '';
+
+  // Thanh dính đáy: nút giữ chỗ luôn trong tầm tay khi khách đã cuộn xa form.
+  const stickyBlock = `<div class="fc2-wssticky" data-sticky hidden>
+    <span>${esc(w.stickyText || '')}</span>
+    <a href="#fc2-ws-form" class="fc2-cta fc2-wsstickybtn">${esc(w.stickyCta || 'Giữ chỗ')}</a>
+  </div>`;
+
   let html = read('page-workshop.html');
   const fill = {
     HERO_IMG,
@@ -907,6 +987,11 @@ function workshopPage() {
     HOST_TEXT: esc(w.hostText || ''),
     HOST_STATS: hostStats,
     PROOF: proofBlock,
+    VIDEOS: videoBlock,
+    QUOTES: quoteBlock,
+    FAQ: faqBlock,
+    FOOTER: buildFooter(),
+    STICKY: stickyBlock,
     TICKER: tickerHtml,
     EYEBROW: esc(w.eyebrow || ''),
     HEADLINE: esc(w.headline || ''),
@@ -936,8 +1021,10 @@ function workshopPage() {
   return page({
     title: w.title || (w.headline + ' | ' + cfg.brand),
     description: w.description || w.subheadline || '',
-    body: html,
-    script: read('workshop.js'),
+    body: html + '\n' + lightbox,
+    // app.js tự thoát nếu trang không có lightbox, nên nạp chung an toàn:
+    // nó mang theo trình phát video, nút tạm dừng marquee và bộ nạp ảnh.
+    script: read('app.js') + '\n' + read('workshop.js'),
   });
 }
 

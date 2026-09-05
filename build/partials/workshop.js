@@ -42,6 +42,40 @@
     }
   }
 
+  /**
+   * Thanh dính đáy chỉ hiện sau khi khách cuộn qua khỏi form đăng ký.
+   * Hiện ngay từ đầu thì nó che mất phần mở đầu, mà lúc đó form vẫn đang
+   * nằm ngay trên màn hình nên cũng chẳng để làm gì.
+   */
+  (function stickyBar() {
+    var bar = $('[data-sticky]');
+    if (!bar) return;
+    bar.hidden = false;
+
+    var toggle = function () {
+      // Ẩn khi form đang trong tầm nhìn, và khi đã gửi xong.
+      var r = form.getBoundingClientRect();
+      var formVisible = !form.hidden && r.bottom > 80 && r.top < innerHeight - 60;
+      var done = thanks && !thanks.hidden;
+      if (!formVisible && !done && scrollY > 320) bar.setAttribute('data-show', '');
+      else bar.removeAttribute('data-show');
+    };
+
+    addEventListener('scroll', toggle, { passive: true });
+    addEventListener('resize', toggle);
+    toggle();
+
+    // Bấm nút trên thanh thì cuộn tới form và đưa con trỏ vào ô đầu tiên.
+    var btn = $('.fc2-wsstickybtn', bar);
+    if (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(function () { var f = $('#fc2-ws-name'); if (f) f.focus({ preventScroll: true }); }, 420);
+      });
+    }
+  })();
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     clearErrors();
