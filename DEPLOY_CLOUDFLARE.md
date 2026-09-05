@@ -65,13 +65,25 @@ dừng lại ở khâu soát cấu hình.
 Vào Worker vừa tạo → **Settings** → **Variables and Secrets** → **Add**.
 Mỗi khoá chọn kiểu **Secret** (không phải Text), để nó không hiện lại sau này.
 
-| Tên khoá | Lấy ở đâu |
-|---|---|
-| `SEPAY_ACCOUNT_NO` | **số tài khoản Techcombank của ANLIFE GROUP**, gõ liền không dấu cách |
-| `SESSION_SECRET` | tự sinh — xem bên dưới |
-| `IP_HASH_SALT` | tự sinh — xem bên dưới |
-| `SEPAY_WEBHOOK_API_KEY` | SePay → Tích hợp webhook → API Key |
-| `RESEND_API_KEY` | *(tuỳ chọn)* resend.com → API Keys. Không có thì hệ vẫn chạy, chỉ là khách không nhận được email xác nhận |
+| Tên khoá | Bắt buộc? | Lấy ở đâu |
+|---|---|---|
+| `SEPAY_ACCOUNT_NO` | **có** | số tài khoản Techcombank của ANLIFE GROUP, gõ liền không dấu cách |
+| `SEPAY_WEBHOOK_API_KEY` | nên có | SePay → Tích hợp → Webhooks |
+| `RESEND_API_KEY` | không | resend.com → API Keys |
+
+`SESSION_SECRET` và `IP_HASH_SALT` **không cần điền** — script deploy tự sinh ở
+lần chạy đầu, và không bao giờ sinh lại (sinh lại là đá văng mọi người đang
+đăng nhập).
+
+**Chỉ một khoá thật sự chặn deploy: `SEPAY_ACCOUNT_NO`.** Thiếu nó thì trang
+thanh toán không sinh được mã QR và khách bấm mua xong nhìn thấy một trang
+trống. Hai khoá kia thiếu thì hệ vẫn chạy:
+
+- thiếu khoá webhook → khách vẫn chuyển khoản được, tiền vẫn về tài khoản, chỉ
+  là đơn nằm ở "chờ thanh toán" tới khi có người vào `/admin` → *Giao dịch chưa
+  khớp* gán tay;
+- thiếu `RESEND_API_KEY` → khách không nhận email xác nhận, nhưng vẫn tra lại
+  được đơn ở `/tra-cuu`.
 
 > **Số tài khoản BẮT BUỘC đặt kiểu Secret, không phải Text.**
 >
@@ -81,26 +93,9 @@ Mỗi khoá chọn kiểu **Secret** (không phải Text), để nó không hi�
 > số tài khoản vào một dòng Text nghĩa là lần deploy kế tiếp xoá sạch nó — không
 > báo gì, và trang thanh toán im lặng hỏng.
 >
-> Secret thì không nằm trong file cấu hình nên deploy không đụng tới. Điền một
-> lần rồi yên tâm.
+> Secret thì không nằm trong file cấu hình nên deploy không đụng tới.
 >
 > Anh Thành tự gõ trực tiếp vào đây thì không ai chép nhầm — kể cả Claude.
-
-**Cách tự sinh `SESSION_SECRET` và `IP_HASH_SALT` mà không cần terminal:** mở tab mới, bấm `F12` để
-mở cửa sổ dành cho lập trình viên, chọn tab **Console**, dán dòng này rồi Enter:
-
-```js
-crypto.randomUUID() + crypto.randomUUID()
-```
-
-Được một chuỗi dài — chép vào `SESSION_SECRET`. Chạy lại lần nữa lấy chuỗi khác
-cho `IP_HASH_SALT`. **Hai chuỗi phải khác nhau.**
-
-> `SESSION_SECRET` là khoá ký phiên đăng nhập. Đổi nó về sau là mọi người đang
-> đăng nhập bị đăng xuất hết — nên đặt một lần rồi thôi.
-
-Nếu chưa có `RESEND_API_KEY` thì bỏ qua, hệ vẫn deploy được: email vào hàng đợi
-rồi đánh dấu "bỏ qua", và khách vẫn tìm lại được đơn ở trang `/tra-cuu`.
 
 ---
 
@@ -135,7 +130,7 @@ Vào **Settings → Build → Variables and Secrets** → thêm:
 > | Chỗ | Dành cho | Đặt gì ở đây |
 > |---|---|---|
 > | Settings → **Build** → Variables | lệnh build và deploy | `ADMIN_EMAIL` |
-> | Settings → **Variables and Secrets** (của Worker) | trang web lúc chạy | `SEPAY_ACCOUNT_NO`, `SESSION_SECRET`, `IP_HASH_SALT`, `SEPAY_WEBHOOK_API_KEY` |
+> | Settings → **Variables and Secrets** (của Worker) | trang web lúc chạy | `SEPAY_ACCOUNT_NO`, `SEPAY_WEBHOOK_API_KEY` |
 >
 > Đặt nhầm chỗ thì không báo lỗi gì, chỉ là thứ cần nó không thấy nó.
 
