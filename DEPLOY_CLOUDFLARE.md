@@ -116,13 +116,28 @@ Cuối log sẽ in ra địa chỉ trang và **URL webhook để dán vào SePay
 
 ## Bước 5 — Tài khoản quản trị
 
-Hiện phải chạy một lệnh trên máy có Node cho việc này:
+Script deploy tự tạo tài khoản owner đầu tiên, nhưng cần biết tạo cho email nào.
 
-```bash
-node scripts/create-admin.mjs --email <email của anh> --remote
-```
+Vào **Settings → Build → Variables and Secrets** → thêm:
 
-Không có Node thì nhắn Claude, sẽ có cách khác.
+| Tên | Giá trị |
+|---|---|
+| `ADMIN_EMAIL` | email anh dùng để đăng nhập `/admin` |
+
+> ⚠️ **Hai chỗ "Variables and Secrets" khác nhau, đừng nhầm:**
+>
+> | Chỗ | Dành cho | Đặt gì ở đây |
+> |---|---|---|
+> | Settings → **Build** → Variables | lệnh build và deploy | `ADMIN_EMAIL` |
+> | Settings → **Variables and Secrets** (của Worker) | trang web lúc chạy | `SEPAY_ACCOUNT_NO`, `SESSION_SECRET`, `IP_HASH_SALT`, `SEPAY_WEBHOOK_API_KEY` |
+>
+> Đặt nhầm chỗ thì không báo lỗi gì, chỉ là thứ cần nó không thấy nó.
+
+Deploy xong, **mật khẩu in ra ở cuối nhật ký build và chỉ hiện một lần** — chép
+ra chỗ an toàn ngay, rồi đăng nhập `/admin` → Nhân sự → đổi mật khẩu.
+
+Tài khoản chỉ được tạo khi bảng còn rỗng, nên những lần deploy sau không sinh
+thêm tài khoản nào.
 
 ---
 
