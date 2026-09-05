@@ -85,6 +85,13 @@ function makeCrop({ from, to, ratioW, ratioH, cropY, label }) {
     console.log(`  · Cắt ${label}: ${from} -> ${to} (${w}x${cropH}, từ y=${y})`);
     return true;
   } catch (err) {
+    // Máy build không có ffmpeg (ví dụ CI của Cloudflare) nhưng bản đã cắt sẵn
+    // được commit trong public/media — dùng lại chính nó, đừng rơi về ảnh dọc
+    // vì object-fit sẽ cắt vào giữa và mất mặt.
+    if (fs.existsSync(out)) {
+      console.log(`  · Dùng lại bản cắt sẵn ${to} (máy này không có ffmpeg)`);
+      return true;
+    }
     warnings.push(`Không cắt được ${label} (${err.message.slice(0, 60)}) — dùng ảnh gốc, có thể bị mất mặt.`);
     return false;
   }
@@ -105,10 +112,19 @@ const HERO_IMG = heroCropped ? '/media/hero.jpg' : `/media/${heroPhoto.src || 't
 const PORTRAIT_IMG = portraitCropped ? '/media/thanh-portrait.jpg' : `/media/${portraitPhoto.src || 'thanh-2.jpg'}`;
 
 const videoDir = path.join(PUBLIC, 'videos');
+/**
+ * Danh sách ô video lấy từ CẢ file .mp4 lẫn ảnh poster .jpg.
+ *
+ * Khi phát qua YouTube (bắt buộc trên Cloudflare vì file 25 MB vượt giới hạn
+ * của Workers Assets) thì repo chỉ giữ poster, không giữ mp4 — nếu chỉ đếm
+ * .mp4 thì toàn bộ ô video biến mất khỏi trang.
+ */
 const videos = fs.existsSync(videoDir)
-  ? fs.readdirSync(videoDir).filter((f) => f.endsWith('.mp4')).map((f) => f.slice(0, -4)).sort()
+  ? [...new Set(fs.readdirSync(videoDir)
+      .filter((f) => /\.(mp4|jpg)$/i.test(f))
+      .map((f) => f.replace(/\.(mp4|jpg)$/i, '')))].sort()
   : [];
-if (!videos.length) warnings.push('Chưa có video nào trong public/videos — chạy transcode trước rồi build lại.');
+if (!videos.length) warnings.push('Chưa có video nào trong public/videos — bỏ poster vào rồi build lại.');
 
 // Video có thể phát từ YouTube (nhẹ, hợp Vercel) hoặc từ file mp4 tự host (hợp VPS)
 const videoBase = String(cfg.videoBaseUrl || '').replace(/\/$/, '');
@@ -123,7 +139,10 @@ const VID = (id) => {
   return {
     id,
     youtube: ytId || '',
-    src: ytId ? '' : `${videoBase}/videos/${id}.mp4`,
+    // Không có ID YouTube mà cũng không có file mp4 thì để trống, tránh thẻ
+    // <video> trỏ vào đường dẫn 404.
+    src: ytId || !fs.existsSync(path.join(videoDir, `${id}.mp4`))
+      ? '' : `${videoBase}/videos/${id}.mp4`,
     poster: fs.existsSync(path.join(videoDir, `${id}.jpg`)) ? `${videoBase}/videos/${id}.jpg` : '',
     caption: cfg.videoCaptions?.[id] || '',
   };
@@ -801,8 +820,92 @@ const pages = {
   }),
 };
 
+
+// ------------------------------------------------------------ 6b. Trang workshop /workshop
+function workshopPage() {
+  const w = cfg.workshop || {};
+  if (w.enabled === false || !String(w.headline ?? '').trim()) {
+    warnings.push('workshop trống hoặc đang tắt trong site.config.json — bỏ qua, không build trang /workshop.');
+    return null;
+  }
+
+  const bullet = (t) => `<li style="display:flex;gap:12px;font-size:17px;line-height:1.65">`
+    + `<span style="flex-shrink:0;color:#2f7a4d;font-weight:700">✓</span><span>${esc(t)}</span></li>`;
+  const dash = (t) => `<li style="display:flex;gap:12px;font-size:17px;line-height:1.65">`
+    + `<span style="flex-shrink:0;color:#67676f">—</span><span>${esc(t)}</span></li>`;
+
+  const list = (arr, fn) => (arr || []).filter((t) => String(t ?? '').trim()).map(fn).join('\n');
+
+  // Ngày giờ chỉ hiện dòng nào đã điền — trường trống thì ẩn hẳn, không bao
+  // giờ hiện chỗ trống cho khách thấy.
+  const whenRows = [
+    ['Ngày', w.dateText],
+    ['Thời gian', w.timeText],
+    ['Hình thức', w.formatText],
+  ].filter(([, v]) => String(v ?? '').trim())
+    .map(([k, v]) => `<div style="display:flex;gap:10px;font-size:16px;line-height:1.6">`
+      + `<span style="min-width:88px;color:#67676f">${esc(k)}</span>`
+      + `<b style="color:#191919">${esc(v)}</b></div>`)
+    .join('\n');
+  if (!whenRows) emptySlots.push('Ngày giờ workshop — điền "workshop.dateText" và "workshop.timeText"');
+
+  const agenda = (w.agenda || []).filter((a) => String(a?.title ?? '').trim()).map((a) => `
+    <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:22px 24px">
+      <div style="font-size:12px;font-weight:700;color:#2f7a4d;letter-spacing:.06em;margin-bottom:8px">${esc(a.label || '')}</div>
+      <h3 style="font-size:21px;font-weight:800;margin:0 0 8px">${esc(a.title)}</h3>
+      <p style="font-size:16px;line-height:1.7;color:#4a4a52;margin:0">${esc(a.text || '')}</p>
+    </div>`).join('\n');
+
+  const ticker = (w.ticker || []).filter(Boolean);
+  const tickerHtml = ticker.length
+    ? [...ticker, ...ticker].map((t) => `<span>${esc(t)}</span>`).join('\n')
+    : '';
+
+  const closing = String(w.closing ?? '').trim()
+    ? `<p style="font-size:19px;line-height:1.6;font-weight:600;color:#191919;border-left:3px solid #2f7a4d;padding-left:18px;margin:0">${esc(w.closing)}</p>`
+    : '';
+
+  let html = read('page-workshop.html');
+  const fill = {
+    TICKER: tickerHtml,
+    EYEBROW: esc(w.eyebrow || ''),
+    HEADLINE: esc(w.headline || ''),
+    SUBHEADLINE: esc(w.subheadline || ''),
+    WHEN_ROWS: whenRows,
+    LEAD: esc(w.lead || ''),
+    PAIN_HEADING: esc(w.painHeading || ''),
+    PAINS: list(w.pains, dash),
+    AGENDA_HEADING: esc(w.agendaHeading || ''),
+    AGENDA_LEAD: esc(w.agendaLead || ''),
+    AGENDA: agenda,
+    TAKEAWAY_HEADING: esc(w.takeawayHeading || ''),
+    TAKEAWAYS: list(w.takeaways, bullet),
+    AUDIENCE_HEADING: esc(w.audienceHeading || ''),
+    AUDIENCE: list(w.audience, bullet),
+    CLOSING: closing,
+    FORM_EYEBROW: esc(w.formEyebrow || ''),
+    FORM_HEADING: esc(w.formHeading || 'Đăng ký tham gia'),
+    FORM_SUB: esc(w.formSub || ''),
+    CTA_LABEL: esc(w.ctaLabel || 'Giữ chỗ tham gia'),
+    FORM_NOTE: esc(w.formNote || ''),
+    THANKS_HEADLINE: esc(w.thankYouHeadline || 'Đã giữ chỗ cho anh chị'),
+    THANKS_TEXT: esc(w.thankYouText || ''),
+  };
+  for (const [k, v] of Object.entries(fill)) html = html.split(`{{${k}}}`).join(v);
+
+  return page({
+    title: w.title || (w.headline + ' | ' + cfg.brand),
+    description: w.description || w.subheadline || '',
+    body: html,
+    script: read('workshop.js'),
+  });
+}
+
 const leadPage = leadMagnetPage();
 if (leadPage) pages['ban-do-21-ngay.html'] = leadPage;
+
+const wsPage = workshopPage();
+if (wsPage) pages['workshop.html'] = wsPage;
 
 for (const [name, content] of Object.entries(pages)) {
   fs.writeFileSync(path.join(PUBLIC, name), content, 'utf8');
@@ -810,7 +913,7 @@ for (const [name, content] of Object.entries(pages)) {
 const html = pages['index.html'];
 
 // ------------------------------------------------------------ 8. Báo cáo
-console.log('\n✔ Đã build 3 trang:');
+console.log(`\n✔ Đã build ${Object.keys(pages).length} trang:`);
 for (const [name, content] of Object.entries(pages)) {
   console.log(`  · public/${name.padEnd(17)} ${(Buffer.byteLength(content) / 1024).toFixed(0)} KB`);
 }

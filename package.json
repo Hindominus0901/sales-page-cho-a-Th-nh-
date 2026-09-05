@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Góc Creator — 3 landing page + CMS + affiliate, chạy trên Cloudflare Workers",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build:pages": "node build/build.mjs",
     "build:admin": "vite build --config admin/vite.config.ts",
@@ -33,6 +35,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.63.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.7.2",

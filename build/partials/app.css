@@ -130,6 +130,18 @@
   .fc2-leadgrid{grid-template-columns:1fr !important}
 }
 
+/* ---------- Trang workshop /workshop ----------
+   Dải chữ chạy dùng chung keyframes fc2-marquee của bản thiết kế. Nội dung
+   được nhân đôi trong build nên dịch -50% là quay đúng về đầu, liền mạch. */
+.fc2-ticker{animation:fc2-marquee 26s linear infinite;will-change:transform}
+
+@media (max-width:860px){
+  /* Xuống một cột: form nằm SAU nội dung, và bỏ sticky — trên màn hình cao
+     ~840px, một card sticky cao hơn viewport sẽ kẹt lại và che mất nội dung. */
+  .fc2-wsgrid{grid-template-columns:1fr !important;gap:32px !important}
+  .fc2-wsform{position:static !important}
+}
+
 /* ---------- Đáp ứng màn hình nhỏ ---------- */
 @media (max-width:720px){
   .fc2 h1{font-size:32px !important}

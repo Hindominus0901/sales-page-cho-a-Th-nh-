@@ -269,5 +269,70 @@
         "caption": "Chỗ trống — thêm ảnh feedback mới"
       }
     ]
+  },
+  "workshop": {
+    "_ghiChu": "Trang /workshop — buổi Zoom miễn phí, thay hoàn toàn Google Form. Ngày giờ ở đây là NGUỒN DUY NHẤT: sửa một chỗ, cả trang và trang cảm ơn đổi theo. Buổi học thật (link Zoom, nhóm Zalo) nằm ở bảng workshop_sessions trong database, sửa trong trang quản trị.",
+    "enabled": true,
+    "title": "Hành trình xây kênh — Xây chính mình | Góc Creator",
+    "description": "Workshop Zoom miễn phí: nhận diện giá trị của mình, chọn đúng hướng xây kênh và lập kế hoạch 21 ngày đầu tiên.",
+    "ticker": [
+      "Workshop Zoom miễn phí · Hành trình xây kênh — Xây chính mình",
+      "Không cần thiết bị · Không cần sẵn người theo dõi · Chỉ cần nghề anh chị đang làm"
+    ],
+    "eyebrow": "WORKSHOP ZOOM — MIỄN PHÍ",
+    "headline": "Hành trình xây kênh — Xây chính mình",
+    "subheadline": "Một buổi để anh chị nhìn rõ mình đang có gì, muốn phục vụ ai, và 21 ngày tới nên bắt đầu từ đâu.",
+    "dateText": "Tối thứ Tư, 05/08/2026",
+    "timeText": "19h45 – 22h00",
+    "formatText": "Zoom Online — link gửi ngay sau khi đăng ký",
+    "lead": "Anh chị không thiếu kiến thức để bắt đầu. Thứ đang thiếu thường là một hướng đi đủ rõ, và đủ nội lực để không bỏ dở giữa chừng. Buổi này Thành làm rõ cả hai.",
+    "painHeading": "Có thể anh chị đang ở đây",
+    "pains": [
+      "Có chuyên môn thật, có kinh nghiệm thật, nhưng chưa biết nên bắt đầu nói từ đâu.",
+      "Đã từng viết bài, từng quay video, làm được vài hôm rồi dừng.",
+      "Lưu rất nhiều mẫu hook và khoá học, nhưng chưa biến được thành bài của mình.",
+      "Đăng đều mà không ra khách, còn kênh nhỏ hơn của người khác lại có người nhắn tin.",
+      "Ngại xuất hiện trước ống kính, sợ nói chưa hay, sợ bị đánh giá."
+    ],
+    "agendaHeading": "Buổi này đi qua ba phần",
+    "agendaLead": "Không phải ba mẹo làm nội dung. Là ba tầng móng, theo đúng thứ tự cần xây.",
+    "agenda": [
+      {
+        "label": "PHẦN 1",
+        "title": "Xây chính mình",
+        "text": "Nhận diện giá trị, thế mạnh và câu chuyện riêng của anh chị — thứ khiến người ta nhớ anh chị chứ không chỉ nhớ kiến thức. Kèm cách gỡ những rào cản đang khiến anh chị trì hoãn."
+      },
+      {
+        "label": "PHẦN 2",
+        "title": "Xây kênh đúng",
+        "text": "Chọn nhóm khách hàng muốn phục vụ, vấn đề cụ thể mình giải quyết được, và ba đến năm trụ cột nội dung dài hạn. Hết cảnh sáng nào cũng phải nghĩ hôm nay đăng gì."
+      },
+      {
+        "label": "PHẦN 3",
+        "title": "Xây sự nghiệp",
+        "text": "Biến chuyên môn thành tài sản số: bài viết, video, tệp người theo dõi đúng tệp, và nền móng cho một mô hình kinh doanh tinh gọn từ chính nghề anh chị đang làm."
+      }
+    ],
+    "takeawayHeading": "Kết buổi anh chị mang về",
+    "takeaways": [
+      "Một góc nhìn rõ hơn về giá trị và thế mạnh của chính mình.",
+      "Một nhóm khách hàng trọng tâm và một chủ đề đủ rõ để bắt đầu.",
+      "Ba đến năm trụ cột nội dung, kèm những ý tưởng bài đầu tiên.",
+      "Một kế hoạch hành động cho 21 ngày kế tiếp."
+    ],
+    "audienceHeading": "Buổi này hợp với ai",
+    "audience": [
+      "Anh chị đã có nghề, có chuyên môn, có sản phẩm hoặc dịch vụ thật.",
+      "Muốn được đúng người biết tới, không chạy theo lượt xem cho vui.",
+      "Sẵn sàng ngồi trọn buổi và làm bài tập ngay trong buổi."
+    ],
+    "closing": "Anh chị không cần hết sợ mới bắt đầu. Chỉ cần bắt đầu, để nỗi sợ ngày càng nhỏ đi.",
+    "formEyebrow": "GIỮ CHỖ — MIỄN PHÍ",
+    "formHeading": "Đăng ký tham gia",
+    "formSub": "Điền thông tin, link Zoom hiện ra ngay sau khi gửi.",
+    "ctaLabel": "Giữ chỗ tham gia workshop",
+    "formNote": "Thông tin của anh chị chỉ dùng để gửi link buổi học và nhắc lịch, không chia sẻ cho bên thứ ba.",
+    "thankYouHeadline": "Đã giữ chỗ cho anh chị",
+    "thankYouText": "Hẹn gặp anh chị trong buổi học. Anh chị lưu lại thông tin bên dưới, và vào nhóm Zalo để được nhắc trước giờ vào phòng."
   }
 }
