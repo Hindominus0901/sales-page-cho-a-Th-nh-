@@ -175,3 +175,51 @@ function buildPayment(env: HonoEnv['Bindings'], order: OrderRow) {
     description: order.order_code,
   });
 }
+
+/**
+ * Tra cứu đơn bằng số điện thoại — cho người đã chuyển khoản rồi đóng tab.
+ *
+ * Trả về càng ít càng tốt: mã đơn, số tiền, trạng thái. KHÔNG trả họ tên và
+ * KHÔNG trả link cổng học viên. Số điện thoại là thứ nửa công khai; ai gõ bừa
+ * một số lạ chỉ biết được số đó có đơn hay không, chứ không biết của ai và
+ * không đọc được bài vở hay tiêu coin của người ta.
+ *
+ * Muốn lấy lại link học viên thì nhắn Zalo — trong trang quản trị có sẵn nút
+ * chép link cho từng người.
+ */
+checkoutRoutes.post('/api/tra-cuu', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+  const limited = await rateLimit(c.env, `tc:${ip}`, 5, 600);
+  if (!limited.ok) {
+    return c.json({ ok: false, error: 'Anh chị thử hơi nhiều lần rồi. Đợi ít phút giúp em nhé.' }, 429);
+  }
+
+  const body = await readBody(c.req.raw);
+  const phoneNorm = toPhoneNorm((body as Record<string, unknown>).phone);
+  if (!phoneNorm) {
+    return c.json({ ok: false, error: 'Số điện thoại chưa đúng. Anh chị nhập lại giúp em.' }, 400);
+  }
+
+  const rows = await c.env.DB.prepare(
+    `SELECT o.order_code, o.status, o.amount_total, o.amount_paid, o.created_at
+     FROM orders o JOIN leads l ON l.id = o.lead_id
+     WHERE l.phone_norm = ?
+     ORDER BY o.created_at DESC LIMIT 10`,
+  ).bind(phoneNorm).all<{
+    order_code: string; status: string;
+    amount_total: number; amount_paid: number; created_at: number;
+  }>();
+
+  c.header('Cache-Control', 'no-store');
+  return c.json({
+    ok: true,
+    orders: (rows.results ?? []).map((o) => ({
+      code: o.order_code,
+      status: o.status,
+      amount: o.amount_total,
+      amountPaid: o.amount_paid,
+      remaining: Math.max(0, o.amount_total - o.amount_paid),
+      createdAt: o.created_at,
+    })),
+  });
+});

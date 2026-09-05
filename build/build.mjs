@@ -656,6 +656,9 @@ function buildFooter() {
     link('Chính sách bảo mật', P.privacy),
     link('Điều khoản sử dụng', P.terms),
     link('Chính sách hoàn tiền', P.refund),
+    // Đường về cho người đã chuyển khoản rồi đóng tab. Để cạnh chính sách vì
+    // đây cũng là chỗ người ta tìm khi thấy lúng túng.
+    link('Tìm lại đơn của tôi', '/tra-cuu'),
   ].join('');
   const thieuChinhSach = ['privacy', 'terms', 'refund'].filter((k) => !String(P[k] ?? '').trim());
   const ghiChuChinhSach = `Link chính sách: ${thieuChinhSach.join(', ')}`;
@@ -670,7 +673,7 @@ function buildFooter() {
 ${zalo ? `<a href="https://zalo.me/${esc(zalo.replace(/\D/g, ''))}" style="color:#26643f;text-decoration:none;font-weight:600">Zalo: ${esc(zalo)}</a>` : ''}
 ${email ? `<a href="mailto:${esc(email)}" style="color:#26643f;text-decoration:none;font-weight:600">${esc(email)}</a>` : ''}
 </div>`
-    : placeholder({ label: 'Zalo và email hỗ trợ', hint: 'Điền CONTACT_ZALO và CONTACT_EMAIL trong .env', minHeight: '78px' });
+    : placeholder({ label: 'Zalo và email hỗ trợ', hint: 'Điền "contact.zalo" và "contact.email" trong site.config.json', minHeight: '78px' });
 
   const khoiPhapLy = thieu.length === 0
     ? `<div style="font-size:14px;color:#4a4a52;line-height:1.8">
@@ -843,6 +846,15 @@ const pages = {
     script: read('thanh-toan.js'),
     noindex: true,
   }),
+  // Khách đóng tab sau khi chuyển khoản thì mất dấu đơn của mình. Trang này là
+  // đường về, và không cần email hay tài khoản gì cả.
+  'tra-cuu.html': page({
+    title: 'Tìm lại đơn — ' + cfg.brand,
+    description: 'Nhập số điện thoại để tìm lại đơn đăng ký của anh chị.',
+    body: read('page-tra-cuu.html'),
+    script: read('tra-cuu.js'),
+    noindex: true,
+  }),
   // Cổng học viên. Một file tĩnh dùng chung cho mọi học viên; mã truy cập nằm
   // trên đường dẫn và trang tự đọc lấy, nên không có gì riêng tư nằm trong file.
   'hoc.html': page({
@@ -854,6 +866,73 @@ const pages = {
   }),
 };
 
+
+// ------------------------------------------------------------ 6a2. Ba trang chính sách
+/**
+ * Ba trang chính sách sinh từ cùng một khung. Nội dung nằm trong site.config.json
+ * → policyPages, nên sửa một câu trong chính sách không phải đụng vào mã.
+ *
+ * Bắt buộc theo luật thương mại điện tử, và cần thật sự đứng sau lời hứa hoàn
+ * tiền in trên trang bán — chứ không phải một trang cho có.
+ */
+function policyPage(key) {
+  const doc = (cfg.policyPages || {})[key];
+  if (!doc || !Array.isArray(doc.sections) || doc.sections.length === 0) {
+    warnings.push(`policyPages.${key} trống — bỏ qua, không build trang chính sách này.`);
+    return null;
+  }
+
+  // **in đậm** là cú pháp duy nhất được phép trong nội dung chính sách. Mọi thứ
+  // khác đã thoát HTML, nên không dán được thẻ lạ vào trang từ file cấu hình.
+  const rich = (t) => esc(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(25,25,25,.06);padding:2px 6px;'
+      + 'border-radius:6px;font-size:.92em">$1</code>');
+
+  const sections = doc.sections.map((sec, i) => {
+    const ps = (sec.paragraphs || []).filter((t) => String(t ?? '').trim());
+    // Mục nào toàn câu ngắn thì trình bày thành danh sách gạch đầu dòng — dễ
+    // đọc hơn hẳn một khối chữ liền trên điện thoại.
+    const asList = ps.length >= 3 && ps.every((t) => String(t).length < 190);
+    const body = asList
+      ? `<ul style="display:grid;gap:9px;margin:0;padding-left:20px">`
+        + ps.map((t) => `<li style="font-size:16px;line-height:1.75;color:#3a3a42">${rich(t)}</li>`).join('')
+        + `</ul>`
+      : ps.map((t) => `<p style="font-size:16px;line-height:1.8;color:#3a3a42;margin:0 0 14px">${rich(t)}</p>`).join('');
+
+    return `<section style="margin-bottom:34px">
+<h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:20px;font-weight:600;letter-spacing:.02em;margin:0 0 12px">
+<span style="color:#2f7a4d">${String(i + 1).padStart(2, '0')}</span> ${esc(sec.heading)}</h2>
+${body}
+</section>`;
+  }).join('\n');
+
+  const others = [
+    ['privacy', 'Chính sách bảo mật', '/chinh-sach-bao-mat'],
+    ['terms', 'Điều khoản sử dụng', '/dieu-khoan'],
+    ['refund', 'Chính sách hoàn tiền', '/chinh-sach-hoan-tien'],
+  ].filter(([k]) => k !== key)
+   .map(([, label, href]) => `<a href="${href}" style="color:#26643f;font-weight:600;text-decoration:none">${label}</a>`)
+   .join('<span style="color:#a8a5b0">·</span>');
+
+  return page({
+    title: `${doc.title} — ${cfg.brand}`,
+    description: String(doc.intro ?? doc.title),
+    noindex: false,
+    body: `<div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
+  <div style="max-width:720px;margin:0 auto;padding:32px 22px 72px">
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#55555c;text-decoration:none;margin-bottom:26px">← Về trang chủ</a>
+    <h1 style="font-size:32px;font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px">${esc(doc.title)}</h1>
+    ${doc.intro ? `<p style="font-size:17px;line-height:1.7;color:#55555c;margin:0 0 34px">${rich(doc.intro)}</p>` : ''}
+    ${sections}
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:14px;border-top:1px solid rgba(25,25,25,.1);padding-top:22px">
+      ${others}
+    </div>
+  </div>
+${buildFooter()}
+</div>`,
+    script: '',
+  });
+}
 
 // ------------------------------------------------------------ 6b. Trang workshop /workshop
 function workshopPage() {
@@ -1070,6 +1149,15 @@ if (leadPage) pages['ban-do-21-ngay.html'] = leadPage;
 
 const wsPage = workshopPage();
 if (wsPage) pages['workshop.html'] = wsPage;
+
+for (const [key, file] of [
+  ['privacy', 'chinh-sach-bao-mat.html'],
+  ['terms',   'dieu-khoan.html'],
+  ['refund',  'chinh-sach-hoan-tien.html'],
+]) {
+  const p = policyPage(key);
+  if (p) pages[file] = p;
+}
 
 for (const [name, content] of Object.entries(pages)) {
   fs.writeFileSync(path.join(PUBLIC, name), content, 'utf8');

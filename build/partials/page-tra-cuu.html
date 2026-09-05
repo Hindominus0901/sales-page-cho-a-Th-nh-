@@ -1,0 +1,42 @@
+<div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
+  <div style="max-width:640px;margin:0 auto;padding:32px 22px 72px">
+
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#55555c;text-decoration:none;margin-bottom:26px">← Về trang chủ</a>
+
+    <h1 style="font-size:32px;font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px">Tìm lại đơn của anh chị</h1>
+    <p style="font-size:16px;line-height:1.7;color:#55555c;margin:0 0 28px">
+      Lỡ đóng tab sau khi chuyển khoản, hoặc quên mất mã đơn? Nhập số điện thoại
+      đã dùng lúc đăng ký, em tìm lại giúp.
+    </p>
+
+    <form data-form class="fc2-shadow" style="background:#fff;border-radius:24px;padding:24px;display:grid;gap:14px;margin-bottom:26px">
+      <label style="display:grid;gap:6px">
+        <span style="font-size:13px;font-weight:600">Số điện thoại đã đăng ký</span>
+        <input name="phone" type="tel" inputmode="tel" autocomplete="tel" required
+               placeholder="0912 345 678"
+               style="height:52px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 14px;font:inherit;font-size:16px">
+      </label>
+      <button type="submit" class="fc2-cta"
+              style="height:54px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border:0;border-radius:16px;cursor:pointer">
+        Tìm đơn
+      </button>
+      <p data-msg style="font-size:14px;line-height:1.6;margin:0"></p>
+    </form>
+
+    <div data-results style="display:grid;gap:12px"></div>
+
+    <div data-help hidden class="fc2-shadow" style="background:#fff;border-radius:20px;padding:22px;margin-top:8px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px">Không thấy đơn nào</div>
+      <p style="font-size:15px;line-height:1.75;color:#55555c;margin:0 0 14px">
+        Có thể anh chị đăng ký bằng số khác, hoặc chưa hoàn tất bước điền form.
+        Anh chị thử lại với số kia, hoặc nhắn Zalo cho em kèm ảnh chụp giao dịch —
+        em tra tay giúp trong ít phút.
+      </p>
+      <a href="/dang-ky" class="fc2-cta"
+         style="display:inline-flex;align-items:center;height:48px;padding:0 22px;background:#2f7a4d;color:#fff;font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">
+        Đăng ký lại từ đầu
+      </a>
+    </div>
+
+  </div>
+</div>

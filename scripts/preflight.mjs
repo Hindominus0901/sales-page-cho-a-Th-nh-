@@ -139,8 +139,16 @@ if (empty(legal.company) || empty(legal.taxId) || empty(legal.address)) {
 const pol = site.policies ?? {};
 if (empty(pol.privacy) || empty(pol.terms) || empty(pol.refund)) {
   warn('Thiếu trang chính sách',
-    'Trang đang in cam kết "14 ngày hoàn 100%" — đó là điều khoản ràng buộc, ' +
-    'phải có trang chính sách hoàn tiền thật đứng sau.');
+    'Trang đang in cam kết hoàn tiền — đó là điều khoản ràng buộc, phải có ' +
+    'trang chính sách thật đứng sau.');
+} else if (pol.confirmed !== true) {
+  // Ba trang đã tồn tại và đã dựng ra được — nhưng nội dung do máy soạn.
+  // "Có trang" và "đã đọc và đồng ý với từng câu" là hai chuyện khác nhau, và
+  // chỉ chuyện thứ hai mới ràng buộc được anh Thành trước khách hàng.
+  warn('Anh Thành chưa xác nhận nội dung ba trang chính sách',
+    'Nội dung do máy soạn theo điều kiện đã chốt (14 ngày, đã nộp 3 bài). ' +
+    'Đọc lại /chinh-sach-bao-mat, /dieu-khoan, /chinh-sach-hoan-tien rồi đổi ' +
+    '"policies.confirmed" thành true trong site.config.json.');
 }
 
 if (empty(site.startDateText)) {

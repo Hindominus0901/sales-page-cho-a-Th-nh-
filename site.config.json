@@ -38,9 +38,12 @@
     "mocNotified": false
   },
   "policies": {
-    "privacy": "",
-    "terms": "",
-    "refund": ""
+    "_ghiChu": "Ba trang này do build/build.mjs sinh ra từ policyPages bên dưới. Muốn dùng trang ngoài thì thay bằng URL đầy đủ.",
+    "privacy": "/chinh-sach-bao-mat",
+    "terms": "/dieu-khoan",
+    "refund": "/chinh-sach-hoan-tien",
+    "confirmed": false,
+    "_ghiChuConfirmed": "Anh Thành đọc xong ba trang và đồng ý với từng câu thì đổi thành true. Còn false thì preflight vẫn cảnh báo trước mỗi lần deploy."
   },
   "heroVideo": "fb-01",
   "youtube": {
@@ -120,7 +123,7 @@
     },
     {
       "q": "Nếu học không hiệu quả thì có được hoàn tiền không?",
-      "a": "Có. Trong 14 ngày đầu kể từ ngày đóng tiền, nếu anh chị thấy không phù hợp thì nhắn Zalo để được hoàn lại 100%, không cần lý do."
+      "a": "Có. Trong 14 ngày đầu kể từ ngày đóng tiền, nếu anh chị đã nộp ít nhất 3 bài mà vẫn thấy không phù hợp thì nhắn Zalo để được hoàn lại 100%. Điều kiện nộp bài là để chắc anh chị đã thử thật — chưa đăng bài nào thì chưa chạm vào phần có giá trị nhất của khoá. Chi tiết ở trang Chính sách hoàn tiền."
     },
     {
       "q": "Lớp học vào khung giờ nào, học trên nền tảng gì?",
@@ -430,5 +433,185 @@
     "stickyText": "Workshop miễn phí · Zoom · tối thứ Tư 05/08",
     "stickyCta": "Giữ chỗ ngay",
     "trustText": "Khoảng 2.000 người đã đi qua các khoá của Thành"
+  },
+  "contact": {
+    "_ghiChu": "Cột liên hệ ở chân trang và trong ba trang chính sách. Trống thì hiện khung nhắc.",
+    "zalo": "",
+    "email": ""
+  },
+  "refundPolicy": {
+    "_ghiChu": "Điều kiện hoàn tiền. Sửa ở đây thì câu cam kết trên trang bán, câu FAQ và trang chính sách hoàn tiền đổi theo — ba chỗ không bao giờ lệch nhau.",
+    "days": 14,
+    "minPosts": 3
+  },
+  "policyPages": {
+    "_ghiChu": "Nội dung ba trang chính sách. Mỗi mục là {heading, paragraphs}. Đoạn nào bọc **…** thì in đậm. Trang nào để mảng rỗng thì không sinh ra.",
+    "privacy": {
+      "title": "Chính sách bảo mật",
+      "intro": "Trang này nói đúng những gì hệ thống của chúng tôi thật sự lưu lại — không phải một bản mẫu chép trên mạng.",
+      "sections": [
+        {
+          "heading": "Ai đang giữ thông tin của anh chị",
+          "paragraphs": [
+            "Trang này do Góc Creator vận hành. Thông tin pháp nhân đầy đủ nằm ở chân trang.",
+            "Chúng tôi chỉ thu thập những thứ cần để liên hệ lại và để lo phần học cho anh chị. Không mua bán danh sách, không bán thông tin cho bên thứ ba."
+          ]
+        },
+        {
+          "heading": "Chúng tôi lưu đúng những gì",
+          "paragraphs": [
+            "Khi anh chị điền form đăng ký, để lại thông tin nhận Bản Đồ 21 Ngày, hoặc đăng ký workshop, chúng tôi lưu: họ tên, số điện thoại, email (nếu anh chị điền), link Facebook (nếu anh chị điền), và toàn bộ câu trả lời trong form — nguyên văn, không sửa.",
+            "Khi anh chị mua khoá học, chúng tôi lưu thêm: mã đơn, số tiền, thời điểm thanh toán, và bốn số cuối trong nội dung chuyển khoản để đối chiếu khi ngân hàng cắt xén nội dung.",
+            "Khi anh chị học, chúng tôi lưu bài nộp của anh chị: link bài đăng, ghi chú anh chị gửi kèm, nhận xét của team, số coin và XP.",
+            "Về kỹ thuật, chúng tôi lưu: nguồn truy cập và tham số quảng cáo (UTM), trình duyệt đang dùng, và một chuỗi băm của địa chỉ IP. **Chúng tôi không lưu địa chỉ IP thô** — chỉ giữ bản đã băm một chiều, đủ để đếm và chặn spam, không đủ để lần ngược ra IP gốc."
+          ]
+        },
+        {
+          "heading": "Dùng để làm gì",
+          "paragraphs": [
+            "Liên hệ tư vấn và chăm sóc anh chị; xử lý đơn hàng và xác nhận thanh toán; vận hành lớp học và chấm bài; tính hoa hồng cho cộng tác viên giới thiệu; và đo xem kênh quảng cáo nào hiệu quả để không đốt tiền vô ích.",
+            "Chúng tôi có chấm điểm mức độ phù hợp của từng người để biết nên gọi ai trước. Việc chấm này chạy bằng một bảng điểm cố định do con người viết ra, không phải AI, và không quyết định thay con người điều gì — nó chỉ xếp thứ tự gọi điện."
+          ]
+        },
+        {
+          "heading": "Cookie",
+          "paragraphs": [
+            "`gc_vid` — một mã ngẫu nhiên nhận diện thiết bị, sống 2 năm. Dùng để đếm lượt truy cập và để không ghi trùng một người thành nhiều người.",
+            "`gc_ref` — ghi lại cộng tác viên đã giới thiệu anh chị tới đây, sống 90 ngày. Đây là cơ sở để trả hoa hồng đúng người.",
+            "`__Host-gc_admin` và `__Host-gc_aff` — chỉ tồn tại khi đăng nhập trang quản trị hoặc portal cộng tác viên. Người mua hàng bình thường không bao giờ có hai cookie này.",
+            "Chúng tôi không dùng cookie của mạng quảng cáo bên thứ ba trên trang này."
+          ]
+        },
+        {
+          "heading": "Ai khác nhìn thấy thông tin của anh chị",
+          "paragraphs": [
+            "SePay — đối tác đối soát thanh toán ngân hàng. Họ nhận thông tin giao dịch chuyển khoản.",
+            "Cloudflare — nơi đặt trang web và cơ sở dữ liệu.",
+            "Google Fonts — trình duyệt của anh chị tải phông chữ từ đây khi mở trang.",
+            "YouTube (chế độ không lưu cookie) — nơi đặt các video feedback.",
+            "Ngoài bốn bên trên, không ai khác. Chúng tôi không chia sẻ danh sách khách cho bên thứ ba nào."
+          ]
+        },
+        {
+          "heading": "Giữ trong bao lâu",
+          "paragraphs": [
+            "Thông tin liên hệ và đơn hàng: giữ trong thời gian còn quan hệ với anh chị, và giữ thêm theo thời hạn lưu chứng từ mà pháp luật yêu cầu.",
+            "Số liệu thống kê truy cập: giữ dạng đã gộp, không gắn với cá nhân."
+          ]
+        },
+        {
+          "heading": "Quyền của anh chị",
+          "paragraphs": [
+            "Anh chị có quyền yêu cầu xem lại, sửa, hoặc xoá thông tin của mình; rút lại sự đồng ý nhận liên hệ; và yêu cầu chúng tôi ngừng gọi.",
+            "Nhắn Zalo hoặc gửi email tới địa chỉ ở chân trang, chúng tôi xử lý trong vòng 7 ngày làm việc. Riêng dữ liệu đơn hàng đã phát sinh thì phải giữ theo quy định về chứng từ, nhưng sẽ không dùng để liên hệ nữa."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Điều khoản sử dụng",
+      "intro": "Những gì chúng tôi cam kết, và những gì chúng tôi mong ở anh chị.",
+      "sections": [
+        {
+          "heading": "Về khoá học",
+          "paragraphs": [
+            "Thử thách 21 ngày là chương trình học trực tuyến kéo dài 21 ngày, học phí 2.000.000đ, giới hạn số chỗ mỗi khoá. Mỗi ngày anh chị đăng một bài lên kênh thật của mình rồi nộp link vào hệ thống; team đọc và nhận xét.",
+            "Chúng tôi cam kết dạy và nhận xét đầy đủ 21 ngày. Chúng tôi **không** cam kết anh chị sẽ đạt một lượng người theo dõi, một mức doanh thu, hay bất kỳ con số cụ thể nào — kết quả phụ thuộc vào việc anh chị làm gì với những gì được học."
+          ]
+        },
+        {
+          "heading": "Đăng ký và thanh toán",
+          "paragraphs": [
+            "Anh chị điền form, hệ thống sinh mã đơn và mã QR chuyển khoản. Tiền về là hệ thống tự nhận biết trong vòng vài phút và mở lớp cho anh chị.",
+            "Nội dung chuyển khoản phải giữ nguyên mã đơn. Gõ sai nội dung thì giao dịch không tự khớp được và cần xử lý tay — nhắn Zalo cho chúng tôi kèm ảnh chụp giao dịch.",
+            "Chuyển thiếu thì đơn ở trạng thái nhận một phần, chưa mở lớp. Chuyển thừa thì chúng tôi liên hệ hoàn lại phần dư."
+          ]
+        },
+        {
+          "heading": "Anh chị cần làm gì",
+          "paragraphs": [
+            "Nộp bài đúng người, đúng kênh của mình. Nộp hộ hoặc nộp bài của người khác thì không được tính.",
+            "Không chia sẻ tài liệu, bản ghi buổi học, hay đường link cá nhân của mình cho người ngoài khoá. Đường link vào lớp là đường link riêng của anh chị — ai có nó là vào được.",
+            "Giữ thái độ tôn trọng trong nhóm học. Chúng tôi có quyền dừng khoá học của người quấy rối người khác, và trường hợp đó không được hoàn tiền."
+          ]
+        },
+        {
+          "heading": "Bản quyền nội dung",
+          "paragraphs": [
+            "Toàn bộ tài liệu, bản ghi và khung nội dung trong khoá thuộc về Góc Creator. Anh chị được dùng cho công việc của chính mình, nhưng không được bán lại, dạy lại có thu phí, hay đăng công khai.",
+            "Bài anh chị đăng trên kênh của anh chị là của anh chị. Chúng tôi có thể xin phép trước khi dùng làm ví dụ hoặc feedback — không tự lấy khi chưa hỏi."
+          ]
+        },
+        {
+          "heading": "Hoàn tiền",
+          "paragraphs": [
+            "Điều kiện và cách yêu cầu nằm ở trang Chính sách hoàn tiền."
+          ]
+        },
+        {
+          "heading": "Chương trình cộng tác viên",
+          "paragraphs": [
+            "Cộng tác viên nhận 20% học phí cho mỗi đơn phát sinh từ đường link giới thiệu của mình.",
+            "Ghi công theo **chạm đầu tiên** trong cửa sổ 90 ngày: người mua đến từ link của ai trước thì hoa hồng về người đó, kể cả khi sau đó họ bấm vào link của người khác.",
+            "Hoa hồng được duyệt sau khi qua thời hạn hoàn tiền. Tự mua qua link của chính mình không được tính hoa hồng. Đơn được hoàn tiền thì hoa hồng tương ứng bị thu hồi."
+          ]
+        },
+        {
+          "heading": "Thay đổi điều khoản",
+          "paragraphs": [
+            "Chúng tôi có thể cập nhật trang này. Thay đổi chỉ áp dụng cho đơn phát sinh sau đó — đơn anh chị đã mua vẫn theo điều khoản tại thời điểm mua.",
+            "Có vướng mắc thì nhắn Zalo hoặc email ở chân trang, chúng tôi ưu tiên giải quyết trực tiếp trước khi cần tới bên thứ ba."
+          ]
+        }
+      ]
+    },
+    "refund": {
+      "title": "Chính sách hoàn tiền",
+      "intro": "Điều kiện viết ở đây đúng bằng câu cam kết in trên trang bán. Không có điều khoản nào ẩn ở chỗ khác.",
+      "sections": [
+        {
+          "heading": "Điều kiện hoàn tiền",
+          "paragraphs": [
+            "Trong **14 ngày** đầu kể từ ngày đóng tiền, nếu anh chị **đã nộp ít nhất 3 bài** mà vẫn thấy khoá học không phù hợp, chúng tôi hoàn lại **100% học phí**.",
+            "Không cần giải thích lý do. Chỉ cần đã thử thật."
+          ]
+        },
+        {
+          "heading": "Vì sao có điều kiện nộp bài",
+          "paragraphs": [
+            "Vì khoá này không phải một bộ video để xem. Giá trị nằm ở việc anh chị đăng bài thật lên kênh thật và nhận nhận xét thật. Chưa nộp bài nào thì chưa chạm vào phần đó của khoá học, và không ai — kể cả anh chị — biết được nó có hợp hay không.",
+            "Ba bài trong 14 ngày là mức thấp: mỗi ngày một bài thì ba bài là ba ngày đầu tiên. Đây là mốc để chắc rằng anh chị đã bắt đầu, không phải một rào cản để né hoàn tiền."
+          ]
+        },
+        {
+          "heading": "Cách yêu cầu",
+          "paragraphs": [
+            "Nhắn Zalo cho chúng tôi theo số ở chân trang, kèm mã đơn của anh chị (dạng GC…). Không cần điền form, không cần gọi điện thuyết phục ai.",
+            "Chúng tôi xác nhận trong 2 ngày làm việc và chuyển tiền trong 7 ngày làm việc kể từ khi xác nhận."
+          ]
+        },
+        {
+          "heading": "Tiền về đâu",
+          "paragraphs": [
+            "Về đúng tài khoản ngân hàng đã dùng để chuyển học phí. Muốn nhận vào tài khoản khác thì báo trước, chúng tôi cần xác minh thêm để tránh nhầm người."
+          ]
+        },
+        {
+          "heading": "Trường hợp không hoàn tiền",
+          "paragraphs": [
+            "Đã quá 14 ngày kể từ ngày đóng tiền.",
+            "Chưa nộp đủ 3 bài trong thời gian đó.",
+            "Tài khoản bị dừng vì vi phạm điều khoản sử dụng (quấy rối người khác trong nhóm học, phát tán tài liệu ra ngoài).",
+            "Đã nhận hoàn tiền cho khoá này trước đó."
+          ]
+        },
+        {
+          "heading": "Ảnh hưởng tới cộng tác viên",
+          "paragraphs": [
+            "Đơn được hoàn tiền thì hoa hồng 20% tương ứng bị thu hồi. Nếu hoa hồng đã được chi, phần đó sẽ trừ vào kỳ chi trả kế tiếp của cộng tác viên."
+          ]
+        }
+      ]
+    }
   }
 }
