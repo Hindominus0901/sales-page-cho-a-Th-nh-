@@ -16,7 +16,7 @@
     "db:migrate": "wrangler d1 migrations apply DB --local",
     "db:migrate:preview": "wrangler d1 migrations apply DB --remote --env preview",
     "db:migrate:prod": "wrangler d1 migrations apply DB --remote --env production",
-    "db:seed": "wrangler d1 execute DB --local --file migrations/seed/0001_seed.sql",
+    "db:seed": "wrangler d1 execute DB --local --file migrations/seed/0001_seed.sql && wrangler d1 execute DB --local --file migrations/seed/0002_gamification.sql",
     "db:reset": "rm -rf .wrangler/state/v3/d1 && npm run db:migrate && npm run db:seed",
     "admin:create": "node scripts/create-admin.mjs",
     "typecheck": "tsc --noEmit",

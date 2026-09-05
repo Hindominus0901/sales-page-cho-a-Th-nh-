@@ -406,6 +406,12 @@
   .fc2-wspage .fc2-shadow{transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out)}
 }
 
+/* Trượt lên khi cuộn tới. Cố ý KHÔNG hạ opacity: hỏng cách mấy cũng chỉ lệch
+   14px, chữ luôn đọc được — khác với .fc2-reveal của bản thiết kế vốn đặt
+   opacity:0 và phụ thuộc vào một script chỉ có ở trang bán. */
+.fc2-slidein{transition:transform .5s var(--ease-out)}
+
 @media (prefers-reduced-motion:reduce){
   .fc2-wssticky{transition:none}
+  .fc2-slidein{transform:none !important;transition:none}
 }

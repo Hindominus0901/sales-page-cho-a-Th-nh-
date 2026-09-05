@@ -265,6 +265,22 @@ body = body.replace(
 body = body.replace(/flex-shrink:0;width:200px;aspect-ratio:9\/16/g, 'flex-shrink:0;width:300px;aspect-ratio:9/16');
 body = body.replace(/flex-shrink:0;width:160px;aspect-ratio:9\/16/g, 'flex-shrink:0;width:240px;aspect-ratio:9/16');
 
+/**
+ * Nút play hai lớp của bản thiết kế: vòng ngoài mờ blur, vòng trong gradient
+ * xanh, tam giác trắng. Tách thành hàm để trang workshop dùng đúng cái đang
+ * có trên trang bán, thay vì vẽ lại một nút khác.
+ */
+function playOverlay(size) {
+  const outer = size === 'lg' ? 92 : 58;
+  const inner = size === 'lg' ? 62 : 40;
+  const icon = size === 'lg' ? 24 : 16;
+  return '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">'
+    + `<div style="background:rgba(255,255,255,.3);backdrop-filter:blur(6px);border-radius:9999px;width:${outer}px;height:${outer}px;display:flex;align-items:center;justify-content:center">`
+    + `<div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);box-shadow:0 6px 16px rgba(0,0,0,.25);border-radius:9999px;width:${inner}px;height:${inner}px;display:flex;align-items:center;justify-content:center">`
+    + `<svg width="${icon}" height="${icon}" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`
+    + '</div></div></div>';
+}
+
 /** Nút dừng/chạy cho các dải tự chạy — WCAG 2.2.2 yêu cầu có cách dừng. */
 function pauseButton() {
   return '<button type="button" class="fc2-pause" data-pause aria-pressed="false">'
@@ -918,11 +934,11 @@ function workshopPage() {
    * để mũi tên qua lại không đếm trùng.
    */
   const wsVideos = videos.slice(0, 10).map((id) => VID(id));
-  const vthumb = (v, clone) => `<div${clone ? ' aria-hidden="true"' : ''} style="flex-shrink:0;width:240px;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#e7dcc6">`
+  const vthumb = (v, clone) => `<div${clone ? ' aria-hidden="true"' : ''} class="fc2-shadow" style="position:relative;flex-shrink:0;width:240px;aspect-ratio:9/16;border-radius:16px;overflow:hidden;background:#e7dcc6">`
     + `<img class="fc2-vthumb"${clone ? ' data-clone="1"' : ''} role="button" tabindex="0"${videoAttrs(v)}`
     + ` src="${v.poster}" alt="${esc(v.caption || 'Video feedback của học viên')}"`
     + ` loading="lazy" width="540" height="960"`
-    + ` style="${THUMB_STYLE}"></div>`;
+    + ` style="${THUMB_STYLE}">${playOverlay('sm')}</div>`;
 
   const videoBlock = wsVideos.length
     ? `<div style="margin:8px 0 46px">
@@ -982,7 +998,19 @@ ${faqItems.map((x, i) => `<details${i === 0 ? ' open=""' : ''}>`
   let html = read('page-workshop.html');
   const fill = {
     HERO_IMG,
+    HERO_MEDIA: heroVideo
+      ? `<img class="fc2-vthumb" role="button" tabindex="0"${videoAttrs(heroVideo)}`
+        + ` src="${HERO_IMG}" alt="Xem video giới thiệu" fetchpriority="high"`
+        + ` style="${THUMB_STYLE}">${playOverlay('lg')}`
+      : `<img src="${HERO_IMG}" alt="Đỗ Mạnh Thành" width="1280" height="720" fetchpriority="high"`
+        + ' style="width:100%;height:100%;object-fit:cover;display:block">',
     PORTRAIT_IMG,
+    // Bốn chấm tick chồng nhau, giống hero trang bán
+    TRUST_DOTS: [0, 1, 2, 3].map((i) =>
+      '<div style="width:30px;height:30px;border-radius:9999px;background:#2f7a4d;color:#fff;'
+      + 'display:flex;align-items:center;justify-content:center;font-size:13px;'
+      + `${i ? 'margin-left:-9px;' : ''}box-shadow:0 0 0 2px #f3ead9">✓</div>`).join(''),
+    TRUST_TEXT: esc(w.trustText || 'Được tin tưởng bởi hàng trăm học viên'),
     HOST_HEADING: esc(w.hostHeading || 'Người dẫn buổi này'),
     HOST_TEXT: esc(w.hostText || ''),
     HOST_STATS: hostStats,

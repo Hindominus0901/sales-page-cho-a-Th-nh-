@@ -11,6 +11,7 @@ import { adminLeadRoutes } from './routes/admin/leads';
 import { adminOrderRoutes } from './routes/admin/orders';
 import { adminAffiliateRoutes } from './routes/admin/affiliates';
 import { adminContentRoutes } from './routes/admin/content';
+import { adminGameRoutes } from './routes/admin/game';
 import { affiliateRoutes } from './routes/affiliate/portal';
 import { runDailyJobs } from './lib/jobs/daily';
 
@@ -37,6 +38,7 @@ app.route('/', adminLeadRoutes);
 app.route('/', adminOrderRoutes);
 app.route('/', adminAffiliateRoutes);
 app.route('/', adminContentRoutes);
+app.route('/', adminGameRoutes);
 app.route('/', affiliateRoutes);
 
 /** Trang quản trị và portal CTV không bao giờ được index. */

@@ -76,6 +76,43 @@
     }
   })();
 
+  /**
+   * Các khối lớn trượt nhẹ lên khi cuộn tới.
+   *
+   * Cố ý KHÔNG hạ opacity. Cách làm quen thuộc là để opacity:0 rồi chờ
+   * IntersectionObserver hiện lên — nhưng khi observer chưa kịp chạy (cuộn
+   * nhanh, tab nền, ảnh chụp thumbnail, trình thu thập dữ liệu) thì cả mảng
+   * nội dung VÔ HÌNH. Đo thực tế trên chính trang này: cuộn nhanh còn 9 khối
+   * trắng trơn.
+   *
+   * Chỉ dịch chuyển 14px thì hỏng cách mấy cũng chỉ lệch 14px, chữ luôn đọc được.
+   */
+  (function revealOnScroll() {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!('IntersectionObserver' in window)) return;
+
+    var targets = $$('.fc2-wspage h2, .fc2-wsproof, .fc2-wsfaq, .fc2-wshost, .fc2-marqwrap')
+      .filter(function (el) { return el.getBoundingClientRect().top > innerHeight * 0.9; });
+    if (!targets.length) return;
+
+    targets.forEach(function (el) {
+      // KHÔNG dùng .fc2-reveal: lớp đó của bản thiết kế đặt opacity:0 và chỉ
+      // hiện lại khi có thêm .fc2-in, mà script làm việc đó chỉ được nhúng vào
+      // trang bán — dùng ở đây là nội dung biến mất vĩnh viễn.
+      el.classList.add('fc2-slidein');
+      el.style.transform = 'translateY(14px)';
+    });
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        en.target.style.transform = '';
+        io.unobserve(en.target);
+      });
+    }, { rootMargin: '140px 0px 0px 0px' });
+    targets.forEach(function (el) { io.observe(el); });
+  })();
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     clearErrors();
