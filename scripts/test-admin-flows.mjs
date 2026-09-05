@@ -385,6 +385,40 @@ console.log('Nhân sự');
     ok('tự đặt lại mật khẩu của mình được', tuDat.status, 200);
     ok('và KHÔNG bị đăng xuất', (await admin.get('/api/admin/me')).status, 200);
 
+    // ---- Tự đổi mật khẩu (có nhập mật khẩu cũ)
+    //
+    // Chạy bằng phiên của NHÂN VIÊN, không phải owner: đường này cố ý nằm
+    // ngoài requireRole('owner') vì ai cũng phải đổi được mật khẩu của mình.
+    // Kiểm bằng owner thì không phân biệt được nó có thật sự mở cho mọi vai
+    // trò hay chỉ tình cờ chạy được vì owner làm gì cũng được.
+    const mkCu = dat.body.password;
+    const mkMoi = 'ChuoiDaiAnToan-2026';
+
+    // Phiên thứ hai của cùng người, mở TRƯỚC khi đổi: đây là cái máy quên đăng
+    // xuất ở quán cà phê, và nó phải chết sau khi đổi mật khẩu.
+    const nvMayKhac = makeClient();
+    await nvMayKhac.req('POST', '/api/admin/login', { email, password: mkCu });
+    nvMayKhac.setCsrf((await nvMayKhac.get('/api/admin/me')).body.csrfToken);
+    ok('máy thứ hai đang đăng nhập được', (await nvMayKhac.get('/api/admin/me')).status, 200);
+
+    ok('sai mật khẩu hiện tại bị từ chối',
+      (await nv.post('/api/admin/me/mat-khau', { current: 'sai-be-bet', next: mkMoi })).status, 400);
+    ok('mật khẩu mới quá ngắn bị từ chối',
+      (await nv.post('/api/admin/me/mat-khau', { current: mkCu, next: 'ngan123' })).status, 400);
+    ok('mật khẩu dễ đoán bị từ chối',
+      (await nv.post('/api/admin/me/mat-khau', { current: mkCu, next: 'goccreator2026' })).status, 400);
+    ok('mật khẩu mới trùng mật khẩu cũ bị từ chối',
+      (await nv.post('/api/admin/me/mat-khau', { current: mkCu, next: mkCu })).status, 400);
+
+    ok('đổi mật khẩu thành công', (await nv.post('/api/admin/me/mat-khau',
+      { current: mkCu, next: mkMoi })).status, 200);
+    ok('người vừa đổi KHÔNG bị đăng xuất', (await nv.get('/api/admin/me')).status, 200);
+    ok('máy thứ hai bị đăng xuất', (await nvMayKhac.get('/api/admin/me')).status, 401);
+    ok('mật khẩu mới đăng nhập được', (await makeClient()
+      .req('POST', '/api/admin/login', { email, password: mkMoi })).status, 200);
+    ok('mật khẩu cũ hết dùng được', (await makeClient()
+      .req('POST', '/api/admin/login', { email, password: mkCu })).status, 401);
+
     // Tắt xong thì phiên của người đó phải chết ngay, không đợi hết hạn —
     // tắt tài khoản mà họ vẫn thao tác được thì việc tắt gần như vô nghĩa.
     ok('tắt được tài khoản', (await admin.patch(`/api/admin/staff/${nvId}`, { isActive: false })).status, 200);

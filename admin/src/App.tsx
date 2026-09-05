@@ -15,6 +15,7 @@ import Students from './pages/Students';
 import Settings from './pages/Settings';
 import AuditLog from './pages/AuditLog';
 import Staff from './pages/Staff';
+import MatKhau from './pages/MatKhau';
 import Submissions from './pages/Submissions';
 import Leaderboard from './pages/Leaderboard';
 import Rewards from './pages/Rewards';
@@ -134,6 +135,13 @@ export default function App() {
         ))}
         <div className="side-foot">
           <div className="who note" style={{ marginBottom: 9 }}>{me.user.name}</div>
+          {/* Đổi mật khẩu để cạnh tên mình, không nhét vào nhóm "Hệ thống":
+              đây là việc của riêng người đang đăng nhập, và mọi vai trò đều
+              làm được — khác với Nhân sự vốn chỉ chủ hệ thống mở nổi. */}
+          <a className="btn sm" href="#/mat-khau"
+             style={{ width: '100%', marginBottom: 7, textAlign: 'center', textDecoration: 'none' }}>
+            Đổi mật khẩu
+          </a>
           <button className="btn sm" style={{ width: '100%' }} onClick={logout}>Đăng xuất</button>
         </div>
       </nav>
@@ -163,6 +171,7 @@ function Route({ path, query }: { path: string; query: URLSearchParams }) {
   if (path === '/qua-tang') return <Rewards />;
   if (path === '/co-che') return <Mechanics />;
   if (path === '/nhan-su') return <Staff />;
+  if (path === '/mat-khau') return <MatKhau />;
   if (path === '/nhat-ky') return <AuditLog />;
   return <div className="card card-pad">Không có trang này. <a href="#/">Về tổng quan</a></div>;
 }
