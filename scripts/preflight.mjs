@@ -178,10 +178,10 @@ const site = JSON.parse(readFileSync('site.config.json', 'utf8'));
 const empty = (v) => !String(v ?? '').trim();
 
 const legal = site.legal ?? {};
-if (empty(legal.company) || empty(legal.taxId) || empty(legal.address)) {
+if (empty(legal.company) || empty(legal.taxId) || empty(legal.address) || empty(legal.email)) {
   warn('Khối pháp nhân ở chân trang còn trống',
     'BẮT BUỘC theo luật thương mại điện tử trước khi chạy quảng cáo: tên công ty, ' +
-    'mã số thuế, địa chỉ, hotline, email. Chưa có thì khối tự ẩn, trang vẫn chạy.');
+    'mã số thuế, địa chỉ, email. Chưa có thì khối tự ẩn, trang vẫn chạy.');
 }
 
 const pol = site.policies ?? {};

@@ -31,10 +31,10 @@
   "testimonialIndustry": "",
   "legal": {
     "company": "CÔNG TY TNHH THƯƠNG MẠI & DỊCH VỤ ANLIFE GROUP",
-    "taxId": "",
-    "address": "",
+    "taxId": "0111561096",
+    "address": "P1405, tầng 14, Tòa Ocean Park, số 1 Đào Duy Anh, Phường Kim Liên, Hà Nội, Việt Nam",
     "hotline": "",
-    "email": "",
+    "email": "nhipsongsoserenitylife@gmail.com",
     "mocNotified": false
   },
   "policies": {
@@ -437,7 +437,7 @@
   "contact": {
     "_ghiChu": "Cột liên hệ ở chân trang và trong ba trang chính sách. Trống thì hiện khung nhắc.",
     "zalo": "",
-    "email": ""
+    "email": "nhipsongsoserenitylife@gmail.com"
   },
   "refundPolicy": {
     "_ghiChu": "Điều kiện hoàn tiền. Sửa ở đây thì câu cam kết trên trang bán, câu FAQ và trang chính sách hoàn tiền đổi theo — ba chỗ không bao giờ lệch nhau.",

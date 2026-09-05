@@ -640,7 +640,10 @@ function buildFooter() {
   const L = cfg.legal || {};
   const P = cfg.policies || {};
   const F = cfg.footer || {};
-  const legalKeys = ['company', 'taxId', 'address', 'hotline', 'email'];
+  // Hotline KHÔNG nằm trong danh sách bắt buộc: luật đòi có phương thức liên hệ,
+  // và email đã đáp ứng. Bắt buộc cả hotline thì thiếu số điện thoại là ẩn sạch
+  // cả khối pháp nhân — tệ hơn nhiều so với hiện khối thiếu một dòng.
+  const legalKeys = ['company', 'taxId', 'address', 'email'];
   const thieu = legalKeys.filter((k) => !String(L[k] ?? '').trim());
 
   const logoBlock = String(cfg.logo?.src ?? '').trim()
@@ -679,8 +682,7 @@ ${email ? `<a href="mailto:${esc(email)}" style="color:#26643f;text-decoration:n
     ? `<div style="font-size:14px;color:#4a4a52;line-height:1.8">
 <div><b style="color:#191919">${esc(L.company)}</b> · Mã số thuế: ${esc(L.taxId)}</div>
 <div>${esc(L.address)}</div>
-<div>Hotline: <a href="tel:${esc(String(L.hotline).replace(/\s/g, ''))}" style="color:#26643f;text-decoration:none">${esc(L.hotline)}</a>
- · Email: <a href="mailto:${esc(L.email)}" style="color:#26643f;text-decoration:none">${esc(L.email)}</a></div>
+<div>${String(L.hotline ?? '').trim() ? `Hotline: <a href="tel:${esc(String(L.hotline).replace(/\s/g, ''))}" style="color:#26643f;text-decoration:none">${esc(L.hotline)}</a> · ` : ''}Email: <a href="mailto:${esc(L.email)}" style="color:#26643f;text-decoration:none">${esc(L.email)}</a></div>
 ${L.mocNotified ? '<div style="margin-top:4px">Đã thông báo với Bộ Công Thương.</div>' : ''}
 </div>`
     : placeholder({
