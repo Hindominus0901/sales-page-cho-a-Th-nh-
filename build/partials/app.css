@@ -140,6 +140,9 @@
      ~840px, một card sticky cao hơn viewport sẽ kẹt lại và che mất nội dung. */
   .fc2-wsgrid{grid-template-columns:1fr !important;gap:32px !important}
   .fc2-wsform{position:static !important}
+  .fc2-wshost{grid-template-columns:1fr !important}
+  .fc2-wshost > div:first-child{max-width:220px}
+  .fc2-wsproof{grid-template-columns:1fr !important}
 }
 
 /* ---------- Đáp ứng màn hình nhỏ ---------- */

@@ -147,6 +147,45 @@
     else if (e.key === 'ArrowRight') openAt(current + 1);
   });
 
+  /**
+   * Nạp ảnh trong các dải tự chạy khi cả dải sắp vào khung nhìn.
+   *
+   * Vì sao cần: dải marquee nhân đôi nội dung rồi kéo bằng translateX. Chrome
+   * KHÔNG kích hoạt loading="lazy" cho ảnh nằm trong khối bị transform như vậy
+   * — đo thực tế thì sau 40 giây vẫn còn 10 thumbnail chưa tải, và khách thấy
+   * ô trắng đúng lúc dải cuộn chúng vào.
+   *
+   * Cách sửa giữ nguyên ý nghĩa của lazy: vẫn không tải gì cho tới khi dải gần
+   * vào màn hình, chỉ là quan sát trên CẢ DẢI thay vì từng ảnh.
+   */
+  function wireMarqueeImages() {
+    var wraps = $$('.fc2-marqwrap, .fc2-vmarquee');
+    if (!wraps.length) return;
+
+    var load = function (wrap) {
+      $$('img[loading="lazy"]', wrap).forEach(function (img) {
+        img.loading = 'eager';
+        // Gán lại src để Chrome nạp ngay, không chờ lần bố cục sau.
+        var src = img.getAttribute('src');
+        if (src) img.setAttribute('src', src);
+      });
+    };
+
+    if (!('IntersectionObserver' in window)) {
+      wraps.forEach(load);
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        load(en.target);
+        io.unobserve(en.target);
+      });
+    }, { rootMargin: '600px 0px' });
+    wraps.forEach(function (w) { io.observe(w); });
+  }
+
   loadSiteConfig();
   wireMarqueePause();
+  wireMarqueeImages();
 })();

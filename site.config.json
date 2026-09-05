@@ -333,6 +333,38 @@
     "ctaLabel": "Giữ chỗ tham gia workshop",
     "formNote": "Thông tin của anh chị chỉ dùng để gửi link buổi học và nhắc lịch, không chia sẻ cho bên thứ ba.",
     "thankYouHeadline": "Đã giữ chỗ cho anh chị",
-    "thankYouText": "Hẹn gặp anh chị trong buổi học. Anh chị lưu lại thông tin bên dưới, và vào nhóm Zalo để được nhắc trước giờ vào phòng."
+    "thankYouText": "Hẹn gặp anh chị trong buổi học. Anh chị lưu lại thông tin bên dưới, và vào nhóm Zalo để được nhắc trước giờ vào phòng.",
+    "hostHeading": "Người dẫn buổi này",
+    "hostText": "Đỗ Mạnh Thành — 10 năm làm marketing, đã đồng hành cùng khoảng 2.000 người xây kênh cá nhân. Học viên đến từ nhiều nghề khác nhau: sức khoẻ, thiết kế nội thất, nuôi dạy con, kinh doanh dịch vụ. Buổi này Thành dẫn trực tiếp, không phải video quay sẵn.",
+    "hostStats": [
+      {
+        "value": "10 năm",
+        "label": "kinh nghiệm marketing"
+      },
+      {
+        "value": "~2.000",
+        "label": "người đã được đào tạo"
+      }
+    ],
+    "proofHeading": "Học viên đã đi qua hành trình này",
+    "proofNote": "Ảnh chụp màn hình thật từ Facebook và Zalo của học viên các khoá trước.",
+    "proofImages": [
+      {
+        "src": "fb-nhung.jpg",
+        "caption": "Chị Nhung Tuyết"
+      },
+      {
+        "src": "fb-chichi.jpg",
+        "caption": "Chị Hạnh Chi — hơn 60 tuổi, nhận học bổng Gương sáng hiếu học"
+      },
+      {
+        "src": "fb-trang.jpg",
+        "caption": "Chị Nguyễn Thị Trang"
+      },
+      {
+        "src": "fb-hanhchi.png",
+        "caption": "Học viên khoá 21 ngày"
+      }
+    ]
   }
 }

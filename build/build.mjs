@@ -865,8 +865,48 @@ function workshopPage() {
     ? `<p style="font-size:19px;line-height:1.6;font-weight:600;color:#191919;border-left:3px solid #2f7a4d;padding-left:18px;margin:0">${esc(w.closing)}</p>`
     : '';
 
+  // Ảnh minh chứng: chỉ lấy file thật có trong public/media, thiếu thì bỏ qua ô
+  // đó thay vì để khung vỡ.
+  const proofImgs = (w.proofImages || [])
+    .filter((x) => x && String(x.src ?? '').trim()
+      && fs.existsSync(path.join(MEDIA_OUT, String(x.src).trim())))
+    // KHÔNG ép khung cố định: ảnh chụp màn hình ở đây phần lớn là ảnh ngang
+    // (tỉ lệ 1.3–1.7), nhét vào khung dọc 4:5 thì object-fit cắt mất chữ hai bên
+    // và bằng chứng thành vô nghĩa. Để mỗi ảnh giữ đúng tỉ lệ của nó.
+    .map((x) => `<figure style="margin:0">
+      <div class="fc2-shadow" style="border-radius:14px;overflow:hidden;background:#e7dcc6;line-height:0">
+        <img src="/media/${esc(x.src)}" alt="${esc(x.caption || 'Ảnh chụp màn hình phản hồi của học viên')}"
+             loading="lazy" style="width:100%;height:auto;display:block">
+      </div>
+      ${x.caption ? `<figcaption style="font-size:13px;color:#4a4a52;margin-top:8px">${esc(x.caption)}</figcaption>` : ''}
+    </figure>`).join('\n');
+
+  if ((w.proofImages || []).length && !proofImgs) {
+    warnings.push('Trang workshop: không tìm thấy ảnh nào trong "workshop.proofImages" — đã ẩn khối bằng chứng.');
+  }
+
+  const proofBlock = proofImgs
+    ? `<div style="margin:8px 0 40px">
+        <h2 style="font-size:28px;font-weight:800;margin:0 0 8px">${esc(w.proofHeading || '')}</h2>
+        ${w.proofNote ? `<p style="font-size:15px;line-height:1.7;color:#4a4a52;margin:0 0 18px">${esc(w.proofNote)}</p>` : ''}
+        <div class="fc2-wsproof" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:start">${proofImgs}</div>
+      </div>`
+    : '';
+
+  const hostStats = (w.hostStats || [])
+    .filter((x) => String(x?.value ?? '').trim())
+    .map((x) => `<div><div style="font-family:Oswald,sans-serif;font-size:26px;font-weight:700;color:#2f7a4d">${esc(x.value)}</div>`
+      + `<div style="font-size:14px;color:#4a4a52">${esc(x.label || '')}</div></div>`)
+    .join('\n');
+
   let html = read('page-workshop.html');
   const fill = {
+    HERO_IMG,
+    PORTRAIT_IMG,
+    HOST_HEADING: esc(w.hostHeading || 'Người dẫn buổi này'),
+    HOST_TEXT: esc(w.hostText || ''),
+    HOST_STATS: hostStats,
+    PROOF: proofBlock,
     TICKER: tickerHtml,
     EYEBROW: esc(w.eyebrow || ''),
     HEADLINE: esc(w.headline || ''),
