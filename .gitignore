@@ -23,3 +23,6 @@ public/videos/*.mp4
 
 # File tạm lúc kiểm chứng — không bao giờ commit
 *.tmp.mjs
+
+# Bản dựng thư để xem trước — rác tạm, không thuộc về repo.
+public/.xem-thu/

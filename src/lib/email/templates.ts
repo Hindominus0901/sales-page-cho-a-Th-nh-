@@ -57,8 +57,10 @@ export function orderPaidMail(
     `Góc Creator đã nhận đủ học phí cho đơn ${order.code} (${vnd(order.amount)}).`,
     'Chỗ của anh chị trong Thử thách 21 ngày đã được giữ.',
     '',
-    'Việc tiếp theo: bên Thành sẽ nhắn Zalo gửi link vào nhóm học, lịch học,',
-    'và đường link riêng để anh chị nộp bài mỗi ngày.',
+    'Ngay sau email này, anh chị nhận thêm một email nữa chứa ĐƯỜNG LINK RIÊNG',
+    'để vào lớp và nộp bài mỗi ngày. Giữ email đó lại.',
+    '',
+    'Bên Thành sẽ nhắn Zalo gửi link vào nhóm học và lịch học.',
     '',
     `Xem lại đơn bất cứ lúc nào: ${base}/thanh-toan/${order.code}`,
     `Quên mã đơn thì tra bằng số điện thoại: ${base}/tra-cuu`,
@@ -75,8 +77,9 @@ export function orderPaidMail(
       p(`Chào <b>${esc(ten)}</b>, Góc Creator đã nhận đủ học phí cho đơn `
         + `<b style="letter-spacing:.05em">${esc(order.code)}</b> (${vnd(order.amount)}). `
         + 'Chỗ của anh chị trong Thử thách 21 ngày đã được giữ.'),
-      p('Bên Thành sẽ nhắn Zalo gửi link vào nhóm học, lịch học, và đường link riêng '
-        + 'để anh chị nộp bài mỗi ngày.'),
+      p('Ngay sau email này, anh chị nhận thêm <b>một email nữa</b> chứa đường link '
+        + 'riêng để vào lớp và nộp bài mỗi ngày. Giữ email đó lại.'),
+      p('Bên Thành sẽ nhắn Zalo gửi link vào nhóm học và lịch học.'),
       btn('Xem lại đơn của tôi', `${base}/thanh-toan/${order.code}`),
       p(`Quên mã đơn thì tra bằng số điện thoại tại <a href="${base}/tra-cuu" style="color:#26643f">`
         + `${base}/tra-cuu</a>.`),
