@@ -158,6 +158,50 @@ script tạo tài khoản owner mới cho email đó, không đụng vào tài k
 
 ---
 
+## Bước 5b — Tên miền riêng manhthanh.net
+
+Địa chỉ `.workers.dev` chạy tốt nhưng dài và không mang thương hiệu — chạy quảng
+cáo bằng nó thì tỷ lệ bấm thấp hơn hẳn.
+
+1. Cloudflare → **Add a site** → gõ `manhthanh.net` → chọn gói **Free**
+2. Cloudflare đưa ra **hai nameserver**. Vào nơi mua tên miền, đổi nameserver
+   sang đúng hai cái đó. Chờ Cloudflare báo **Active** (5 phút–24 giờ).
+3. Workers & Pages → `goc-creator-challenge` → **Domains & Routes** → Add →
+   **Custom domain** → `manhthanh.net`. Thêm lần nữa cho `www.manhthanh.net`.
+
+Địa chỉ `.workers.dev` vẫn chạy song song, không mất.
+
+> **Mọi người phải đăng nhập lại một lần.** Cookie phiên dùng tiền tố `__Host-`
+> nên nó bám vào đúng tên miền đang mở — phiên trên `.workers.dev` không đi theo
+> sang tên miền mới. Đây là hành vi đúng, không phải lỗi.
+
+---
+
+## Bước 5c — Bật email thật (Resend)
+
+Chưa có bước này thì email nằm trong hàng đợi với trạng thái "bỏ qua": khách trả
+tiền xong **không nhận được đường link vào lớp**, và không ai lấy lại được mật
+khẩu.
+
+1. `resend.com` → đăng ký. Miễn phí 3.000 thư/tháng, 100 thư/ngày.
+2. **Domains → Add Domain** → `manhthanh.net`
+3. Resend đưa ra 3 bản ghi DNS (SPF, DKIM, DMARC). Tên miền đã nằm trong
+   Cloudflare rồi nên vào **DNS → Add record** dán vào. Chờ Resend báo
+   **Verified**.
+4. **API Keys → Create API Key** → chép khoá.
+5. Cloudflare → Worker → Settings → **Variables and Secrets** (loại **runtime**,
+   KHÔNG phải mục Build) → thêm `RESEND_API_KEY`, kiểu **Secret**.
+
+`EMAIL_FROM` đã nằm sẵn trong `wrangler.jsonc` — cố ý để ở đó chứ không đặt
+trong dashboard, vì `wrangler deploy` ghi đè toàn bộ vars bằng file cấu hình và
+một biến kiểu Text đặt trong dashboard sẽ bị xoá ở lần deploy kế tiếp.
+
+**Kiểm sau khi bật:** vào `/quen-mat-khau`, xin đặt lại mật khẩu cho email của
+anh, rồi xem thư có tới không và **nó vào Inbox hay Spam**. Vào `/admin` →
+**Hộp thư đi** xem trạng thái từng thư; thư nào lỗi thì bấm "Xếp lại".
+
+---
+
 ## Bước 6 — Việc quan trọng nhất
 
 **Chuyển thật 2.000đ.**
