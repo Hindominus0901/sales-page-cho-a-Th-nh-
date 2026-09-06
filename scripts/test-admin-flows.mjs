@@ -248,6 +248,49 @@ if (orderIds.length >= SO_DON) {
 }
 console.log('');
 
+// ---------------------------------------------------------------- hộp thư đi
+console.log('Hộp thư đi');
+{
+  const now = Math.floor(Date.now() / 1000);
+  const dat = (id, status, err) => db.prepare(`INSERT OR REPLACE INTO email_outbox
+      (id, to_email, to_name, subject, body_text, template, ref_type, ref_id,
+       status, attempts, last_error, created_at)
+    VALUES (?, 'ai-do@vidu.com', 'Ai Đó', 'Thư kiểm chứng', 'nội dung',
+            'order_paid', 'order', ?, ?, ?, ?, ?)`)
+    .run(id, 'ref-' + id, status, status === 'failed' ? 4 : 0, err ?? null, now);
+
+  dat('mail-fail', 'failed', 'Resend trả 422: tên miền chưa xác minh');
+  dat('mail-sent', 'sent', null);
+  dat('mail-skip', 'skipped', 'chưa đặt RESEND_API_KEY');
+
+  const all = await admin.get('/api/admin/hop-thu');
+  ok('lấy được hộp thư', all.status, 200);
+  ok('có bộ đếm theo trạng thái', typeof all.body.tong?.failed, 'number');
+  ok('lỗi hiện kèm lý do',
+    all.body.emails.find((m) => m.id === 'mail-fail')?.last_error?.includes('422'), true);
+
+  const chiLoi = await admin.get('/api/admin/hop-thu?trang_thai=failed');
+  ok('lọc theo trạng thái chạy',
+    chiLoi.body.emails.every((m) => m.status === 'failed'), true);
+
+  // Gửi lại cái đã gửi rồi là khách nhận hai lần — phải chặn.
+  ok('KHÔNG xếp lại được thư đã gửi',
+    (await admin.post('/api/admin/hop-thu/mail-sent/gui-lai')).status, 400);
+
+  ok('xếp lại được thư lỗi',
+    (await admin.post('/api/admin/hop-thu/mail-fail/gui-lai')).status, 200);
+  const sau = db.prepare("SELECT status, attempts, last_error FROM email_outbox WHERE id='mail-fail'").get();
+  ok('thư lỗi quay về hàng đợi', sau.status, 'pending');
+  ok('đếm lượt thử đặt lại 0', sau.attempts, 0);
+  ok('xoá lý do lỗi cũ', sau.last_error, null);
+
+  ok('thư không có thật trả 404',
+    (await admin.post('/api/admin/hop-thu/khong-co/gui-lai')).status, 404);
+
+  db.prepare("DELETE FROM email_outbox WHERE id LIKE 'mail-%'").run();
+}
+console.log('');
+
 // ---------------------------------------------------------------- lịch
 console.log('Lịch tháng');
 {

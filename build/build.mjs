@@ -757,7 +757,35 @@ const baseCss = helmetStyle
   .replace(/@keyframes fc2-pulse\{0%,100%\{box-shadow:[^}]*\}50%\{box-shadow:[^}]*\}\}/, '');
 
 /** Khung HTML dùng chung cho cả ba trang. */
-function page({ title, description, body: pageBody, script, noindex = false }) {
+/**
+ * Địa chỉ gốc của trang, dùng để dựng URL tuyệt đối.
+ *
+ * og:image BẮT BUỘC tuyệt đối — Facebook và Zalo không đoán được host từ một
+ * đường dẫn "/media/hero.jpg", nên chia sẻ link ra là hiện một ô trắng không
+ * ảnh. Đây là lỗi im lặng: trang vẫn đúng, chỉ có phần xem trước lúc chia sẻ
+ * là hỏng, mà đó lại đúng là thứ quyết định người ta có bấm vào hay không.
+ */
+const SITE_URL = String(cfg.siteUrl ?? '').replace(/\/$/, '');
+
+const tuyetDoi = (duongDan) => {
+  if (!duongDan) return '';
+  if (/^https?:\/\//.test(duongDan)) return duongDan;
+  if (!SITE_URL) return duongDan;   // chưa đặt siteUrl thì để nguyên, còn hơn dựng URL sai
+  return SITE_URL + (duongDan.startsWith('/') ? duongDan : '/' + duongDan);
+};
+
+/**
+ * `path` là đường dẫn của chính trang này ('/', '/workshop', …).
+ *
+ * canonical phải khác nhau theo từng trang. Trước đây nó lấy chung một giá trị
+ * cfg.canonicalUrl cho MỌI trang — nghĩa là nếu điền vào thì mọi trang đều khai
+ * với Google rằng "bản gốc của tôi là trang chủ", và các trang còn lại biến mất
+ * khỏi kết quả tìm kiếm. Giá trị đó đang để trống nên chưa gây hại, nhưng đó là
+ * một cái bẫy chờ người sau điền vào.
+ */
+function page({ title, description, body: pageBody, script, noindex = false, path = '' }) {
+  const canonical = !noindex && SITE_URL && path ? SITE_URL + path : '';
+  const ogImage = tuyetDoi(cfg.ogImage);
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -766,11 +794,12 @@ function page({ title, description, body: pageBody, script, noindex = false }) {
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 ${noindex ? '<meta name="robots" content="noindex, nofollow">' : ''}
-${!noindex && cfg.canonicalUrl ? `<link rel="canonical" href="${esc(cfg.canonicalUrl)}">` : ''}
+${canonical ? `<link rel="canonical" href="${esc(canonical)}">` : ''}
 <meta property="og:type" content="website">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(description)}">
-<meta property="og:image" content="${esc(cfg.ogImage)}">
+${canonical ? `<meta property="og:url" content="${esc(canonical)}">` : ''}
+${ogImage ? `<meta property="og:image" content="${esc(ogImage)}">` : ''}
 <meta property="og:locale" content="vi_VN">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#f3ead9">
@@ -820,6 +849,7 @@ function leadMagnetPage() {
   for (const [k, v] of Object.entries(fill)) html = html.split(`{{${k}}}`).join(v);
 
   return page({
+    path: '/ban-do-21-ngay',
     title: lm.title || (lm.headline + ' | ' + cfg.brand),
     description: lm.description || lm.subheadline || '',
     body: html,
@@ -829,12 +859,14 @@ function leadMagnetPage() {
 
 const pages = {
   'index.html': page({
+    path: '/',
     title: cfg.title,
     description: cfg.description,
     body: [body, lightbox, helmetScript].join('\n'),
     script: read('app.js'),
   }),
   'dang-ky.html': page({
+    path: '/dang-ky',
     title: 'Đăng ký giữ chỗ — ' + cfg.brand,
     description: 'Điền thông tin để giữ chỗ Thử thách 21 ngày.',
     body: read('page-dang-ky.html'),
@@ -842,6 +874,7 @@ const pages = {
     noindex: true,
   }),
   'thanh-toan.html': page({
+    path: '/thanh-toan',
     title: 'Thanh toán — ' + cfg.brand,
     description: 'Quét mã QR để hoàn tất giữ chỗ.',
     body: read('page-thanh-toan.html'),
@@ -851,6 +884,7 @@ const pages = {
   // Khách đóng tab sau khi chuyển khoản thì mất dấu đơn của mình. Trang này là
   // đường về, và không cần email hay tài khoản gì cả.
   'tra-cuu.html': page({
+    path: '/tra-cuu',
     title: 'Tìm lại đơn — ' + cfg.brand,
     description: 'Nhập số điện thoại để tìm lại đơn đăng ký của anh chị.',
     body: read('page-tra-cuu.html'),
@@ -860,6 +894,7 @@ const pages = {
   // Cổng học viên. Một file tĩnh dùng chung cho mọi học viên; mã truy cập nằm
   // trên đường dẫn và trang tự đọc lấy, nên không có gì riêng tư nằm trong file.
   'hoc.html': page({
+    path: '/hoc',
     title: 'Hành trình 21 ngày — ' + cfg.brand,
     description: 'Nộp bài, xem nhận xét và đổi quà.',
     body: read('page-hoc.html'),
@@ -916,7 +951,9 @@ ${body}
    .map(([, label, href]) => `<a href="${href}" style="color:#26643f;font-weight:600;text-decoration:none">${label}</a>`)
    .join('<span style="color:#a8a5b0">·</span>');
 
+  const duongDan = { privacy: '/chinh-sach-bao-mat', terms: '/dieu-khoan', refund: '/chinh-sach-hoan-tien' }[key];
   return page({
+    path: duongDan,
     title: `${doc.title} — ${cfg.brand}`,
     description: String(doc.intro ?? doc.title),
     noindex: false,
@@ -1137,6 +1174,7 @@ ${faqItems.map((x, i) => `<details${i === 0 ? ' open=""' : ''}>`
   for (const [k, v] of Object.entries(fill)) html = html.split(`{{${k}}}`).join(v);
 
   return page({
+    path: '/workshop',
     title: w.title || (w.headline + ' | ' + cfg.brand),
     description: w.description || w.subheadline || '',
     body: html + '\n' + lightbox,

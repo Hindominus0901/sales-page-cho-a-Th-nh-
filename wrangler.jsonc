@@ -34,7 +34,17 @@
   // ─────────────────────────────────────────────────────────────────────────
   "vars": {
     "APP_ENV": "production",
-    "PUBLIC_BASE_URL": "https://goc-creator-challenge.nhipsongsoserenitylife.workers.dev",
+    "PUBLIC_BASE_URL": "https://manhthanh.net",
+
+    // Địa chỉ gửi email. Ở ĐÂY chứ không phải trong dashboard: `wrangler deploy`
+    // ghi đè toàn bộ vars bằng file này, nên một biến kiểu Text đặt trong
+    // dashboard sẽ bị xoá ở lần deploy kế tiếp — im lặng, và hệ quả là email
+    // ngừng gửi mà không có gì báo. Chỉ RESEND_API_KEY là Secret (secret không
+    // nằm trong file nên deploy không đụng tới).
+    //
+    // Tên miền trong địa chỉ này PHẢI là tên miền đã xác minh ở Resend, nếu
+    // không thư vẫn "gửi thành công" nhưng Gmail ném vào spam.
+    "EMAIL_FROM": "Góc Creator <no-reply@manhthanh.net>",
     // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán.
     //
     // SEPAY_ACCOUNT_NO CỐ Ý KHÔNG có ở đây. `wrangler deploy` ghi đè toàn bộ

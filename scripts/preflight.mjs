@@ -172,9 +172,51 @@ if (!SKIP_SECRETS) {
   }
 }
 
-// ------------------------------------------------------- nội dung trang (cảnh báo)
+// --------------------------------------------------------- tên miền và email
+
+/**
+ * Tên miền của trang và tên miền gửi mail phải khớp nhau.
+ *
+ * Resend chỉ ký được thư cho tên miền đã xác minh. Gửi từ một tên miền khác thì
+ * thư vẫn "gửi thành công" theo cách nhìn của hệ — Resend nhận, trả 200, bảng
+ * email_outbox ghi 'sent' — nhưng Gmail đọc SPF/DKIM thấy không khớp và ném
+ * thẳng vào spam. Không có gì trong hệ báo chuyện đó, nên phải soát ở đây.
+ */
+const hostCua = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+const siteHost = hostCua(baseUrl);
+const emailFrom = String(vars.EMAIL_FROM ?? '').trim();
+
+if (siteHost.endsWith('workers.dev')) {
+  warn('Trang vẫn chạy trên địa chỉ workers.dev',
+    'Địa chỉ này dài và không mang thương hiệu — chạy quảng cáo bằng nó thì tỷ lệ ' +
+    'bấm thấp hơn hẳn. Trỏ tên miền riêng trong Workers → Domains & Routes, rồi ' +
+    'sửa PUBLIC_BASE_URL trong wrangler.jsonc và siteUrl trong site.config.json.');
+}
+
+if (emailFrom) {
+  const m = emailFrom.match(/@([^\s>]+)/);
+  const mailHost = (m?.[1] ?? '').toLowerCase().replace(/^www\./, '');
+  if (siteHost && mailHost && mailHost !== siteHost) {
+    warn('Tên miền gửi mail khác tên miền của trang',
+      `Trang là "${siteHost}" nhưng EMAIL_FROM gửi từ "${mailHost}". Nếu tên miền ` +
+      'gửi chưa được xác minh ở Resend thì thư vào thẳng spam, mà hệ vẫn ghi là ' +
+      '"đã gửi" — không có gì báo cho tới khi khách nói không nhận được mail.');
+  }
+}
 
 const site = JSON.parse(readFileSync('site.config.json', 'utf8'));
+if (!String(site.siteUrl ?? '').trim()) {
+  warn('site.config.json chưa có siteUrl',
+    'Thẻ canonical và ảnh xem trước khi chia sẻ (og:image) cần địa chỉ tuyệt đối. ' +
+    'Thiếu thì chia sẻ link lên Facebook hay Zalo hiện một ô trắng không ảnh.');
+} else if (siteHost && hostCua(site.siteUrl) !== siteHost) {
+  warn('siteUrl và PUBLIC_BASE_URL trỏ hai nơi khác nhau',
+    `site.config.json ghi "${hostCua(site.siteUrl)}", wrangler.jsonc ghi "${siteHost}". ` +
+    'Một trong hai sai, và cái sai đó đi vào thẻ canonical hoặc vào link trong email.');
+}
+
+// ------------------------------------------------------- nội dung trang (cảnh báo)
+
 const empty = (v) => !String(v ?? '').trim();
 
 const legal = site.legal ?? {};

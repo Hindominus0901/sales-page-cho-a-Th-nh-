@@ -354,3 +354,82 @@ adminContentRoutes.get('/api/admin/lich', async (c) => {
   events.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   return c.json({ ok: true, thang, events });
 });
+
+// ---------------------------------------------------------------- hộp thư đi
+
+/**
+ * Hộp thư đi.
+ *
+ * Email hỏng mà không ai nhìn thấy thì bằng không có email: khách trả tiền,
+ * thư không tới, và chuyện đó chỉ lộ ra khi họ nhắn Zalo hỏi. Màn hình này là
+ * chỗ duy nhất nhìn được cả hàng đợi.
+ *
+ * 'skipped' KHÁC 'failed', và phân biệt được là quan trọng: 'skipped' nghĩa là
+ * chưa đặt RESEND_API_KEY — tính năng chưa bật, không có gì hỏng. 'failed' mới
+ * là có thứ cần sửa.
+ */
+adminContentRoutes.get('/api/admin/hop-thu', async (c) => {
+  const trangThai = String(c.req.query('trang_thai') ?? '').trim();
+  const hopLe = ['pending', 'sent', 'failed', 'skipped'];
+  const loc = hopLe.includes(trangThai) ? trangThai : null;
+
+  const rows = await c.env.DB.prepare(
+    `SELECT id, to_email, to_name, subject, template, ref_type, ref_id,
+            status, attempts, last_error, created_at, sent_at
+     FROM email_outbox
+     ${loc ? 'WHERE status = ?' : ''}
+     ORDER BY created_at DESC LIMIT 200`,
+  ).bind(...(loc ? [loc] : [])).all<Record<string, unknown>>();
+
+  const dem = await c.env.DB.prepare(
+    `SELECT status, COUNT(*) AS n FROM email_outbox GROUP BY status`,
+  ).all<{ status: string; n: number }>();
+
+  const tong: Record<string, number> = { pending: 0, sent: 0, failed: 0, skipped: 0 };
+  for (const r of dem.results ?? []) tong[r.status] = r.n;
+
+  return c.json({
+    ok: true,
+    tong,
+    emails: (rows.results ?? []).map((r) => ({
+      ...r,
+      createdAtText: ictDateTime(r.created_at as number),
+      sentAtText: r.sent_at ? ictDateTime(r.sent_at as number) : null,
+    })),
+  });
+});
+
+/**
+ * Xếp lại một email để lượt gửi sau nhặt.
+ *
+ * KHÔNG gửi thẳng ở đây. Gửi thẳng thì màn hình treo chờ nhà cung cấp mail, và
+ * nếu Resend chậm thì admin bấm lại lần nữa — thành hai email cho một người.
+ * Đưa về 'pending' và để cron mỗi giờ lo, đúng đường mà mọi email khác đi.
+ *
+ * attempts đặt lại 0 vì đây là một quyết định mới của con người: bốn lần thử
+ * trước đã hết lượt, người xem đã nhìn lý do lỗi và vẫn muốn thử lại.
+ */
+adminContentRoutes.post('/api/admin/hop-thu/:id/gui-lai', requireRole('owner', 'admin'), async (c) => {
+  const id = c.req.param('id');
+  const admin = adminUserOf(c);
+
+  const row = await c.env.DB.prepare(
+    `SELECT id, to_email, status FROM email_outbox WHERE id = ?`,
+  ).bind(id).first<{ id: string; to_email: string; status: string }>();
+  if (!row) return c.json({ ok: false, error: 'Không tìm thấy email này.' }, 404);
+  if (row.status === 'sent') {
+    return c.json({ ok: false, error: 'Email này đã gửi rồi — gửi lại là khách nhận hai lần.' }, 400);
+  }
+
+  await c.env.DB.prepare(
+    `UPDATE email_outbox SET status = 'pending', attempts = 0, last_error = NULL WHERE id = ?`,
+  ).bind(id).run();
+
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'email.requeue', entityType: 'email_outbox', entityId: id,
+    before: { status: row.status }, after: { status: 'pending', to: row.to_email },
+  });
+
+  return c.json({ ok: true });
+});
