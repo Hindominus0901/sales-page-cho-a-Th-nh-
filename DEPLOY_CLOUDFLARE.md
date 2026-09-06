@@ -158,16 +158,16 @@ script tạo tài khoản owner mới cho email đó, không đụng vào tài k
 
 ---
 
-## Bước 5b — Tên miền riêng manhthanh.net
+## Bước 5b — Tên miền riêng manhthanh.com
 
 Địa chỉ `.workers.dev` chạy tốt nhưng dài và không mang thương hiệu — chạy quảng
 cáo bằng nó thì tỷ lệ bấm thấp hơn hẳn.
 
-1. Cloudflare → **Add a site** → gõ `manhthanh.net` → chọn gói **Free**
+1. Cloudflare → **Add a site** → gõ `manhthanh.com` → chọn gói **Free**
 2. Cloudflare đưa ra **hai nameserver**. Vào nơi mua tên miền, đổi nameserver
    sang đúng hai cái đó. Chờ Cloudflare báo **Active** (5 phút–24 giờ).
 3. Workers & Pages → `goc-creator-challenge` → **Domains & Routes** → Add →
-   **Custom domain** → `manhthanh.net`. Thêm lần nữa cho `www.manhthanh.net`.
+   **Custom domain** → `manhthanh.com`. Thêm lần nữa cho `www.manhthanh.com`.
 
 Địa chỉ `.workers.dev` vẫn chạy song song, không mất.
 
@@ -184,7 +184,7 @@ tiền xong **không nhận được đường link vào lớp**, và không ai 
 khẩu.
 
 1. `resend.com` → đăng ký. Miễn phí 3.000 thư/tháng, 100 thư/ngày.
-2. **Domains → Add Domain** → `manhthanh.net`
+2. **Domains → Add Domain** → `manhthanh.com`
 3. Resend đưa ra 3 bản ghi DNS (SPF, DKIM, DMARC). Tên miền đã nằm trong
    Cloudflare rồi nên vào **DNS → Add record** dán vào. Chờ Resend báo
    **Verified**.

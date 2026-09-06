@@ -34,7 +34,7 @@
   // ─────────────────────────────────────────────────────────────────────────
   "vars": {
     "APP_ENV": "production",
-    "PUBLIC_BASE_URL": "https://manhthanh.net",
+    "PUBLIC_BASE_URL": "https://manhthanh.com",
 
     // Địa chỉ gửi email. Ở ĐÂY chứ không phải trong dashboard: `wrangler deploy`
     // ghi đè toàn bộ vars bằng file này, nên một biến kiểu Text đặt trong
@@ -44,7 +44,7 @@
     //
     // Tên miền trong địa chỉ này PHẢI là tên miền đã xác minh ở Resend, nếu
     // không thư vẫn "gửi thành công" nhưng Gmail ném vào spam.
-    "EMAIL_FROM": "Góc Creator <no-reply@manhthanh.net>",
+    "EMAIL_FROM": "Góc Creator <no-reply@manhthanh.com>",
     // Thông tin tài khoản nhận tiền — công khai, in thẳng trên trang thanh toán.
     //
     // SEPAY_ACCOUNT_NO CỐ Ý KHÔNG có ở đây. `wrangler deploy` ghi đè toàn bộ

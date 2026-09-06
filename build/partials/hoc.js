@@ -63,6 +63,14 @@
     if (!box) return;
     box.hidden = false;
 
+    /* Địa chỉ web lấy từ chính trang đang mở, KHÔNG gõ cứng.
+
+       Gõ cứng thì chữ này chỉ đúng cho đúng một tên miền: học viên mở web bằng
+       địa chỉ workers.dev sẽ được chỉ tới một nơi họ không đứng, và lần sau đổi
+       tên miền là câu này sai mà không có gì báo. */
+    var mien = $('[data-mien]');
+    if (mien) mien.textContent = location.host;
+
     var nut = $('[data-dat-nut]');
     var o = $('[data-mk]');
     var msg = $('[data-dat-msg]');
@@ -92,8 +100,8 @@
           }
           box.innerHTML = '<div style="font-size:16px;font-weight:800;margin-bottom:6px">'
             + 'Đã đặt mật khẩu</div><p style="font-size:14px;line-height:1.7;color:#55555c;margin:0">'
-            + 'Lần sau anh chị vào thẳng <b>manhthanh.net/dang-nhap</b> bằng email '
-            + esc(d.email || '') + ' và mật khẩu vừa đặt.</p>';
+            + 'Lần sau anh chị vào thẳng <b>' + esc(location.host) + '/dang-nhap</b> '
+            + 'bằng email ' + esc(d.email || '') + ' và mật khẩu vừa đặt.</p>';
         })
         .catch(function () {
           msg.textContent = 'Không kết nối được. Anh chị thử lại giúp em.';
