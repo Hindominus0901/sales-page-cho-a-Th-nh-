@@ -987,7 +987,10 @@ ${body}
   return page({
     path: duongDan,
     title: `${doc.title} — ${cfg.brand}`,
-    description: String(doc.intro ?? doc.title),
+    // Bỏ cú pháp **đậm** khỏi thẻ mô tả. Thân trang chạy qua rich() nên ** thành
+    // <b>, nhưng thẻ description thì không — để nguyên là Google và Facebook hiện
+    // đúng hai dấu sao giữa câu giới thiệu.
+    description: String(doc.intro ?? doc.title).replace(/\*\*([^*]+)\*\*/g, '$1'),
     noindex: false,
     body: `<div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
   <div style="max-width:720px;margin:0 auto;padding:32px 22px 72px">

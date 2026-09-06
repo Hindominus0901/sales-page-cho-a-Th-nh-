@@ -63,8 +63,7 @@ export function orderPaidMail(
     `Xem lại đơn bất cứ lúc nào: ${base}/thanh-toan/${order.code}`,
     `Quên mã đơn thì tra bằng số điện thoại: ${base}/tra-cuu`,
     '',
-    'Nếu sau khi học thấy không phù hợp, chính sách hoàn tiền ở đây:',
-    `${base}/chinh-sach-hoan-tien`,
+    `Điều khoản và chính sách: ${base}/dieu-khoan`,
   ].join('\n');
 
   return {
@@ -81,8 +80,8 @@ export function orderPaidMail(
       btn('Xem lại đơn của tôi', `${base}/thanh-toan/${order.code}`),
       p(`Quên mã đơn thì tra bằng số điện thoại tại <a href="${base}/tra-cuu" style="color:#26643f">`
         + `${base}/tra-cuu</a>.`),
-      p(`Chính sách hoàn tiền: <a href="${base}/chinh-sach-hoan-tien" style="color:#26643f">`
-        + '14 ngày, đã nộp ít nhất 3 bài</a>.'),
+      p(`Điều khoản và chính sách: <a href="${base}/dieu-khoan" style="color:#26643f">`
+        + `${esc(base)}/dieu-khoan</a>.`),
     ]),
     template: 'order_paid',
     refType: 'order',

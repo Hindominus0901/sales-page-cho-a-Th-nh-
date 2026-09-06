@@ -165,7 +165,7 @@ export async function transitionCommission(
 }
 
 export const COMMISSION_LABEL: Record<CommissionStatus, string> = {
-  pending:          'Chờ qua cửa sổ hoàn tiền',
+  pending:          'Chờ qua kỳ soát đơn',
   held:             'Đang treo — cần xem lại',
   approved:         'Đã duyệt, chờ CTV yêu cầu rút',
   payout_requested: 'Đang trong đợt chi',

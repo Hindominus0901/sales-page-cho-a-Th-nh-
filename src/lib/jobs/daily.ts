@@ -53,7 +53,13 @@ async function expireStaleOrders(env: Env): Promise<void> {
 }
 
 /**
- * Hoa hồng qua cửa sổ hoàn tiền và không bị treo thì tự duyệt.
+ * Hoa hồng qua kỳ soát đơn (COMMISSION_HOLD_DAYS, hiện 7 ngày) và không bị treo
+ * thì tự duyệt.
+ *
+ * Khoảng đệm này ra đời để chờ hết hạn hoàn tiền. Khoá nay KHÔNG hoàn tiền nữa
+ * nhưng vẫn giữ 7 ngày, có chủ ý: nó là lưới bắt đơn gian lận, chuyển khoản bị
+ * ngân hàng đảo, và CTV tự mua rồi xin huỷ — những thứ không biến mất cùng với
+ * chính sách hoàn tiền.
  * Hoa hồng 'held' KHÔNG bao giờ được tự duyệt — phải có người xem.
  */
 async function autoApproveCommissions(env: Env): Promise<void> {

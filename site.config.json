@@ -123,7 +123,7 @@
     },
     {
       "q": "Nếu học không hiệu quả thì có được hoàn tiền không?",
-      "a": "Có. Trong 14 ngày đầu kể từ ngày đóng tiền, nếu anh chị đã nộp ít nhất 3 bài mà vẫn thấy không phù hợp thì nhắn Zalo để được hoàn lại 100%. Điều kiện nộp bài là để chắc anh chị đã thử thật — chưa đăng bài nào thì chưa chạm vào phần có giá trị nhất của khoá. Chi tiết ở trang Chính sách hoàn tiền."
+      "a": "Khoá này không hoàn tiền. Toàn bộ bài học và quyền vào lớp được mở ngay sau khi thanh toán, nên không có cách nào thu lại phần đã trao. Bù lại, anh chị biết trước chính xác mình mua gì: nội dung 21 ngày, cách chấm bài và mức cam kết của team đều ghi rõ trên trang này, và anh chị dự workshop miễn phí trước để xem cách Thành dạy có hợp với mình không. Trường hợp chuyển khoản trùng hoặc lỗi hệ thống thì bên em hoàn lại, chi tiết ở trang Chính sách hoàn tiền."
     },
     {
       "q": "Lớp học vào khung giờ nào, học trên nền tảng gì?",
@@ -440,9 +440,13 @@
     "email": "nhipsongsoserenitylife@gmail.com"
   },
   "refundPolicy": {
-    "_ghiChu": "Điều kiện hoàn tiền. Sửa ở đây thì câu cam kết trên trang bán, câu FAQ và trang chính sách hoàn tiền đổi theo — ba chỗ không bao giờ lệch nhau.",
-    "days": 14,
-    "minPosts": 3
+    "_ghiChu": "Khoá không hoàn tiền. Trước đây có cam kết 14 ngày; anh Thành đã bỏ. Ba ngoại lệ dưới đây là những trường hợp bên em thu tiền mà không giao được thứ đã bán — giữ lại tiền trong những trường hợp đó là sai, không phải chính sách.",
+    "refundable": false,
+    "ngoaiLe": [
+      "Chuyển khoản trùng hoặc chuyển thừa",
+      "Lỗi hệ thống khiến không vào được lớp và bên em không khắc phục được",
+      "Góc Creator huỷ hoặc hoãn khoá học"
+    ]
   },
   "policyPages": {
     "_ghiChu": "Nội dung ba trang chính sách. Mỗi mục là {heading, paragraphs}. Đoạn nào bọc **…** thì in đậm. Trang nào để mảng rỗng thì không sinh ra.",
@@ -532,7 +536,7 @@
           "paragraphs": [
             "Nộp bài đúng người, đúng kênh của mình. Nộp hộ hoặc nộp bài của người khác thì không được tính.",
             "Không chia sẻ tài liệu, bản ghi buổi học, hay đường link cá nhân của mình cho người ngoài khoá. Đường link vào lớp là đường link riêng của anh chị — ai có nó là vào được.",
-            "Giữ thái độ tôn trọng trong nhóm học. Chúng tôi có quyền dừng khoá học của người quấy rối người khác, và trường hợp đó không được hoàn tiền."
+            "Giữ thái độ tôn trọng trong nhóm học. Chúng tôi có quyền dừng khoá học của người quấy rối người khác, và trường hợp đó không được trả lại học phí."
           ]
         },
         {
@@ -545,7 +549,8 @@
         {
           "heading": "Hoàn tiền",
           "paragraphs": [
-            "Điều kiện và cách yêu cầu nằm ở trang Chính sách hoàn tiền."
+            "Khoá học **không hoàn tiền**. Quyền vào lớp được mở toàn bộ ngay sau khi thanh toán nên không thu lại được.",
+            "Ba trường hợp bên em vẫn trả lại tiền — chuyển khoản trùng hoặc thừa, lỗi hệ thống khiến không vào được lớp, và Góc Creator huỷ khoá — ghi ở trang Chính sách hoàn tiền."
           ]
         },
         {
@@ -553,7 +558,7 @@
           "paragraphs": [
             "Cộng tác viên nhận 20% học phí cho mỗi đơn phát sinh từ đường link giới thiệu của mình.",
             "Ghi công theo **chạm đầu tiên** trong cửa sổ 90 ngày: người mua đến từ link của ai trước thì hoa hồng về người đó, kể cả khi sau đó họ bấm vào link của người khác.",
-            "Hoa hồng được duyệt sau khi qua thời hạn hoàn tiền. Tự mua qua link của chính mình không được tính hoa hồng. Đơn được hoàn tiền thì hoa hồng tương ứng bị thu hồi."
+            "Hoa hồng được duyệt sau 7 ngày kể từ khi đơn thanh toán — khoảng đệm để bên em soát đơn bất thường. Tự mua qua link của chính mình không được tính hoa hồng. Đơn được trả lại tiền thì hoa hồng tương ứng bị thu hồi."
           ]
         },
         {
@@ -567,48 +572,43 @@
     },
     "refund": {
       "title": "Chính sách hoàn tiền",
-      "intro": "Điều kiện viết ở đây đúng bằng câu cam kết in trên trang bán. Không có điều khoản nào ẩn ở chỗ khác.",
+      "intro": "Nói thẳng ngay dòng đầu: khoá Thử thách 21 Ngày **không hoàn tiền**. Trang này giải thích vì sao, và ba trường hợp bên em vẫn trả lại tiền.",
       "sections": [
         {
-          "heading": "Điều kiện hoàn tiền",
+          "heading": "Khoá học không hoàn tiền",
           "paragraphs": [
-            "Trong **14 ngày** đầu kể từ ngày đóng tiền, nếu anh chị **đã nộp ít nhất 3 bài** mà vẫn thấy khoá học không phù hợp, chúng tôi hoàn lại **100% học phí**.",
-            "Không cần giải thích lý do. Chỉ cần đã thử thật."
+            "Ngay khi thanh toán thành công, anh chị được mở **toàn bộ** quyền vào lớp: lộ trình 21 ngày, quyền nộp bài và nhận nhận xét của team, nhóm học, và kho quà tặng. Không có phần nào bị giữ lại để mở dần.",
+            "Đã trao hết ngay từ đầu thì không có cách nào thu lại. Đó là lý do khoá này không hoàn tiền — không phải vì bên em muốn giữ tiền, mà vì thứ đã bán không lấy về được."
           ]
         },
         {
-          "heading": "Vì sao có điều kiện nộp bài",
+          "heading": "Bù lại, anh chị biết trước mình mua gì",
           "paragraphs": [
-            "Vì khoá này không phải một bộ video để xem. Giá trị nằm ở việc anh chị đăng bài thật lên kênh thật và nhận nhận xét thật. Chưa nộp bài nào thì chưa chạm vào phần đó của khoá học, và không ai — kể cả anh chị — biết được nó có hợp hay không.",
-            "Ba bài trong 14 ngày là mức thấp: mỗi ngày một bài thì ba bài là ba ngày đầu tiên. Đây là mốc để chắc rằng anh chị đã bắt đầu, không phải một rào cản để né hoàn tiền."
+            "Toàn bộ nội dung 21 ngày, cách chấm bài và mức cam kết của team đều ghi rõ trên trang bán — không có phần nào chỉ lộ ra sau khi đóng tiền.",
+            "**Workshop miễn phí** để anh chị xem tận mắt cách Thành dạy và nhận xét bài, trước khi quyết định. Không hợp thì không mua, không mất gì.",
+            "Bên em trả lời mọi câu hỏi qua Zalo trước khi anh chị chuyển khoản. Hỏi kỹ rồi hãy mua."
+          ]
+        },
+        {
+          "heading": "Ba trường hợp bên em vẫn trả lại tiền",
+          "paragraphs": [
+            "Đây không phải ngoại lệ của chính sách, mà là những lúc bên em thu tiền nhưng không giao được thứ đã bán. Giữ tiền trong các trường hợp đó là sai, nên bên em trả lại — không cần anh chị phải thuyết phục ai, chỉ cần báo.",
+            "**Chuyển khoản trùng hoặc chuyển thừa.** Chuyển hai lần cho một đơn, hoặc chuyển nhiều hơn số phải trả — bên em hoàn lại phần thừa.",
+            "**Lỗi hệ thống khiến anh chị không vào được lớp** và bên em không khắc phục được trong thời gian hợp lý.",
+            "**Góc Creator huỷ hoặc hoãn khoá học.** Hoàn 100%, không điều kiện."
           ]
         },
         {
           "heading": "Cách yêu cầu",
           "paragraphs": [
-            "Nhắn Zalo cho chúng tôi theo số ở chân trang, kèm mã đơn của anh chị (dạng GC…). Không cần điền form, không cần gọi điện thuyết phục ai.",
-            "Chúng tôi xác nhận trong 2 ngày làm việc và chuyển tiền trong 7 ngày làm việc kể từ khi xác nhận."
-          ]
-        },
-        {
-          "heading": "Tiền về đâu",
-          "paragraphs": [
-            "Về đúng tài khoản ngân hàng đã dùng để chuyển học phí. Muốn nhận vào tài khoản khác thì báo trước, chúng tôi cần xác minh thêm để tránh nhầm người."
-          ]
-        },
-        {
-          "heading": "Trường hợp không hoàn tiền",
-          "paragraphs": [
-            "Đã quá 14 ngày kể từ ngày đóng tiền.",
-            "Chưa nộp đủ 3 bài trong thời gian đó.",
-            "Tài khoản bị dừng vì vi phạm điều khoản sử dụng (quấy rối người khác trong nhóm học, phát tán tài liệu ra ngoài).",
-            "Đã nhận hoàn tiền cho khoá này trước đó."
+            "Nhắn Zalo theo số ở chân trang, kèm **mã đơn** của anh chị (dạng `GC…`). Không cần điền form, không cần gọi điện thuyết phục ai.",
+            "Bên em xác nhận trong **2 ngày làm việc** và chuyển tiền trong **7 ngày làm việc** kể từ khi xác nhận. Tiền về đúng tài khoản ngân hàng đã dùng để chuyển học phí; muốn nhận vào tài khoản khác thì báo trước để bên em xác minh, tránh chuyển nhầm người."
           ]
         },
         {
           "heading": "Ảnh hưởng tới cộng tác viên",
           "paragraphs": [
-            "Đơn được hoàn tiền thì hoa hồng 20% tương ứng bị thu hồi. Nếu hoa hồng đã được chi, phần đó sẽ trừ vào kỳ chi trả kế tiếp của cộng tác viên."
+            "Đơn được trả lại tiền theo ba trường hợp trên thì hoa hồng 20% tương ứng bị thu hồi. Nếu hoa hồng đã được chi, phần đó trừ vào kỳ chi trả kế tiếp."
           ]
         }
       ]
