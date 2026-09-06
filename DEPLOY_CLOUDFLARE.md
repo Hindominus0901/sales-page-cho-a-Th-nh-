@@ -158,18 +158,60 @@ script tạo tài khoản owner mới cho email đó, không đụng vào tài k
 
 ---
 
-## Bước 5b — Tên miền riêng manhthanh.com
+## Bước 5b — Tên miền riêng manhthanh.net
 
-Địa chỉ `.workers.dev` chạy tốt nhưng dài và không mang thương hiệu — chạy quảng
-cáo bằng nó thì tỷ lệ bấm thấp hơn hẳn.
+`manhthanh.net` đang chạy trên hosting PA Vietnam và có email `@manhthanh.net`.
+Chuyển sang Cloudflare là chuyển **toàn bộ DNS** của tên miền, nên phải giữ lại
+đúng những bản ghi đang nuôi email — thiếu một cái là thư ngừng tới, và không có
+gì báo.
 
-1. Cloudflare → **Add a site** → gõ `manhthanh.com` → chọn gói **Free**
-2. Cloudflare đưa ra **hai nameserver**. Vào nơi mua tên miền, đổi nameserver
-   sang đúng hai cái đó. Chờ Cloudflare báo **Active** (5 phút–24 giờ).
-3. Workers & Pages → `goc-creator-challenge` → **Domains & Routes** → Add →
-   **Custom domain** → `manhthanh.com`. Thêm lần nữa cho `www.manhthanh.com`.
+### Trạng thái trước khi chuyển
 
-Địa chỉ `.workers.dev` vẫn chạy song song, không mất.
+Đây là DNS hiện tại (tra ngày viết tài liệu này). Sau khi chuyển, Cloudflare
+phải có đủ những dòng đánh dấu GIỮ:
+
+| Bản ghi | Giá trị | |
+|---|---|---|
+| `@` A | 112.213.89.76 | **BỎ** — web mới thay chỗ này |
+| `www` A | 112.213.89.76 | **BỎ** — web mới thay chỗ này |
+| `mail` A | 112.213.89.76 | **GIỮ** — email đi qua đây |
+| `webmail` A | 112.213.89.76 | **GIỮ** — trang đọc thư |
+| `ftp` A | 112.213.89.76 | GIỮ nếu còn dùng FTP |
+| `cpanel` A | 112.213.89.76 | GIỮ nếu còn vào cPanel |
+| `@` MX | mail.manhthanh.net (10) | **GIỮ** |
+| `@` TXT | `v=spf1 a mx ~all` | **GIỮ** |
+
+> Website cũ trên hosting PA Vietnam sẽ **ngừng hiện** sau bước này — đúng như
+> anh Thành đã chốt. File trên hosting không mất, chỉ là không ai vào bằng
+> `manhthanh.net` nữa.
+
+### Các bước
+
+1. Cloudflare → **Add** → `manhthanh.net` → gói **Free**
+2. Ở màn hình onboarding, để **Import DNS records: Automatic**. Cloudflare tự
+   quét và chép các bản ghi đang có.
+3. **Đối chiếu lại danh sách vừa nhập với bảng trên.** Bản quét tự động có thể
+   sót tên miền con — nó chỉ tìm được những cái nó đoán ra. Thiếu dòng nào thì
+   **DNS → Add record** thêm tay.
+4. **Các bản ghi `mail`, `webmail`, `ftp`, `cpanel` phải để đám mây XÁM
+   (DNS only), KHÔNG phải cam.** Đám mây cam nghĩa là Cloudflare đứng giữa —
+   nó chỉ hiểu web, và bật cho mail là email chết ngay. Đây là lỗi hay gặp
+   nhất khi chuyển tên miền sang Cloudflare.
+5. Cloudflare đưa ra **hai nameserver**. Vào PA Vietnam →
+   **Quản lý dịch vụ → Danh sách dịch vụ → manhthanh.net → Nameserver**, thay
+   ba nameserver `pavietnam` bằng hai cái của Cloudflare.
+6. Chờ Cloudflare báo **Active** (thường 15–30 phút, luật cho tới 24 giờ).
+7. Workers & Pages → `goc-creator-challenge` → **Domains & Routes** → Add →
+   **Custom domain** → `manhthanh.net`. Thêm lần nữa cho `www.manhthanh.net`.
+
+Bước 7 tự thay bản ghi gốc, nên không phải xoá tay hai dòng "BỎ" ở trên.
+
+### Kiểm sau khi xong
+
+- Mở `https://manhthanh.net` — phải ra trang bán khoá 21 Ngày
+- **Tự gửi một email tới hộp thư `@manhthanh.net` của anh và xem nó có tới không.**
+  Đây là bước dễ bỏ qua nhất và cũng là thứ hỏng thì đau nhất.
+- Địa chỉ `.workers.dev` vẫn chạy song song, không mất.
 
 > **Mọi người phải đăng nhập lại một lần.** Cookie phiên dùng tiền tố `__Host-`
 > nên nó bám vào đúng tên miền đang mở — phiên trên `.workers.dev` không đi theo
@@ -184,10 +226,35 @@ tiền xong **không nhận được đường link vào lớp**, và không ai 
 khẩu.
 
 1. `resend.com` → đăng ký. Miễn phí 3.000 thư/tháng, 100 thư/ngày.
-2. **Domains → Add Domain** → `manhthanh.com`
+2. **Domains → Add Domain** → `manhthanh.net`
 3. Resend đưa ra 3 bản ghi DNS (SPF, DKIM, DMARC). Tên miền đã nằm trong
    Cloudflare rồi nên vào **DNS → Add record** dán vào. Chờ Resend báo
    **Verified**.
+
+   > **CHỖ NÀY DỄ HỎNG NHẤT.** `manhthanh.net` đã có sẵn một bản ghi SPF cho
+   > email của PA Vietnam:
+   >
+   > ```
+   > v=spf1 a mx ~all
+   > ```
+   >
+   > Một tên miền chỉ được có **ĐÚNG MỘT** bản ghi SPF. Thêm bản ghi SPF thứ hai
+   > của Resend vào là SPF hỏng hoàn toàn — và hỏng theo cách tệ nhất: cả email
+   > cũ lẫn email mới đều bắt đầu rơi vào spam, mà không có gì báo lỗi.
+   >
+   > Cách đúng là **gộp làm một**. Resend bảo thêm `include:amazonses.com` thì
+   > sửa dòng SPF đang có thành:
+   >
+   > ```
+   > v=spf1 a mx include:amazonses.com ~all
+   > ```
+   >
+   > Giữ nguyên phần `a mx` — đó là thứ cho phép hosting PA Vietnam tiếp tục gửi
+   > thư. Bỏ nó đi là email từ hộp thư công ty vào spam.
+   >
+   > Nếu Resend cho chọn gửi qua một tên miền con (kiểu `send.manhthanh.net`)
+   > thì **chọn cách đó** — tên miền con có SPF riêng, không đụng gì tới SPF của
+   > email công ty, và đỡ hẳn chỗ dễ sai này.
 4. **API Keys → Create API Key** → chép khoá.
 5. Cloudflare → Worker → Settings → **Variables and Secrets** (loại **runtime**,
    KHÔNG phải mục Build) → thêm `RESEND_API_KEY`, kiểu **Secret**.
