@@ -891,6 +891,22 @@ const pages = {
     script: read('tra-cuu.js'),
     noindex: true,
   }),
+  // Hai trang lấy lại mật khẩu. noindex: chúng không có gì cho Google, và một
+  // trang đặt lại mật khẩu nằm trong kết quả tìm kiếm chỉ mời thêm người dò.
+  'quen-mat-khau.html': page({
+    title: 'Quên mật khẩu — ' + cfg.brand,
+    description: 'Lấy lại quyền đăng nhập qua email.',
+    body: read('page-quen-mat-khau.html'),
+    script: read('quen-mat-khau.js'),
+    noindex: true,
+  }),
+  'dat-lai-mat-khau.html': page({
+    title: 'Đặt mật khẩu mới — ' + cfg.brand,
+    description: 'Đặt mật khẩu mới cho tài khoản Góc Creator.',
+    body: read('page-dat-lai-mat-khau.html'),
+    script: read('dat-lai-mat-khau.js'),
+    noindex: true,
+  }),
   // Cổng học viên. Một file tĩnh dùng chung cho mọi học viên; mã truy cập nằm
   // trên đường dẫn và trang tự đọc lấy, nên không có gì riêng tư nằm trong file.
   'hoc.html': page({

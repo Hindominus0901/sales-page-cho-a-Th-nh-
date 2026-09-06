@@ -10,6 +10,10 @@ import { COMMISSION_LABEL, HOLD_REASON_LABEL } from '../../lib/affiliate/commiss
 import { audit } from '../../lib/db/audit';
 import { now, ictDateTime } from '../../lib/util/datetime';
 import { toPhoneNorm } from '../../lib/validation/phone';
+import { capPhieu } from '../../lib/auth/password-reset';
+import { passwordResetMail } from '../../lib/email/templates';
+import { queueMail, drainOutbox } from '../../lib/email/outbox';
+import { rateLimit } from '../../lib/security/ratelimit';
 
 export const affiliateRoutes = new Hono<HonoEnv>();
 
@@ -62,10 +66,56 @@ affiliateRoutes.post('/api/aff/logout', async (c) => {
   return c.json({ ok: true });
 });
 
+/**
+ * CTV xin đặt lại mật khẩu.
+ *
+ * Nằm TRƯỚC khối use() bên dưới và có tên trong danh sách công khai của nó —
+ * người quên mật khẩu thì đúng là chưa đăng nhập được.
+ *
+ * Cùng câu trả lời cho mọi trường hợp, kể cả email không có tài khoản: khác
+ * nhau là biến trang này thành công cụ dò xem ai đang làm CTV cho Góc Creator.
+ */
+affiliateRoutes.post('/api/aff/quen-mat-khau', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+  type Body = { email?: string };
+  const body = await c.req.json<Body>().catch(() => ({} as Body));
+  const emailNorm = String(body.email ?? '').trim().toLowerCase();
+
+  const cauTraLoi = { ok: true, message: 'Nếu email này có tài khoản, em đã gửi hướng dẫn tới đó.' };
+
+  const limited = await rateLimit(c.env, `reset:${ip}`, 10, 3600);
+  if (!limited.ok || !emailNorm) return c.json(cauTraLoi);
+
+  // CTV chưa được duyệt cũng không cấp phiếu: họ chưa có mật khẩu để đặt lại,
+  // và gửi thư "đặt lại mật khẩu" cho người chưa có tài khoản là khó hiểu.
+  const aff = await c.env.DB.prepare(
+    `SELECT id, name, email FROM affiliates
+     WHERE email_norm = ? AND status = 'active' AND password_hash IS NOT NULL`,
+  ).bind(emailNorm).first<{ id: string; name: string; email: string }>();
+  if (!aff) return c.json(cauTraLoi);
+
+  const phieu = await capPhieu(c.env, 'affiliate', aff.id, aff.email, c.req.header('cf-connecting-ip') ?? null);
+  if (!phieu) return c.json(cauTraLoi);
+
+  await queueMail(c.env, passwordResetMail(c.env, {
+    resetId: phieu.resetId, token: phieu.token, subjectType: 'affiliate',
+    email: aff.email, name: aff.name,
+  }));
+  c.executionCtx.waitUntil(drainOutbox(c.env).catch((err) => console.error('[email] lượt gửi lỗi', err)));
+
+  await audit(c.env, {
+    actorType: 'system', actorId: null, actorLabel: aff.email,
+    action: 'affiliate.reset_requested', entityType: 'affiliate', entityId: aff.id,
+  });
+
+  return c.json(cauTraLoi);
+});
+
 affiliateRoutes.use('/api/aff/*', async (c, next) => {
   // Hai route trên là công khai; phần còn lại bắt buộc đăng nhập.
   const path = new URL(c.req.url).pathname;
-  if (path === '/api/aff/login' || path === '/api/aff/logout') return next();
+  const congKhai = ['/api/aff/login', '/api/aff/logout', '/api/aff/quen-mat-khau'];
+  if (congKhai.includes(path)) return next();
   return requireAffiliate(c, next);
 });
 

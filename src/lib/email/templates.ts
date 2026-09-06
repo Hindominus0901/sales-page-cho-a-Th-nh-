@@ -6,7 +6,7 @@ export interface Mail {
   subject: string;
   text: string;
   html: string;
-  template: 'order_paid' | 'workshop_registered';
+  template: 'order_paid' | 'workshop_registered' | 'password_reset';
   refType: string;
   refId: string;
 }
@@ -132,5 +132,73 @@ export function workshopMail(
     template: 'workshop_registered',
     refType: 'workshop_registration',
     refId: reg.id,
+  };
+}
+
+/** Chữ hiện ra cho từng vai trò — người nhận không quan tâm tới tên bảng. */
+const VAI_TRO: Record<string, string> = {
+  admin: 'trang quản trị',
+  affiliate: 'portal cộng tác viên',
+  student: 'lớp học',
+};
+
+/**
+ * Mail đặt lại mật khẩu.
+ *
+ * refId là **id của phiếu đặt lại**, KHÔNG phải id người dùng. Bảng email_outbox
+ * có UNIQUE(template, ref_id) để webhook SePay gửi lại không sinh hai thư — với
+ * mail này thì cùng ràng buộc ấy thành cái bẫy: lấy id người dùng làm refId thì
+ * lần xin thứ hai bị ON CONFLICT DO NOTHING nuốt mất, không báo lỗi gì, và
+ * người dùng ngồi chờ một email không bao giờ tới.
+ */
+export function passwordResetMail(
+  env: Env,
+  input: {
+    resetId: string; token: string; subjectType: string;
+    email: string; name: string | null;
+  },
+): Mail {
+  const base = env.PUBLIC_BASE_URL.replace(/\/$/, '');
+  const link = `${base}/dat-lai-mat-khau?ma=${encodeURIComponent(input.token)}`;
+  const ten = (input.name ?? '').split(' ').slice(-1)[0] || 'anh chị';
+  const noi = VAI_TRO[input.subjectType] ?? 'hệ thống';
+
+  const text = [
+    `Chào ${ten},`,
+    '',
+    `Có người vừa xin đặt lại mật khẩu ${noi} Góc Creator cho email này.`,
+    '',
+    'Mở đường link dưới đây để đặt mật khẩu mới:',
+    link,
+    '',
+    'Đường link dùng được MỘT LẦN và hết hạn sau 1 giờ.',
+    '',
+    'Nếu không phải anh chị xin, cứ bỏ qua email này — mật khẩu hiện tại',
+    'vẫn nguyên vẹn, và đường link trên sẽ tự hết hạn.',
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  const html = shell('Đặt lại mật khẩu', [
+    p(`Chào <b>${esc(ten)}</b>,`),
+    p(`Có người vừa xin đặt lại mật khẩu ${esc(noi)} cho email này.`),
+    btn('Đặt mật khẩu mới', link),
+    p('Đường link dùng được <b>một lần</b> và hết hạn sau <b>1 giờ</b>.'),
+    // Câu này quan trọng hơn nó trông: người nhận một mail đặt lại mật khẩu mà
+    // họ không xin thường hoảng và bấm vào để "kiểm tra" — đúng thứ kẻ lừa đảo
+    // muốn. Nói thẳng rằng không làm gì mới là đúng.
+    p('<span style="color:#6a6a72;font-size:14px">Nếu không phải anh chị xin, '
+      + 'cứ bỏ qua email này. Mật khẩu hiện tại vẫn nguyên vẹn và đường link trên '
+      + 'sẽ tự hết hạn.</span>'),
+  ]);
+
+  return {
+    toEmail: input.email,
+    toName: input.name,
+    subject: 'Đặt lại mật khẩu — Góc Creator',
+    text, html,
+    template: 'password_reset',
+    refType: 'password_reset',
+    refId: input.resetId,
   };
 }

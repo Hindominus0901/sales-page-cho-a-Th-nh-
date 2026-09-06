@@ -36,6 +36,12 @@ export default function Login({ onDone }: { onDone: () => void }) {
         <button type="submit" className="btn primary" style={{ width: '100%' }} disabled={busy}>
           {busy ? 'Đang kiểm tra…' : 'Đăng nhập'}
         </button>
+        {/* Quên mật khẩu phải nằm ngay đây. Người quên mật khẩu đang đứng ở
+            đúng màn hình này, và bắt họ đi tìm chỗ khác là bắt họ nhắn Zalo. */}
+        <a href="/quen-mat-khau?vai=admin" className="muted"
+           style={{ display: 'block', textAlign: 'center', fontSize: 13, marginTop: 12 }}>
+          Quên mật khẩu?
+        </a>
       </form>
     </div>
   );

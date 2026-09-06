@@ -3,10 +3,15 @@ import type { HonoEnv } from '../../types';
 import { createSession, clearCookie, readSession, revokeSession, csrfToken, COOKIE_ADMIN }
   from '../../lib/auth/session';
 import { verifyPassword, hashPassword } from '../../lib/security/hash';
+import { checkPassword } from '../../lib/security/password-policy';
 import { loginLockedOut, loginFailed, loginSucceeded, requireAdmin, adminUserOf }
   from '../../lib/auth/guards';
 import { audit } from '../../lib/db/audit';
 import { now } from '../../lib/util/datetime';
+import { capPhieu, doiPhieu } from '../../lib/auth/password-reset';
+import { passwordResetMail } from '../../lib/email/templates';
+import { queueMail, drainOutbox } from '../../lib/email/outbox';
+import { rateLimit } from '../../lib/security/ratelimit';
 
 export const adminAuthRoutes = new Hono<HonoEnv>();
 
@@ -71,47 +76,6 @@ adminAuthRoutes.get('/api/admin/me', requireAdmin, async (c) => {
 // ------------------------------------------------------- tự đổi mật khẩu
 
 /**
- * Mật khẩu tối thiểu 12 ký tự.
- *
- * Cloudflare Workers chặn PBKDF2 ở 100.000 vòng — thấp hơn khuyến nghị của
- * OWASP, và đó là trần nền tảng chứ không phải lựa chọn. Bù lại bằng độ dài:
- * một mật khẩu 12 ký tự thật sự ngẫu nhiên vẫn ngoài tầm dò, còn "Thanh2024"
- * thì 100.000 vòng không cứu nổi.
- */
-const MIN_PASSWORD = 12;
-
-/**
- * Những chuỗi khiến mật khẩu thành đoán được.
- *
- * Danh sách này không nhằm bắt hết mọi mật khẩu yếu — không danh sách nào làm
- * được thế. Nó chặn đúng những thứ người ta thật sự hay gõ ở dự án NÀY, và
- * quan trọng hơn: chặn việc lấy chính email hay tên thương hiệu làm mật khẩu.
- */
-const CAM = ['password', 'matkhau', 'goccreator', 'goc creator', '123456', 'qwerty',
-  'admin', 'abc123', '111111', 'iloveyou'];
-
-function checkPassword(moi: string, email: string): string | null {
-  if (moi.length < MIN_PASSWORD) {
-    return `Mật khẩu phải từ ${MIN_PASSWORD} ký tự trở lên — hiện mới ${moi.length}.`;
-  }
-  if (moi.length > 200) return 'Mật khẩu dài quá 200 ký tự.';
-  if (moi.trim() !== moi) return 'Mật khẩu không được bắt đầu hoặc kết thúc bằng dấu cách.';
-
-  const thuong = moi.toLowerCase();
-  for (const xau of CAM) {
-    if (thuong.includes(xau)) return `Mật khẩu không được chứa "${xau}" — dễ đoán quá.`;
-  }
-  // Phần trước @ của email là thứ người dò thử đầu tiên.
-  const ten = email.split('@')[0]?.toLowerCase() ?? '';
-  if (ten.length >= 4 && thuong.includes(ten)) {
-    return 'Mật khẩu không được chứa email của anh chị.';
-  }
-  // Một ký tự lặp lại suốt thì dài mấy cũng vô nghĩa.
-  if (/^(.)\1*$/.test(moi)) return 'Mật khẩu chỉ có một ký tự lặp lại.';
-  return null;
-}
-
-/**
  * Tự đổi mật khẩu của chính mình, có nhập mật khẩu cũ.
  *
  * KHÔNG nằm dưới requireRole('owner') như phần còn lại của file: nhân viên và
@@ -166,4 +130,76 @@ adminAuthRoutes.post('/api/admin/me/mat-khau', requireAdmin, async (c) => {
   });
 
   return c.json({ ok: true });
+});
+
+// ------------------------------------------------------- quên mật khẩu
+
+/**
+ * Xin đặt lại mật khẩu.
+ *
+ * KHÔNG có requireAdmin — người quên mật khẩu thì đúng là chưa đăng nhập được.
+ *
+ * Luôn trả về CÙNG MỘT CÂU, dù email có tài khoản hay không, dù có cấp được
+ * phiếu hay bị chặn vì xin quá nhiều. Trả lời khác nhau là biến trang này
+ * thành công cụ dò xem địa chỉ nào có tài khoản quản trị — thông tin đầu tiên
+ * mà người muốn đột nhập đi tìm.
+ */
+adminAuthRoutes.post('/api/admin/quen-mat-khau', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+  type Body = { email?: string };
+  const body = await c.req.json<Body>().catch(() => ({} as Body));
+  const emailNorm = String(body.email ?? '').trim().toLowerCase();
+
+  const cauTraLoi = { ok: true, message: 'Nếu email này có tài khoản, em đã gửi hướng dẫn tới đó.' };
+
+  // Chặn theo IP để một người không quét được cả danh sách email.
+  const limited = await rateLimit(c.env, `reset:${ip}`, 10, 3600);
+  if (!limited.ok) return c.json(cauTraLoi);
+  if (!emailNorm) return c.json(cauTraLoi);
+
+  const user = await c.env.DB.prepare(
+    `SELECT id, name, email FROM admin_users WHERE email_norm = ? AND is_active = 1`,
+  ).bind(emailNorm).first<{ id: string; name: string; email: string }>();
+  if (!user) return c.json(cauTraLoi);
+
+  const phieu = await capPhieu(c.env, 'admin', user.id, user.email, c.req.header('cf-connecting-ip') ?? null);
+  if (!phieu) return c.json(cauTraLoi);
+
+  await queueMail(c.env, passwordResetMail(c.env, {
+    resetId: phieu.resetId, token: phieu.token, subjectType: 'admin',
+    email: user.email, name: user.name,
+  }));
+  c.executionCtx.waitUntil(drainOutbox(c.env).catch((err) => console.error('[email] lượt gửi lỗi', err)));
+
+  await audit(c.env, {
+    actorType: 'system', actorId: null, actorLabel: user.email,
+    action: 'admin.reset_requested', entityType: 'admin_user', entityId: user.id,
+  });
+
+  return c.json(cauTraLoi);
+});
+
+/** Đổi mã trong đường link lấy mật khẩu mới. Dùng chung cho cả ba vai trò. */
+adminAuthRoutes.post('/api/dat-lai-mat-khau', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+  type Body = { ma?: string; matKhau?: string };
+  const body = await c.req.json<Body>().catch(() => ({} as Body));
+
+  // Mã là 32 byte ngẫu nhiên nên không dò nổi, nhưng vẫn chặn để không ai biến
+  // đây thành chỗ đốt CPU của Worker.
+  const limited = await rateLimit(c.env, `datlai:${ip}`, 20, 3600);
+  if (!limited.ok) {
+    return c.json({ ok: false, error: 'Anh chị thử lại sau ít phút giúp em.' }, 429);
+  }
+
+  const res = await doiPhieu(c.env, String(body.ma ?? ''), String(body.matKhau ?? ''));
+  if (!res.ok) return c.json({ ok: false, error: res.error }, 400);
+
+  await audit(c.env, {
+    actorType: 'system', actorId: null, actorLabel: res.email,
+    action: res.subjectType + '.reset_done',
+    entityType: res.subjectType, entityId: res.subjectId,
+  });
+
+  return c.json({ ok: true, vai: res.subjectType });
 });

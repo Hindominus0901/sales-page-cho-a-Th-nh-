@@ -248,6 +248,99 @@ if (orderIds.length >= SO_DON) {
 }
 console.log('');
 
+// ------------------------------------------------------------ quên mật khẩu
+console.log('Quên mật khẩu qua email');
+{
+  const layMa = (n = 1) => {
+    const rows = db.prepare(
+      "SELECT body_text FROM email_outbox WHERE template='password_reset' ORDER BY created_at DESC LIMIT ?"
+    ).all(n);
+    return rows.map((r) => r.body_text.match(/ma=([A-Za-z0-9_-]+)/)?.[1]);
+  };
+  const demThu = () => db.prepare(
+    "SELECT COUNT(*) n FROM email_outbox WHERE template='password_reset'").get().n;
+
+  db.prepare("DELETE FROM email_outbox WHERE template='password_reset'").run();
+  db.prepare('DELETE FROM password_resets').run();
+
+  // Tài khoản riêng cho phần này: đặt lại mật khẩu thu hồi mọi phiên, nên dùng
+  // tài khoản đang chạy các phần khác là tự đá mình ra giữa chừng.
+  const email = `reset-${Date.now()}@test.vn`;
+  const them = await admin.post('/api/admin/staff', { name: 'Người Quên', email, role: 'staff' });
+  ok('tạo được tài khoản để thử', them.status, 200);
+  const mkCu = them.body.password;
+
+  const khach = () => makeClient();
+
+  // Email không có thật phải trả ĐÚNG CÙNG MỘT CÂU với email có thật — khác
+  // nhau là biến trang này thành công cụ dò xem ai có tài khoản.
+  const khong = await khach().req('POST', '/api/admin/quen-mat-khau', { email: 'khong-he-co@test.vn' });
+  const co = await khach().req('POST', '/api/admin/quen-mat-khau', { email });
+  ok('email không tồn tại vẫn trả 200', khong.status, 200);
+  ok('hai câu trả lời GIỐNG HỆT nhau', khong.body.message, co.body.message);
+  ok('email không tồn tại KHÔNG sinh thư', demThu(), 1);
+
+  // Cái bẫy UNIQUE(template, ref_id) của bảng email_outbox: nếu refId lấy id
+  // người dùng thì lần xin thứ hai bị nuốt mất và người ta chờ mãi một thư
+  // không bao giờ tới.
+  await khach().req('POST', '/api/admin/quen-mat-khau', { email });
+  ok('xin hai lần thì có HAI thư', demThu(), 2);
+
+  const [maMoi, maCu] = layMa(2);
+  ok('lấy được mã từ thư', typeof maMoi, 'string');
+
+  ok('mã bịa bị từ chối',
+    (await khach().req('POST', '/api/dat-lai-mat-khau',
+      { ma: 'ma-bia-dat-hoan-toan', matKhau: 'ChuoiDaiAnToan-2026' })).status, 400);
+  ok('mật khẩu mới quá ngắn bị từ chối',
+    (await khach().req('POST', '/api/dat-lai-mat-khau', { ma: maMoi, matKhau: 'ngan1' })).status, 400);
+  ok('mật khẩu dễ đoán bị từ chối',
+    (await khach().req('POST', '/api/dat-lai-mat-khau', { ma: maMoi, matKhau: 'goccreator2026' })).status, 400);
+
+  const dat = await khach().req('POST', '/api/dat-lai-mat-khau',
+    { ma: maMoi, matKhau: 'CayXoaiBanPhim-73' });
+  ok('đặt lại thành công', dat.status, 200);
+  ok('trả về đúng vai để đưa tới đúng cửa', dat.body.vai, 'admin');
+
+  ok('mật khẩu MỚI đăng nhập được',
+    (await khach().req('POST', '/api/admin/login', { email, password: 'CayXoaiBanPhim-73' })).status, 200);
+  ok('mật khẩu CŨ hết dùng được',
+    (await khach().req('POST', '/api/admin/login', { email, password: mkCu })).status, 401);
+
+  ok('dùng lại đúng mã đó lần hai bị từ chối',
+    (await khach().req('POST', '/api/dat-lai-mat-khau',
+      { ma: maMoi, matKhau: 'MotChuoiKhacNua-99' })).status, 400);
+
+  // Mã còn nằm trong hộp thư của lần xin trước cũng phải chết theo — hộp thư
+  // là thứ có thể đã bị đọc trộm, và đó chính là lý do người ta xin đặt lại.
+  ok('mã của lần xin TRƯỚC cũng chết theo',
+    (await khach().req('POST', '/api/dat-lai-mat-khau',
+      { ma: maCu, matKhau: 'MotChuoiKhacNua-99' })).status, 400);
+
+  // Mã hết hạn: đẩy lùi hạn trong database rồi thử.
+  await khach().req('POST', '/api/admin/quen-mat-khau', { email });
+  const [maHetHan] = layMa(1);
+  db.prepare('UPDATE password_resets SET expires_at = ? WHERE used_at IS NULL')
+    .run(Math.floor(Date.now() / 1000) - 60);
+  const hetHan = await khach().req('POST', '/api/dat-lai-mat-khau',
+    { ma: maHetHan, matKhau: 'MotChuoiKhacNua-99' });
+  ok('mã quá hạn bị từ chối', hetHan.status, 400);
+  ok('câu lỗi nói rõ là quá hạn', hetHan.body.error.includes('quá hạn'), true);
+
+  // Xin quá nhiều lần trong một giờ thì ngừng cấp — nhưng CÂU TRẢ LỜI KHÔNG
+  // ĐỔI, nếu không thì đếm số lần cũng là một cách dò.
+  db.prepare('DELETE FROM password_resets').run();
+  db.prepare("DELETE FROM email_outbox WHERE template='password_reset'").run();
+  for (let i = 0; i < 5; i++) await khach().req('POST', '/api/admin/quen-mat-khau', { email });
+  ok('chặn ở 3 phiếu mỗi giờ', demThu(), 3);
+  const quaNhieu = await khach().req('POST', '/api/admin/quen-mat-khau', { email });
+  ok('bị chặn vẫn trả cùng câu', quaNhieu.body.message, co.body.message);
+
+  db.prepare("DELETE FROM email_outbox WHERE template='password_reset'").run();
+  db.prepare('DELETE FROM password_resets').run();
+}
+console.log('');
+
 // ---------------------------------------------------------------- hộp thư đi
 console.log('Hộp thư đi');
 {
