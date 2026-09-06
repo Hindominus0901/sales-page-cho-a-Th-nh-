@@ -178,8 +178,36 @@ phải có đủ những dòng đánh dấu GIỮ:
 | `webmail` A | 112.213.89.76 | **GIỮ** — trang đọc thư |
 | `ftp` A | 112.213.89.76 | GIỮ nếu còn dùng FTP |
 | `cpanel` A | 112.213.89.76 | GIỮ nếu còn vào cPanel |
+| `autodiscover` A | 112.213.89.76 | **GIỮ** — Outlook tự dò cấu hình |
+| `autoconfig` A | 112.213.89.76 | **GIỮ** — Thunderbird tự dò cấu hình |
 | `@` MX | mail.manhthanh.net (10) | **GIỮ** |
 | `@` TXT | `v=spf1 a mx ~all` | **GIỮ** |
+
+> ### Bản quét tự động KHÔNG đủ. Đây là chuyện đã xảy ra thật.
+>
+> Lần chuyển này, bản quét của Cloudflare tìm được đúng 4 bản ghi và **sót
+> `mail`** — trong khi MX trỏ thẳng vào `mail.manhthanh.net`. Kích hoạt lúc đó
+> là email chết hoàn toàn, và thư gửi tới bị **trả về** chứ không nằm chờ.
+>
+> Nó sót vì tên miền có một **bản ghi ký tự đại diện** `*` → `112.213.89.76`.
+> Ký tự đại diện không nằm trong danh sách nào để dò, nên không công cụ nào
+> liệt kê được nó — chỉ có cách suy ra.
+>
+> **Cách tự kiểm:** tra một tên miền con bịa hoàn toàn.
+>
+> ```
+> nslookup xyzq123abc-khong-he-co.manhthanh.net
+> ```
+>
+> Ra một địa chỉ IP nghĩa là **có** ký tự đại diện, và mọi tên miền con đang
+> chạy nhờ nó. Báo không tìm thấy nghĩa là không có.
+>
+> **Quyết định đã chốt: KHÔNG chép ký tự đại diện sang Cloudflare.** Chỉ khai
+> tường minh 6 tên miền con ở bảng trên. Đổi lại, tên miền con gõ nhầm sẽ báo
+> lỗi rõ ràng thay vì âm thầm trả về hosting cũ — dễ dò lỗi hơn nhiều về sau.
+>
+> Nếu vài ngày sau có thứ gì đó hỏng mà không rõ lý do, gần như chắc chắn là
+> một tên miền con chưa khai. Thêm nó vào DNS của Cloudflare là xong.
 
 > Website cũ trên hosting PA Vietnam sẽ **ngừng hiện** sau bước này — đúng như
 > anh Thành đã chốt. File trên hosting không mất, chỉ là không ai vào bằng
@@ -193,7 +221,8 @@ phải có đủ những dòng đánh dấu GIỮ:
 3. **Đối chiếu lại danh sách vừa nhập với bảng trên.** Bản quét tự động có thể
    sót tên miền con — nó chỉ tìm được những cái nó đoán ra. Thiếu dòng nào thì
    **DNS → Add record** thêm tay.
-4. **Các bản ghi `mail`, `webmail`, `ftp`, `cpanel` phải để đám mây XÁM
+4. **Các bản ghi `mail`, `webmail`, `ftp`, `cpanel`, `autodiscover`,
+   `autoconfig` phải để đám mây XÁM
    (DNS only), KHÔNG phải cam.** Đám mây cam nghĩa là Cloudflare đứng giữa —
    nó chỉ hiểu web, và bật cho mail là email chết ngay. Đây là lỗi hay gặp
    nhất khi chuyển tên miền sang Cloudflare.
@@ -210,7 +239,13 @@ Bước 7 tự thay bản ghi gốc, nên không phải xoá tay hai dòng "BỎ
 
 - Mở `https://manhthanh.net` — phải ra trang bán khoá 21 Ngày
 - **Tự gửi một email tới hộp thư `@manhthanh.net` của anh và xem nó có tới không.**
-  Đây là bước dễ bỏ qua nhất và cũng là thứ hỏng thì đau nhất.
+  Đây là bước dễ bỏ qua nhất và cũng là thứ hỏng thì đau nhất. Làm ngay khi
+  Cloudflare báo Active, đừng để hôm sau.
+- Tra lại DNS cho chắc:
+  ```
+  nslookup mail.manhthanh.net     → phải ra 112.213.89.76
+  nslookup -type=mx manhthanh.net → phải ra mail.manhthanh.net
+  ```
 - Địa chỉ `.workers.dev` vẫn chạy song song, không mất.
 
 > **Mọi người phải đăng nhập lại một lần.** Cookie phiên dùng tiền tố `__Host-`
