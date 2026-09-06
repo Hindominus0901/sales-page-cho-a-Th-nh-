@@ -66,6 +66,52 @@ export async function sessionFromToken(env: Env, token: string): Promise<Student
   };
 }
 
+/**
+ * Cùng một phiên học viên, nhưng nhận ra người từ tài khoản đã đăng nhập thay
+ * vì từ mã trên đường dẫn.
+ *
+ * Một học viên có thể có nhiều lần ghi danh (mua lại khoá sau, hoặc học lại
+ * đợt khác). Lấy lần MỚI NHẤT — đó là lớp họ đang học. Ưu tiên lần còn đang
+ * hoạt động: người vừa ghi danh đợt mới mà lần cũ đã huỷ thì phải vào đợt mới,
+ * không phải nhìn lại cái đã huỷ.
+ */
+export async function sessionFromStudentId(env: Env, studentId: string): Promise<StudentSession | null> {
+  const row = await env.DB.prepare(
+    `SELECT e.id AS enrollment_id, e.student_id, e.cohort, e.status, e.progress_day,
+            e.posts_done, e.started_at,
+            s.full_name, s.xp, s.coin, s.streak_current, s.streak_best
+     FROM enrollments e JOIN students s ON s.id = e.student_id
+     WHERE e.student_id = ?
+     ORDER BY (e.status = 'active') DESC, e.created_at DESC
+     LIMIT 1`,
+  ).bind(studentId).first<{
+    enrollment_id: string; student_id: string; cohort: string | null; status: string;
+    progress_day: number; posts_done: number; started_at: number | null;
+    full_name: string; xp: number; coin: number;
+    streak_current: number; streak_best: number;
+  }>();
+  if (!row) return null;
+
+  env.DB.prepare(`UPDATE enrollments SET last_seen_at = ? WHERE id = ?`)
+    .bind(now(), row.enrollment_id).run()
+    .catch((err) => console.error('[hoc] không ghi được last_seen_at', err));
+
+  return {
+    enrollmentId: row.enrollment_id,
+    studentId: row.student_id,
+    fullName: row.full_name,
+    cohort: row.cohort,
+    status: row.status,
+    progressDay: row.progress_day,
+    postsDone: row.posts_done,
+    startedAt: row.started_at,
+    xp: row.xp,
+    coin: row.coin,
+    streakCurrent: row.streak_current,
+    streakBest: row.streak_best,
+  };
+}
+
 export interface DaySlot {
   day: number;
   status: 'approved' | 'pending' | 'needs_work' | 'rejected' | 'empty';

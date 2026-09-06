@@ -229,6 +229,21 @@ test('Email xác nhận vào hàng đợi đúng một lần dù webhook gửi l
   // 'failed' đọc như "có gì đó hỏng cần sửa", còn sự thật là tính năng chưa bật.
   ok('trạng thái khi chưa có RESEND_API_KEY', mail.status, 'skipped');
   ok('không thử lại vô ích', mail.attempts, 0);
+
+  // Thư gửi đường link vào lớp — thứ DUY NHẤT chuyển link riêng tới học viên.
+  ok('có đúng một thư gửi link vào lớp',
+    count("SELECT COUNT(*) n FROM email_outbox WHERE template='student_access'"), 1);
+  const linkMail = db.prepare("SELECT * FROM email_outbox WHERE template='student_access'").get();
+
+  // Mã trong thư PHẢI là mã thật trong database. Câu INSERT ghi danh có
+  // ON CONFLICT DO NOTHING, nên lần chạy lại sinh một mã không hề được ghi —
+  // nhét mã đó vào thư là gửi cho học viên một đường link chết.
+  const maTrongThu = linkMail.body_text.match(/\/hoc\/([0-9a-f]{32})/)?.[1];
+  const maThat = db.prepare('SELECT access_token FROM enrollments LIMIT 1').get()?.access_token;
+  ok('mã trong thư đúng bằng mã trong database', maTrongThu, maThat);
+
+  const mo = await fetch(`${BASE}/api/hoc/${maTrongThu}`);
+  ok('mở đường link trong thư thì vào được lớp', mo.status, 200);
 });
 
 test('Workshop: mọi ô bắt buộc, gửi mail đúng một lần', async () => {

@@ -15,6 +15,7 @@ import { adminGameRoutes } from './routes/admin/game';
 import { adminStaffRoutes } from './routes/admin/staff';
 import { affiliateRoutes } from './routes/affiliate/portal';
 import { studentRoutes } from './routes/student';
+import { studentAuthRoutes } from './routes/student-auth';
 import { runDailyJobs, runHourlyJobs } from './lib/jobs/daily';
 
 const app = new Hono<HonoEnv>();
@@ -43,7 +44,12 @@ app.route('/', adminContentRoutes);
 app.route('/', adminGameRoutes);
 app.route('/', adminStaffRoutes);
 app.route('/', affiliateRoutes);
+// studentRoutes TRƯỚC: nó đăng ký middleware đặt X-Robots-Tag và
+// Referrer-Policy cho /api/hoc/*, và Hono chạy theo thứ tự đăng ký — mắc
+// studentAuthRoutes trước thì route đặt mật khẩu (cũng nằm dưới /api/hoc/)
+// trả lời xong trước khi middleware kịp chạy, và mất hai header đó.
 app.route('/', studentRoutes);
+app.route('/', studentAuthRoutes);
 
 /** Trang quản trị và portal CTV không bao giờ được index. */
 app.use('/admin/*', async (c, next) => { c.header('X-Robots-Tag', 'noindex, nofollow'); await next(); });
@@ -89,6 +95,16 @@ const spaShell = (mount: 'admin' | 'aff') => (c: Context<HonoEnv>) => {
 app.get('/hoc/:token', async (c) => {
   c.header('X-Robots-Tag', 'noindex, nofollow');
   c.header('Referrer-Policy', 'no-referrer');
+  return c.env.ASSETS.fetch(new Request(new URL('/hoc.html', c.req.url)));
+});
+
+/**
+ * Cùng trang đó, mở bằng tài khoản đã đăng nhập thay vì mã trên đường dẫn.
+ * Chưa đăng nhập thì chính trang tự chuyển sang /dang-nhap — không chặn ở đây,
+ * vì file tĩnh này không có gì bí mật và chặn ở đây thì phải đọc phiên hai lần.
+ */
+app.get('/hoc', async (c) => {
+  c.header('X-Robots-Tag', 'noindex, nofollow');
   return c.env.ASSETS.fetch(new Request(new URL('/hoc.html', c.req.url)));
 });
 

@@ -5,8 +5,8 @@ import { commissionOf } from '../util/money';
 import { auditStmt } from '../db/audit';
 import { bumpDailyStats } from '../db/events';
 import { assessSelfReferral } from '../affiliate/self-referral';
-import { orderPaidMail } from '../email/templates';
-import { queueMailStmt } from '../email/outbox';
+import { orderPaidMail, studentAccessMail } from '../email/templates';
+import { queueMailStmt, queueMail } from '../email/outbox';
 
 export interface OrderRow {
   id: string;
@@ -200,6 +200,31 @@ export async function fulfillOrder(
   }));
 
   await env.DB.batch(statements);
+
+  /**
+   * Thư gửi đường link vào lớp — xếp hàng SAU batch, có chủ ý.
+   *
+   * Mã truy cập sinh bằng accessToken() ngay trong câu INSERT, mà câu đó có
+   * ON CONFLICT(order_id) DO NOTHING: chạy lại lần hai thì nó không ghi gì, và
+   * mã vừa sinh ở lần chạy đó KHÔNG nằm trong database. Nhét mã ấy vào thư là
+   * gửi cho học viên một đường link chết.
+   *
+   * Nên đọc ngược mã THẬT ra rồi mới soạn thư. Nằm ngoài batch không sao:
+   * UNIQUE(template, ref_id) của email_outbox lo phần chống trùng, đúng như
+   * nó lo cho thư xác nhận thanh toán.
+   */
+  const ghiDanh = await env.DB.prepare(
+    `SELECT access_token FROM enrollments WHERE order_id = ?`,
+  ).bind(order.id).first<{ access_token: string }>();
+
+  if (ghiDanh?.access_token) {
+    await queueMail(env, studentAccessMail(env, {
+      orderId: order.id,
+      name: order.full_name,
+      email: order.email,
+      token: ghiDanh.access_token,
+    }));
+  }
 
   await bumpDailyStats(env, 'sales_21d', order.affiliate_id, {
     paid_orders: 1,

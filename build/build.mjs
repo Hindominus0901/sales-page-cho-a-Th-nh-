@@ -891,6 +891,22 @@ const pages = {
     script: read('tra-cuu.js'),
     noindex: true,
   }),
+  // Trang tuyển cộng tác viên. KHÔNG noindex — đây là trang mình muốn người ta
+  // tìm thấy, khác hẳn mấy trang đăng nhập.
+  'ctv-dang-ky.html': page({
+    path: '/ctv-dang-ky',
+    title: 'Cộng tác viên — ' + cfg.brand,
+    description: 'Giới thiệu khoá Thử thách 21 ngày, nhận 20% mỗi đơn.',
+    body: read('page-ctv-dang-ky.html'),
+    script: read('ctv-dang-ky.js'),
+  }),
+  'dang-nhap.html': page({
+    title: 'Vào lớp — ' + cfg.brand,
+    description: 'Đăng nhập cổng học viên Góc Creator.',
+    body: read('page-dang-nhap.html'),
+    script: read('dang-nhap.js'),
+    noindex: true,
+  }),
   // Hai trang lấy lại mật khẩu. noindex: chúng không có gì cho Google, và một
   // trang đặt lại mật khẩu nằm trong kết quả tìm kiếm chỉ mời thêm người dò.
   'quen-mat-khau.html': page({

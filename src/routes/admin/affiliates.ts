@@ -6,6 +6,9 @@ import { transitionCommission, transitionCommissions, COMMISSION_LABEL, HOLD_REA
 import { PAYOUT_LABEL } from '../../lib/affiliate/payout';
 import { uuid, randomToken } from '../../lib/util/id';
 import { now, ictDateTime } from '../../lib/util/datetime';
+import { capPhieu } from '../../lib/auth/password-reset';
+import { affiliateApprovedMail } from '../../lib/email/templates';
+import { queueMail, drainOutbox } from '../../lib/email/outbox';
 import { hashPassword } from '../../lib/security/hash';
 import { toPhoneNorm } from '../../lib/validation/phone';
 
@@ -96,7 +99,8 @@ adminAffiliateRoutes.patch('/api/admin/affiliates/:id', requireRole('owner', 'ad
     .catch(() => ({} as Record<string, never>));
 
   const before = await c.env.DB.prepare(
-    `SELECT status, commission_rate FROM affiliates WHERE id = ?`,
+    `SELECT status, commission_rate, password_hash, name, email, code
+     FROM affiliates WHERE id = ?`,
   ).bind(id).first();
   if (!before) return c.json({ ok: false, error: 'Không tìm thấy cộng tác viên.' }, 404);
 
@@ -116,6 +120,30 @@ adminAffiliateRoutes.patch('/api/admin/affiliates/:id', requireRole('owner', 'ad
   ).bind(body.status ?? null, body.commissionRate ?? null, body.notes ?? null,
     body.status ?? '', now(), now(), id).run();
 
+  /**
+   * Vừa duyệt một hồ sơ CHƯA CÓ MẬT KHẨU: gửi thư kèm link đặt mật khẩu.
+   *
+   * Điều kiện "chưa có mật khẩu" là thứ giữ cho việc mở lại một CTV bị treo
+   * không gửi cho họ một link đặt lại mật khẩu chẳng ai xin.
+   *
+   * Dùng lại đúng cơ chế password_resets thay vì sinh mật khẩu tạm rồi bắt
+   * admin chép tay qua Zalo — mật khẩu đi qua Zalo thì nằm lại ở đó mãi mãi.
+   */
+  const truoc = before as { status?: string; password_hash?: string | null;
+    name?: string; email?: string; code?: string };
+  if (body.status === 'active' && truoc.status !== 'active' && !truoc.password_hash) {
+    const phieu = await capPhieu(c.env, 'affiliate', id, String(truoc.email ?? ''), null);
+    if (phieu) {
+      await queueMail(c.env, affiliateApprovedMail(c.env, {
+        resetId: phieu.resetId, token: phieu.token,
+        name: String(truoc.name ?? ''), email: String(truoc.email ?? ''),
+        code: String(truoc.code ?? ''),
+      }));
+      c.executionCtx.waitUntil(
+        drainOutbox(c.env).catch((err) => console.error('[email] lượt gửi lỗi', err)));
+    }
+  }
+
   // Khoá tài khoản thì cắt luôn mọi phiên đang mở, không chờ hết hạn.
   if (body.status === 'suspended' || body.status === 'rejected') {
     await c.env.DB.prepare(
@@ -123,9 +151,16 @@ adminAffiliateRoutes.patch('/api/admin/affiliates/:id', requireRole('owner', 'ad
     ).bind(now(), id).run();
   }
 
+  // Bỏ password_hash trước khi ghi nhật ký. Câu SELECT ở trên lấy nó về để
+  // biết CTV đã đặt mật khẩu chưa; ghi thẳng cả `before` vào audit_log là chép
+  // bản băm mật khẩu vào một bảng mà mọi quản trị viên đọc được — hạ toàn bộ
+  // giá trị của việc băm nó.
+  const { password_hash: _bo, ...beforeSach } = before as Record<string, unknown>;
+
   await audit(c.env, {
     actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
-    action: 'affiliate.update', entityType: 'affiliate', entityId: id, before, after: body,
+    action: 'affiliate.update', entityType: 'affiliate', entityId: id,
+    before: beforeSach, after: body,
   });
   return c.json({ ok: true });
 });

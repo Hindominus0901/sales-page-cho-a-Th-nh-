@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hành trình 21 ngày — Góc Creator</title>
-<meta name="description" content="Nộp bài, xem nhận xét và đổi quà.">
+<title>Vào lớp — Góc Creator</title>
+<meta name="description" content="Đăng nhập cổng học viên Góc Creator.">
 <meta name="robots" content="noindex, nofollow">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="Hành trình 21 ngày — Góc Creator">
-<meta property="og:description" content="Nộp bài, xem nhận xét và đổi quà.">
+<meta property="og:title" content="Vào lớp — Góc Creator">
+<meta property="og:description" content="Đăng nhập cổng học viên Góc Creator.">
 
 <meta property="og:image" content="https://manhthanh.net/media/hero.jpg">
 <meta property="og:locale" content="vi_VN">
@@ -485,145 +485,45 @@
 </head>
 <body style="margin:0;background:#f3ead9;color:#191919">
 <div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
-  <div style="max-width:760px;margin:0 auto;padding:28px 20px 96px">
+  <div style="max-width:460px;margin:0 auto;padding:56px 22px 72px">
 
-    <!-- Đang tải -->
-    <div data-state="loading" class="fc2-shadow" style="background:#fff;border-radius:28px;padding:40px;text-align:center;color:#77777d">
-      Đang mở hành trình của anh chị…
-    </div>
+    <div style="font-size:12px;font-weight:700;color:#2f7a4d;letter-spacing:.06em;margin-bottom:10px">GÓC CREATOR</div>
+    <h1 style="font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0 0 8px">Vào lớp</h1>
+    <p style="font-size:16px;line-height:1.7;color:#55555c;margin:0 0 26px">
+      Đăng nhập bằng email anh chị đã dùng khi đăng ký khoá học.
+    </p>
 
-    <!-- Link hỏng -->
-    <div data-state="error" hidden class="fc2-shadow" style="background:#fff;border-radius:28px;padding:32px">
-      <div style="font-size:19px;font-weight:800;margin-bottom:10px">Không mở được đường link này</div>
-      <p data-error-message style="font-size:15px;line-height:1.7;color:#55555c;margin:0 0 18px"></p>
+    <form data-form class="fc2-shadow" style="background:#fff;border-radius:24px;padding:24px;display:grid;gap:16px">
+      <label style="display:grid;gap:6px">
+        <span style="font-size:13px;font-weight:600">Email</span>
+        <input name="email" type="email" inputmode="email" autocomplete="email" required
+               placeholder="email@cua-anh-chi.com"
+               style="height:52px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 14px;font:inherit;font-size:16px">
+      </label>
+      <label style="display:grid;gap:6px">
+        <span style="font-size:13px;font-weight:600">Mật khẩu</span>
+        <input name="password" type="password" autocomplete="current-password" required
+               style="height:52px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 14px;font:inherit;font-size:16px">
+      </label>
+      <button type="submit" class="fc2-cta"
+              style="height:54px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border:0;border-radius:16px;cursor:pointer">
+        Vào lớp
+      </button>
+      <p data-msg style="font-size:14px;line-height:1.6;margin:0"></p>
+      <a href="/quen-mat-khau?vai=hv" style="text-align:center;font-size:13.5px;color:#55555c;text-decoration:none">
+        Quên mật khẩu?
+      </a>
+    </form>
+
+    <!-- Học viên cũ chưa từng đặt mật khẩu sẽ đứng ở đây và không biết làm gì.
+         Nói thẳng cho họ đường đi, thay vì để họ nhắn Zalo hỏi. -->
+    <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:20px;margin-top:16px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Chưa có mật khẩu?</div>
       <p style="font-size:14px;line-height:1.7;color:#55555c;margin:0">
-        Anh chị nhắn Zalo cho team để được gửi lại link mới giúp em.
+        Nếu anh chị vẫn đang vào lớp bằng đường link riêng trong email, mở đúng
+        đường link đó — ở đầu trang có nút đặt mật khẩu. Đặt xong thì lần sau
+        đăng nhập ở đây, không cần link nữa.
       </p>
-    </div>
-
-    <div data-state="app" hidden>
-
-      <!-- Mời đặt mật khẩu. Chỉ hiện khi vào bằng đường link cũ và tài khoản
-           chưa có mật khẩu — người đã đăng nhập không cần thấy nó nữa. -->
-      <div data-dat-mk hidden class="fc2-shadow"
-           style="background:#fff;border:1px solid rgba(47,122,77,.3);border-radius:20px;padding:20px;margin-bottom:20px">
-        <div style="font-size:16px;font-weight:800;margin-bottom:6px">Đặt mật khẩu để lần sau khỏi cần link</div>
-        <p style="font-size:14px;line-height:1.7;color:#55555c;margin:0 0 14px">
-          Đường link này là chìa khoá vào lớp của riêng anh chị. Mất email là mất
-          link. Đặt một mật khẩu thì lần sau chỉ cần vào
-          <b>manhthanh.net/dang-nhap</b> là xong.
-        </p>
-        <div style="display:grid;gap:10px;max-width:380px">
-          <input data-mk type="password" autocomplete="new-password" placeholder="Mật khẩu mới, từ 12 ký tự"
-                 style="height:48px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 14px;font:inherit;font-size:16px">
-          <button data-dat-nut class="fc2-cta"
-                  style="height:48px;background:#2f7a4d;color:#fff;font-weight:700;font-size:15px;border:0;border-radius:14px;cursor:pointer">
-            Đặt mật khẩu
-          </button>
-          <p data-dat-msg style="font-size:13.5px;line-height:1.6;margin:0"></p>
-        </div>
-      </div>
-
-      <!-- Đầu trang: tên, bậc, ba con số -->
-      <header style="margin-bottom:22px">
-        <div style="font-size:13px;font-weight:700;color:#2f7a4d;letter-spacing:.04em;margin-bottom:8px">HÀNH TRÌNH 21 NGÀY</div>
-        <h1 style="font-size:30px;font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0 0 6px">
-          Chào <span data-name></span>
-        </h1>
-        <p data-cohort style="font-size:14px;color:#55555c;margin:0"></p>
-      </header>
-
-      <div class="fc2-shadow fc2-hocrank" style="background:#fff;border-radius:24px;padding:22px 24px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <span data-rank-icon style="font-size:34px;line-height:1"></span>
-          <div style="min-width:0;flex:1">
-            <div data-rank-name style="font-size:19px;font-weight:800"></div>
-            <div data-rank-next style="font-size:13px;color:#55555c;margin-top:2px"></div>
-          </div>
-        </div>
-        <div style="height:8px;background:rgba(25,25,25,.08);border-radius:999px;margin-top:14px;overflow:hidden">
-          <div data-rank-bar style="height:100%;width:0;background:#2f7a4d;border-radius:999px;transition:width .6s cubic-bezier(.22,1,.36,1)"></div>
-        </div>
-      </div>
-
-      <div class="fc2-hocstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:26px">
-        <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:16px 18px">
-          <div style="font-size:12px;color:#55555c;margin-bottom:4px">Coin đang có</div>
-          <div data-coin style="font-size:24px;font-weight:800;font-variant-numeric:tabular-nums">0</div>
-        </div>
-        <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:16px 18px">
-          <div style="font-size:12px;color:#55555c;margin-bottom:4px">Chuỗi ngày</div>
-          <div data-streak style="font-size:24px;font-weight:800;font-variant-numeric:tabular-nums">0</div>
-        </div>
-        <div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:16px 18px">
-          <div style="font-size:12px;color:#55555c;margin-bottom:4px">Bài đã duyệt</div>
-          <div data-done style="font-size:24px;font-weight:800;font-variant-numeric:tabular-nums">0<span style="font-size:15px;font-weight:600;color:#77777d">/21</span></div>
-        </div>
-      </div>
-
-      <!-- 21 ô ngày -->
-      <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 12px">Chặng đường</h2>
-      <div data-grid class="fc2-hocgrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:12px"></div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#55555c;margin-bottom:30px">
-        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2f7a4d;margin-right:5px"></i>Đã duyệt</span>
-        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#e2a33c;margin-right:5px"></i>Chờ duyệt</span>
-        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#c8123a;margin-right:5px"></i>Cần sửa</span>
-        <span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:rgba(25,25,25,.12);margin-right:5px"></i>Chưa nộp</span>
-      </div>
-
-      <!-- Nộp bài -->
-      <div class="fc2-shadow" style="background:#fff;border-radius:28px;padding:26px;margin-bottom:30px">
-        <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 4px">Nộp bài</h2>
-        <p data-submit-hint style="font-size:14px;color:#55555c;line-height:1.65;margin:0 0 18px"></p>
-
-        <!-- Nhận xét của team cho ngày đang chọn -->
-        <div data-feedback hidden style="border-left:3px solid #e2a33c;background:rgba(226,163,60,.09);border-radius:0 14px 14px 0;padding:14px 16px;margin-bottom:18px">
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px">Nhận xét của team</div>
-          <div data-feedback-text style="font-size:14px;line-height:1.7;color:#3a3a42"></div>
-        </div>
-
-        <form data-form style="display:grid;gap:14px">
-          <label style="display:grid;gap:6px">
-            <span style="font-size:13px;font-weight:600">Ngày</span>
-            <select name="day" style="height:48px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 12px;font:inherit;background:#fff"></select>
-          </label>
-          <label style="display:grid;gap:6px">
-            <span style="font-size:13px;font-weight:600">Link bài đăng</span>
-            <input name="postUrl" type="url" inputmode="url" placeholder="https://…" required
-                   style="height:48px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 14px;font:inherit">
-          </label>
-          <label style="display:grid;gap:6px">
-            <span style="font-size:13px;font-weight:600">Đăng ở đâu</span>
-            <select name="channel" style="height:48px;border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:0 12px;font:inherit;background:#fff">
-              <option value="facebook">Facebook</option>
-              <option value="tiktok">TikTok</option>
-              <option value="youtube">YouTube</option>
-              <option value="khac">Nơi khác</option>
-            </select>
-          </label>
-          <label style="display:grid;gap:6px">
-            <span style="font-size:13px;font-weight:600">Anh chị muốn team góp ý điều gì? <span style="font-weight:400;color:#77777d">(không bắt buộc)</span></span>
-            <textarea name="content" rows="3" placeholder="Ví dụ: em thấy phần mở đầu hơi dài, anh chị xem giúp em…"
-                      style="border:1px solid rgba(25,25,25,.16);border-radius:14px;padding:12px 14px;font:inherit;resize:vertical"></textarea>
-          </label>
-          <button type="submit" class="fc2-cta"
-                  style="height:54px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border:0;border-radius:16px;cursor:pointer">
-            Nộp bài
-          </button>
-          <p data-form-msg style="font-size:14px;line-height:1.6;margin:0"></p>
-        </form>
-      </div>
-
-      <!-- Đổi quà -->
-      <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 4px">Đổi quà</h2>
-      <p style="font-size:14px;color:#55555c;line-height:1.65;margin:0 0 14px">Coin tích được đổi lấy phần quà bên dưới. Đổi xong team sẽ nhắn Zalo để gửi quà.</p>
-      <div data-rewards style="display:grid;gap:12px;margin-bottom:26px"></div>
-
-      <div data-redemptions hidden style="margin-bottom:20px">
-        <h3 style="font-size:15px;font-weight:700;margin:0 0 10px">Quà đã đổi</h3>
-        <div data-redemptions-list style="display:grid;gap:8px"></div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -756,354 +656,41 @@ function wireMarqueePause() {
   } catch (e) { /* bỏ qua */ }
 }
 
-/* Cổng học viên /hoc/<mã> — xem tiến độ, nộp bài, đổi quà. */
 (function () {
-  'use strict';
+  var form = document.querySelector('[data-form]');
+  if (!form) return;
+  var msg = form.querySelector('[data-msg]');
+  var btn = form.querySelector('button[type=submit]');
 
-  var root = $('[data-state="app"]');
-  if (!root) return;
+  function noi(text, mau) { msg.textContent = text; msg.style.color = mau; }
 
-  /* HAI chế độ.
+  // Đã đăng nhập rồi mà mở lại trang này thì đưa thẳng vào lớp — đứng trước
+  // một form đăng nhập trong khi đang đăng nhập là khó hiểu.
+  fetch('/api/hv/me', { cache: 'no-store' })
+    .then(function (r) { if (r.ok) location.href = '/hoc'; })
+    .catch(function () {});
 
-     Có mã trên đường dẫn (/hoc/<mã>) — đường cũ, học viên đang học dùng nó,
-     không cần mật khẩu. Không có mã — trang mở bằng phiên đăng nhập.
-
-     Khác nhau đúng ở tiền tố đường API và ở việc đường nào nộp bài. Mọi thứ
-     còn lại của trang này không cần biết mình đang ở chế độ nào. */
-  var token = (location.pathname.match(/\/hoc\/([0-9a-f]{32})/) || [])[1];
-  var api = token ? '/api/hoc/' + token : '/api/hv';
-  var duongTrang = token ? api : api + '/trang';
-  var state = null;
-  var selectedDay = 1;
-
-  function show(name) {
-    ['loading', 'error', 'app'].forEach(function (k) {
-      var el = $('[data-state="' + k + '"]');
-      if (el) el.hidden = k !== name;
-    });
-  }
-
-  function fail(message) {
-    $('[data-error-message]').textContent = message;
-    show('error');
-  }
-
-  function esc(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  var num = function (n) { return Number(n || 0).toLocaleString('vi-VN'); };
-
-  /* Màu ô ngày. Ba trạng thái "chưa xong" gộp lại thành hai màu cho dễ đọc
-     trên điện thoại: cần sửa và bị từ chối đều là "làm lại", chờ duyệt là
-     "đang chờ mình". */
-  var TONE = {
-    approved:   { bg: '#2f7a4d', fg: '#fff' },
-    pending:    { bg: '#e2a33c', fg: '#231a06' },
-    needs_work: { bg: '#c8123a', fg: '#fff' },
-    rejected:   { bg: '#c8123a', fg: '#fff' },
-    empty:      { bg: 'rgba(25,25,25,.07)', fg: '#55555c' }
-  };
-
-  load();
-  moiDatMatKhau();
-
-  /* Mời đặt mật khẩu, chỉ khi vào bằng đường link cũ.
-
-     Không hỏi máy chủ xem đã có mật khẩu chưa: câu trả lời đó nói cho bất kỳ
-     ai cầm link biết tài khoản này đã có mật khẩu hay chưa, mà chẳng đổi được
-     gì cho người dùng thật. Cứ hiện ô, ai đã có mật khẩu thì máy chủ từ chối
-     kèm câu giải thích. */
-  function moiDatMatKhau() {
-    if (!token) return;
-    var box = $('[data-dat-mk]');
-    if (!box) return;
-    box.hidden = false;
-
-    var nut = $('[data-dat-nut]');
-    var o = $('[data-mk]');
-    var msg = $('[data-dat-msg]');
-
-    nut.addEventListener('click', function () {
-      var mk = o.value;
-      if (mk.length < 12) {
-        msg.textContent = 'Mật khẩu phải từ 12 ký tự trở lên — hiện mới ' + mk.length + '.';
-        msg.style.color = '#c8123a';
-        return;
-      }
-      nut.disabled = true;
-      msg.textContent = 'Đang đặt…';
-      msg.style.color = '#55555c';
-
-      fetch('/api/hoc/' + token + '/dat-mat-khau', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ matKhau: mk })
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (!d.ok) {
-            msg.textContent = d.error || 'Không đặt được mật khẩu.';
-            msg.style.color = '#c8123a';
-            return;
-          }
-          box.innerHTML = '<div style="font-size:16px;font-weight:800;margin-bottom:6px">'
-            + 'Đã đặt mật khẩu</div><p style="font-size:14px;line-height:1.7;color:#55555c;margin:0">'
-            + 'Lần sau anh chị vào thẳng <b>manhthanh.net/dang-nhap</b> bằng email '
-            + esc(d.email || '') + ' và mật khẩu vừa đặt.</p>';
-        })
-        .catch(function () {
-          msg.textContent = 'Không kết nối được. Anh chị thử lại giúp em.';
-          msg.style.color = '#c8123a';
-        })
-        .finally(function () { nut.disabled = false; });
-    });
-  }
-
-  function load() {
-    fetch(duongTrang, { cache: 'no-store' })
-      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-      .then(function (res) {
-        /* Chưa đăng nhập và cũng không có mã: đưa thẳng tới màn hình đăng
-           nhập thay vì hiện một câu lỗi rồi để người ta đứng đó. */
-        if (res.ok === false && !token && res.d && res.d.error === 'Chưa đăng nhập.') {
-          location.href = '/dang-nhap';
-          return;
-        }
-        if (!res.ok || !res.d.ok) return fail(res.d.error || 'Không mở được đường link này.');
-        state = res.d;
-        selectedDay = pickDay();
-        render();
-        show('app');
-      })
-      .catch(function () {
-        fail('Không kết nối được. Anh chị kiểm tra mạng rồi tải lại trang giúp em.');
-      });
-  }
-
-  /* Ô ngày mở sẵn. Ưu tiên ngày bị trả về trước tiên: ở đó có nhận xét của
-     team đang chờ đọc và một việc cụ thể phải làm, còn ô trống thì lúc nào
-     cũng còn đó. Sau đó mới tới ngày hôm nay, rồi ngày trống đầu tiên. */
-  function pickDay() {
-    var redo = state.days.find(function (d) {
-      return d.status === 'needs_work' || d.status === 'rejected';
-    });
-    if (redo) return redo.day;
-
-    var today = state.student.currentDay;
-    var slot = state.days[today - 1];
-    if (slot && slot.status === 'empty') return today;
-
-    var firstEmpty = state.days.find(function (d) { return d.status === 'empty'; });
-    return firstEmpty ? firstEmpty.day : today;
-  }
-
-  function render() {
-    var s = state.student, r = state.rank;
-
-    $('[data-name]').textContent = s.name;
-    $('[data-cohort]').textContent = s.cohort ? 'Khoá ' + s.cohort : '';
-    $('[data-coin]').textContent = num(s.coin);
-    $('[data-streak]').textContent = s.streak + (s.streak > 0 ? ' ngày' : '');
-    $('[data-done]').innerHTML = s.postsDone + '<span style="font-size:15px;font-weight:600;color:#77777d">/21</span>';
-
-    $('[data-rank-icon]').textContent = r.icon || '🌱';
-    $('[data-rank-name]').textContent = r.name;
-    $('[data-rank-next]').textContent = r.next
-      ? 'Còn ' + num(r.xpToNext) + ' XP nữa là lên bậc ' + r.next.icon + ' ' + r.next.name
-      : 'Anh chị đang ở bậc cao nhất.';
-    $('[data-rank-bar]').style.width = Math.round((r.progress || 0) * 100) + '%';
-
-    renderGrid();
-    renderForm();
-    renderRewards();
-    renderRedemptions();
-  }
-
-  function renderGrid() {
-    $('[data-grid]').innerHTML = state.days.map(function (d) {
-      var t = TONE[d.status] || TONE.empty;
-      var on = d.day === selectedDay;
-      return '<button type="button" data-day="' + d.day + '" '
-        + 'style="aspect-ratio:1;border:0;border-radius:12px;cursor:pointer;font:inherit;font-weight:700;'
-        + 'background:' + t.bg + ';color:' + t.fg + ';'
-        + 'outline:' + (on ? '2px solid #191919' : 'none') + ';outline-offset:2px">'
-        + d.day + '</button>';
-    }).join('');
-  }
-
-  function renderForm() {
-    var slot = state.days[selectedDay - 1] || { status: 'empty' };
-    var form = $('[data-form]');
-    var m = state.mechanics;
-
-    form.day.innerHTML = state.days.map(function (d) {
-      var label = 'Ngày ' + d.day
-        + (d.status === 'approved' ? ' — đã duyệt'
-          : d.status === 'pending' ? ' — chờ duyệt'
-          : d.status === 'empty' ? '' : ' — cần sửa');
-      return '<option value="' + d.day + '"' + (d.day === selectedDay ? ' selected' : '') + '>'
-        + esc(label) + '</option>';
-    }).join('');
-
-    form.postUrl.value = slot.postUrl || '';
-    form.content.value = slot.content || '';
-    form.channel.value = slot.channel || 'facebook';
-
-    var fb = $('[data-feedback]');
-    fb.hidden = !slot.feedback;
-    if (slot.feedback) $('[data-feedback-text]').textContent = slot.feedback;
-
-    /* Bài đã duyệt thì khoá form lại — sửa được sau khi đã cộng coin nghĩa là
-       link đã nhận thưởng có thể bị thay bằng link khác. */
-    var locked = slot.status === 'approved';
-    form.postUrl.disabled = form.content.disabled = form.channel.disabled = locked;
-    var btn = form.querySelector('button[type="submit"]');
-    btn.disabled = locked;
-    btn.textContent = locked ? 'Bài này đã được duyệt' : (slot.status === 'empty' ? 'Nộp bài' : 'Nộp lại bài');
-    btn.style.opacity = locked ? '.45' : '1';
-    btn.style.cursor = locked ? 'default' : 'pointer';
-
-    $('[data-submit-hint]').textContent = locked
-      ? 'Ngày ' + selectedDay + ' đã được duyệt, cộng ' + num(slot.coinAwarded) + ' coin.'
-      : 'Mỗi bài được duyệt: ' + num(m.coinPerSubmission) + ' coin + ' + num(m.xpPerSubmission)
-        + ' XP. Nộp liền ngày thì mỗi ngày chuỗi cộng thêm ' + m.streakBonusPct + '% coin.';
-    $('[data-form-msg]').textContent = '';
-  }
-
-  function renderRewards() {
-    var box = $('[data-rewards]');
-    if (!state.rewards.length) {
-      box.innerHTML = '<div style="font-size:14px;color:#55555c">Chưa có phần quà nào đang mở.</div>';
-      return;
-    }
-    box.innerHTML = state.rewards.map(function (r) {
-      return '<div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:18px 20px;'
-        + 'display:flex;gap:16px;align-items:center;flex-wrap:wrap">'
-        + '<div style="flex:1;min-width:180px">'
-        +   '<div style="font-size:16px;font-weight:700">' + esc(r.name) + '</div>'
-        +   (r.description ? '<div style="font-size:13px;color:#55555c;line-height:1.6;margin-top:3px">' + esc(r.description) + '</div>' : '')
-        +   '<div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-top:6px">' + num(r.cost_coin) + ' coin</div>'
-        + '</div>'
-        + (r.canRedeem
-          ? '<button type="button" data-redeem="' + esc(r.id) + '" class="fc2-cta" style="height:46px;padding:0 20px;'
-            + 'background:#2f7a4d;color:#fff;font-weight:700;font-size:14px;border:0;border-radius:14px;cursor:pointer">Đổi</button>'
-          : '<span style="font-size:13px;color:#77777d">' + esc(r.reason || 'Chưa đổi được') + '</span>')
-        + '</div>';
-    }).join('');
-  }
-
-  var REDEEM_LABEL = {
-    requested: 'Đang chờ team duyệt', approved: 'Đã duyệt, chờ gửi',
-    fulfilled: 'Đã gửi', rejected: 'Bị từ chối — coin đã hoàn lại', cancelled: 'Đã huỷ'
-  };
-
-  function renderRedemptions() {
-    var list = state.redemptions || [];
-    $('[data-redemptions]').hidden = list.length === 0;
-    $('[data-redemptions-list]').innerHTML = list.map(function (r) {
-      return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;'
-        + 'background:#fff;border-radius:14px;padding:11px 14px">'
-        + '<span>' + esc(r.reward_name) + '</span>'
-        + '<span style="color:#55555c">' + esc(REDEEM_LABEL[r.status] || r.status) + '</span>'
-        + '</div>';
-    }).join('');
-  }
-
-  // ----------------------------------------------------------------- sự kiện
-
-  $('[data-grid]').addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-day]');
-    if (!btn) return;
-    selectedDay = Number(btn.getAttribute('data-day'));
-    renderGrid();
-    renderForm();
-  });
-
-  $('[data-form]').addEventListener('change', function (e) {
-    if (e.target.name !== 'day') return;
-    selectedDay = Number(e.target.value);
-    renderGrid();
-    renderForm();
-  });
-
-  $('[data-form]').addEventListener('submit', function (e) {
+  form.addEventListener('submit', function (e) {
     e.preventDefault();
-    var form = e.target;
-    var btn = form.querySelector('button[type="submit"]');
-    var msg = $('[data-form-msg]');
-    var old = btn.textContent;
-
     btn.disabled = true;
-    btn.textContent = 'Đang gửi…';
-    msg.textContent = '';
+    noi('Đang kiểm tra…', '#55555c');
 
-    post(api + '/nop-bai', {
-      day: Number(form.day.value),
-      postUrl: form.postUrl.value,
-      content: form.content.value,
-      channel: form.channel.value
-    }).then(function (res) {
-      btn.disabled = false;
-      btn.textContent = old;
-      if (!res.ok) {
-        msg.style.color = '#c8123a';
-        msg.textContent = res.error || 'Chưa gửi được, anh chị thử lại giúp em.';
-        return;
-      }
-      /* Vẽ lại trước rồi mới ghi lời báo: renderForm() xoá ô thông báo, đặt
-         lời báo trước thì nó biến mất ngay khi số liệu mới về. */
-      refresh().then(function () {
-        msg.style.color = '#2f7a4d';
-        msg.textContent = res.message;
-      });
-    });
-  });
-
-  $('[data-rewards]').addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-redeem]');
-    if (!btn) return;
-    if (!confirm('Anh chị xác nhận đổi phần quà này?')) return;
-
-    btn.disabled = true;
-    btn.textContent = 'Đang đổi…';
-    post(api + '/doi-qua', { rewardId: btn.getAttribute('data-redeem'), note: '' })
-      .then(function (res) {
-        if (!res.ok) {
-          alert(res.error || 'Chưa đổi được, anh chị thử lại giúp em.');
-          btn.disabled = false;
-          btn.textContent = 'Đổi';
-          return;
-        }
-        refresh();
-      });
-  });
-
-  function post(url, body) {
-    return fetch(url, {
+    fetch('/api/hv/dang-nhap', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        email: form.querySelector('[name=email]').value.trim(),
+        password: form.querySelector('[name=password]').value
+      })
     })
       .then(function (r) { return r.json(); })
-      .catch(function () { return { ok: false, error: 'Mất kết nối. Anh chị thử lại giúp em.' }; });
-  }
-
-  /* Tải lại số liệu sau khi nộp/đổi, nhưng GIỮ nguyên ngày đang chọn — nhảy
-     về ngày khác ngay sau khi vừa nộp thì học viên tưởng bài mình bay mất. */
-  function refresh() {
-    var keep = selectedDay;
-    return fetch(api, { cache: 'no-store' })
-      .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (!d.ok) return;
-        state = d;
-        selectedDay = keep;
-        render();
+        if (!d.ok) { noi(d.error || 'Không đăng nhập được.', '#c8123a'); return; }
+        location.href = '/hoc';
       })
-      .catch(function () { /* giữ nguyên màn hình đang có */ });
-  }
+      .catch(function () { noi('Không kết nối được. Anh chị thử lại giúp em.', '#c8123a'); })
+      .finally(function () { btn.disabled = false; });
+  });
 })();
 
 </script>

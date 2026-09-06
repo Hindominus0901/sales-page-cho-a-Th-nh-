@@ -11,7 +11,8 @@ import { audit } from '../../lib/db/audit';
 import { now, ictDateTime } from '../../lib/util/datetime';
 import { toPhoneNorm } from '../../lib/validation/phone';
 import { capPhieu } from '../../lib/auth/password-reset';
-import { passwordResetMail } from '../../lib/email/templates';
+import { uuid } from '../../lib/util/id';
+import { passwordResetMail, affiliateApplicationMail, affiliateApprovedMail } from '../../lib/email/templates';
 import { queueMail, drainOutbox } from '../../lib/email/outbox';
 import { rateLimit } from '../../lib/security/ratelimit';
 
@@ -111,10 +112,105 @@ affiliateRoutes.post('/api/aff/quen-mat-khau', async (c) => {
   return c.json(cauTraLoi);
 });
 
+/**
+ * Cộng tác viên tự nộp hồ sơ.
+ *
+ * Trước đây admin phải tạo tay từng người: hỏi thông tin qua Zalo, gõ vào màn
+ * hình Cộng tác viên, chép mật khẩu tạm gửi lại. Ba bước tay cho mỗi CTV là ba
+ * chỗ để quên, và nó chặn đúng thứ mình muốn nhiều — người tự tìm đến.
+ *
+ * Hồ sơ vào ở trạng thái 'pending' và KHÔNG có mật khẩu: chưa duyệt thì chưa
+ * đăng nhập được, chưa có mã giới thiệu chạy được. Admin duyệt trong màn hình
+ * sẵn có.
+ */
+affiliateRoutes.post('/api/aff/dang-ky', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+  const limited = await rateLimit(c.env, `affdk:${ip}`, 5, 3600);
+  if (!limited.ok) {
+    return c.json({ ok: false, error: 'Anh chị thao tác hơi nhanh, thử lại sau ít phút giúp em.' }, 429);
+  }
+
+  type Body = { name?: string; email?: string; phone?: string; kenh?: string; website?: string };
+  const b = await c.req.json<Body>().catch(() => ({} as Body));
+
+  // Bẫy bot, cùng cách với các form công khai khác: người thật không thấy ô này.
+  if (String(b.website ?? '').trim()) return c.json({ ok: true });
+
+  const name = String(b.name ?? '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  const email = String(b.email ?? '').trim().toLowerCase().slice(0, 160);
+  const phone = String(b.phone ?? '').trim().slice(0, 30);
+  const kenh = String(b.kenh ?? '').replace(/\s+/g, ' ').trim().slice(0, 500);
+
+  if (name.length < 2) return c.json({ ok: false, error: 'Anh chị nhập họ tên giúp em.' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    return c.json({ ok: false, error: 'Email không hợp lệ.' }, 400);
+  }
+  const phoneNorm = toPhoneNorm(phone);
+  if (!phoneNorm) return c.json({ ok: false, error: 'Số điện thoại không hợp lệ.' }, 400);
+
+  const id = uuid();
+  const ts = now();
+
+  try {
+    await c.env.DB.prepare(
+      `INSERT INTO affiliates
+         (id, code, name, email, email_norm, phone, phone_norm, status,
+          commission_rate, notes, created_at, updated_at)
+       VALUES (?,?,?,?,?,?,?, 'pending', ?, ?, ?, ?)`,
+    ).bind(id, await maChuaDung(c.env, name), name, email, email, phone, phoneNorm,
+      Number(c.env.AFFILIATE_DEFAULT_RATE_BP || 2000),
+      kenh ? `Kênh khi đăng ký: ${kenh}` : null, ts, ts).run();
+  } catch (err) {
+    // UNIQUE(email_norm). Nói thẳng là đã có hồ sơ — đây không phải thông tin
+    // bí mật (người nộp chính là người biết email của mình), và im lặng thì họ
+    // nộp lại năm lần rồi nhắn Zalo hỏi vì sao không thấy gì.
+    if (String(err).includes('email_norm')) {
+      return c.json({
+        ok: false,
+        error: 'Email này đã có hồ sơ cộng tác viên. Nếu đã được duyệt, anh chị '
+          + 'đăng nhập ở /aff; nếu quên mật khẩu thì dùng chức năng quên mật khẩu.',
+      }, 409);
+    }
+    throw err;
+  }
+
+  await queueMail(c.env, affiliateApplicationMail(c.env, { id, name, email }));
+  c.executionCtx.waitUntil(drainOutbox(c.env).catch((e) => console.error('[email] lượt gửi lỗi', e)));
+
+  await audit(c.env, {
+    actorType: 'system', actorId: null, actorLabel: email,
+    action: 'affiliate.applied', entityType: 'affiliate', entityId: id,
+    after: { name, email, phone },
+  });
+
+  return c.json({ ok: true, message: 'Em đã nhận hồ sơ. Bên Thành sẽ xem và phản hồi qua email.' });
+});
+
+/**
+ * Mã giới thiệu sinh từ tên, bảo đảm không trùng.
+ *
+ * ux_affiliates_code là UNIQUE, nên trùng mã là cả câu INSERT hỏng và người
+ * nộp thấy lỗi 500 — trong khi lý do thật chỉ là có một CTV khác trùng tên.
+ */
+async function maChuaDung(env: HonoEnv['Bindings'], name: string): Promise<string> {
+  const goc = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/gi, 'd').replace(/[^A-Za-z]/g, '').toUpperCase().slice(-10) || 'CTV';
+
+  for (let i = 0; i < 20; i++) {
+    const thu = i === 0 ? goc : goc + String(Math.floor(Math.random() * 900) + 100);
+    const co = await env.DB.prepare(`SELECT 1 AS x FROM affiliates WHERE code = ?`)
+      .bind(thu).first();
+    if (!co) return thu;
+  }
+  // 20 lần vẫn trùng thì bỏ hẳn phần tên — mã xấu vẫn hơn hồ sơ không nộp được.
+  return 'CTV' + Date.now().toString(36).toUpperCase().slice(-6);
+}
+
 affiliateRoutes.use('/api/aff/*', async (c, next) => {
   // Hai route trên là công khai; phần còn lại bắt buộc đăng nhập.
   const path = new URL(c.req.url).pathname;
-  const congKhai = ['/api/aff/login', '/api/aff/logout', '/api/aff/quen-mat-khau'];
+  const congKhai = ['/api/aff/login', '/api/aff/logout', '/api/aff/quen-mat-khau',
+    '/api/aff/dang-ky'];
   if (congKhai.includes(path)) return next();
   return requireAffiliate(c, next);
 });

@@ -12,12 +12,19 @@ import { hmacSha256, timingSafeEqual, hashIp } from '../security/hash';
  */
 export const COOKIE_ADMIN = '__Host-gc_admin';
 export const COOKIE_AFF = '__Host-gc_aff';
+export const COOKIE_STUDENT = '__Host-gc_hv';
+
+export type VaiTro = 'admin' | 'affiliate' | 'student';
+
+const COOKIE_CUA: Record<VaiTro, string> = {
+  admin: COOKIE_ADMIN, affiliate: COOKIE_AFF, student: COOKIE_STUDENT,
+};
 
 const SESSION_DAYS = 30;
 
 export interface SessionRow {
   id: string;
-  subject_type: 'admin' | 'affiliate';
+  subject_type: VaiTro;
   subject_id: string;
   csrf_secret: string;
   expires_at: number;
@@ -26,7 +33,7 @@ export interface SessionRow {
 
 export async function createSession(
   env: Env,
-  subjectType: 'admin' | 'affiliate',
+  subjectType: VaiTro,
   subjectId: string,
   req: Request,
 ): Promise<{ id: string; cookie: string }> {
@@ -44,7 +51,7 @@ export async function createSession(
     req.headers.get('user-agent'), ts, ts, daysFromNow(SESSION_DAYS)).run();
 
   const signature = await hmacSha256(env.SESSION_SECRET, id);
-  const name = subjectType === 'admin' ? COOKIE_ADMIN : COOKIE_AFF;
+  const name = COOKIE_CUA[subjectType];
 
   /**
    * Tiền tố __Host- bắt buộc Secure + Path=/ và cấm Domain — cookie không thể
@@ -71,9 +78,9 @@ export function clearCookie(name: string, isHttps: boolean): string {
 export async function readSession(
   env: Env,
   req: Request,
-  subjectType: 'admin' | 'affiliate',
+  subjectType: VaiTro,
 ): Promise<SessionRow | null> {
-  const name = subjectType === 'admin' ? COOKIE_ADMIN : COOKIE_AFF;
+  const name = COOKIE_CUA[subjectType];
   const bare = name.replace('__Host-', '');
   const raw = readCookie(req, name) ?? readCookie(req, bare);
   if (!raw) return null;
@@ -109,7 +116,7 @@ export async function revokeSession(env: Env, id: string): Promise<void> {
 
 /** Thu hồi mọi phiên của một người — dùng khi khoá tài khoản hoặc đổi mật khẩu. */
 export async function revokeAllSessions(
-  env: Env, subjectType: 'admin' | 'affiliate', subjectId: string,
+  env: Env, subjectType: VaiTro, subjectId: string,
 ): Promise<void> {
   await env.DB.prepare(
     `UPDATE sessions SET revoked_at = ? WHERE subject_type = ? AND subject_id = ? AND revoked_at IS NULL`,

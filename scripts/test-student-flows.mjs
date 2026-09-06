@@ -22,6 +22,10 @@ const ok = (label, actual, expected) => {
 
 const now = Math.floor(Date.now() / 1000);
 
+// Email riêng mỗi lần chạy: ux_students_email là UNIQUE, và bộ kiểm phải chạy
+// lại được nhiều lần trong ngày.
+const EMAIL = `hv-kiem-thu-${Date.now()}@vidu.com`;
+
 // Số điện thoại riêng mỗi lần chạy: `UNIQUE(phone_norm)` là ràng buộc thật của
 // hệ, không phải thứ để né bằng cách xoá dữ liệu người khác.
 const suffix = String(now % 1000000).padStart(6, '0');
@@ -42,10 +46,10 @@ const enrollmentId = randomUUID();
 const productId = db.prepare(`SELECT id FROM products LIMIT 1`).get().id;
 
 db.prepare(
-  `INSERT INTO students (id, full_name, phone, phone_norm, xp, coin, streak_current,
-                         streak_best, created_at, updated_at)
-   VALUES (?,?,?,?,0,0,0,0,?,?)`,
-).run(studentId, 'Học viên Kiểm Thử', PHONE, PHONE_NORM, now, now);
+  `INSERT INTO students (id, full_name, phone, phone_norm, email, email_norm, xp, coin,
+                         streak_current, streak_best, created_at, updated_at)
+   VALUES (?,?,?,?,?,?,0,0,0,0,?,?)`,
+).run(studentId, 'Học viên Kiểm Thử', PHONE, PHONE_NORM, EMAIL, EMAIL, now, now);
 
 db.prepare(
   `INSERT INTO enrollments (id, student_id, product_id, status, started_at,
@@ -134,6 +138,65 @@ const newToken = randomBytes(16).toString('hex');
 db.prepare(`UPDATE enrollments SET access_token = ? WHERE id = ?`).run(newToken, enrollmentId);
 ok('mã cũ hết dùng được', (await get(`/api/hoc/${token}`)).ok, false);
 ok('mã mới dùng được', (await get(`/api/hoc/${newToken}`)).ok, true);
+
+console.log('\n7. Đăng nhập bằng email và mật khẩu');
+{
+  // Cookie jar tối giản: chỉ cần giữ đúng một cookie phiên học viên.
+  let jar = '';
+  const goi = async (path, opts = {}) => {
+    const res = await fetch(BASE + path, {
+      ...opts,
+      headers: { ...(opts.headers ?? {}), ...(jar ? { cookie: jar } : {}) },
+      cache: 'no-store',
+    });
+    for (const raw of res.headers.getSetCookie?.() ?? []) {
+      const pair = raw.split(';')[0];
+      if (pair.includes('gc_hv')) jar = pair;
+    }
+    let body; try { body = await res.json(); } catch { body = {}; }
+    return { status: res.status, body };
+  };
+
+  ok('chưa đăng nhập thì /api/hv/trang trả 401', (await goi('/api/hv/trang')).status, 401);
+
+  const dat = (mk) => goi(`/api/hoc/${newToken}/dat-mat-khau`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ matKhau: mk }),
+  });
+
+  ok('mật khẩu quá ngắn bị từ chối', (await dat('ngan1')).status, 400);
+  ok('đặt mật khẩu lần đầu từ link cũ', (await dat('CayXoaiBanPhim-73')).status, 200);
+  // Đặt xong là đăng nhập luôn — họ vừa chứng minh danh tính, bắt gõ lại là thừa.
+  ok('đặt xong vào được lớp ngay', (await goi('/api/hv/trang')).status, 200);
+
+  // Đã có mật khẩu rồi mà link cũ vẫn đổi được mật khẩu thì ai nhặt được link
+  // (email chuyển tiếp, ảnh chụp màn hình) là chiếm luôn tài khoản.
+  ok('đặt lần hai bằng link cũ bị chặn', (await dat('MotChuoiKhacNua-99')).status, 400);
+
+  // Đường link cũ KHÔNG được gãy: học viên đang học vẫn dùng nó.
+  ok('link cũ vẫn vào được như thường', (await goi(`/api/hoc/${newToken}`)).status, 200);
+
+  jar = '';
+  ok('sai mật khẩu bị từ chối', (await goi('/api/hv/dang-nhap', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: EMAIL, password: 'sai-be-bet-nhe' }),
+  })).status, 401);
+
+  ok('đăng nhập bằng email + mật khẩu', (await goi('/api/hv/dang-nhap', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: EMAIL, password: 'CayXoaiBanPhim-73' }),
+  })).status, 200);
+
+  const trang = await goi('/api/hv/trang');
+  ok('vào lớp bằng phiên đăng nhập', trang.status, 200);
+  ok('và thấy đúng học viên của mình', trang.body.student.name, 'Học viên Kiểm Thử');
+
+  // Phiên học viên không được là chìa khoá vào trang quản trị.
+  ok('phiên học viên KHÔNG vào được /api/admin', (await goi('/api/admin/me')).status, 401);
+
+  ok('đăng xuất được', (await goi('/api/hv/dang-xuat', { method: 'POST' })).status, 200);
+  ok('đăng xuất rồi thì hết vào được', (await goi('/api/hv/trang')).status, 401);
+}
 
 // ------------------------------------------------------------------ dọn dẹp
 // Xoá học viên trước: bản ghi đổi quà tham chiếu tới quà, xoá quà trước là

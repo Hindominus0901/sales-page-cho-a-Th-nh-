@@ -5,10 +5,16 @@
   var root = $('[data-state="app"]');
   if (!root) return;
 
-  var token = (location.pathname.match(/\/hoc\/([0-9a-f]{32})/) || [])[1];
-  if (!token) return fail('Đường link thiếu mã truy cập.');
+  /* HAI chế độ.
 
-  var api = '/api/hoc/' + token;
+     Có mã trên đường dẫn (/hoc/<mã>) — đường cũ, học viên đang học dùng nó,
+     không cần mật khẩu. Không có mã — trang mở bằng phiên đăng nhập.
+
+     Khác nhau đúng ở tiền tố đường API và ở việc đường nào nộp bài. Mọi thứ
+     còn lại của trang này không cần biết mình đang ở chế độ nào. */
+  var token = (location.pathname.match(/\/hoc\/([0-9a-f]{32})/) || [])[1];
+  var api = token ? '/api/hoc/' + token : '/api/hv';
+  var duongTrang = token ? api : api + '/trang';
   var state = null;
   var selectedDay = 1;
 
@@ -43,11 +49,70 @@
   };
 
   load();
+  moiDatMatKhau();
+
+  /* Mời đặt mật khẩu, chỉ khi vào bằng đường link cũ.
+
+     Không hỏi máy chủ xem đã có mật khẩu chưa: câu trả lời đó nói cho bất kỳ
+     ai cầm link biết tài khoản này đã có mật khẩu hay chưa, mà chẳng đổi được
+     gì cho người dùng thật. Cứ hiện ô, ai đã có mật khẩu thì máy chủ từ chối
+     kèm câu giải thích. */
+  function moiDatMatKhau() {
+    if (!token) return;
+    var box = $('[data-dat-mk]');
+    if (!box) return;
+    box.hidden = false;
+
+    var nut = $('[data-dat-nut]');
+    var o = $('[data-mk]');
+    var msg = $('[data-dat-msg]');
+
+    nut.addEventListener('click', function () {
+      var mk = o.value;
+      if (mk.length < 12) {
+        msg.textContent = 'Mật khẩu phải từ 12 ký tự trở lên — hiện mới ' + mk.length + '.';
+        msg.style.color = '#c8123a';
+        return;
+      }
+      nut.disabled = true;
+      msg.textContent = 'Đang đặt…';
+      msg.style.color = '#55555c';
+
+      fetch('/api/hoc/' + token + '/dat-mat-khau', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ matKhau: mk })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.ok) {
+            msg.textContent = d.error || 'Không đặt được mật khẩu.';
+            msg.style.color = '#c8123a';
+            return;
+          }
+          box.innerHTML = '<div style="font-size:16px;font-weight:800;margin-bottom:6px">'
+            + 'Đã đặt mật khẩu</div><p style="font-size:14px;line-height:1.7;color:#55555c;margin:0">'
+            + 'Lần sau anh chị vào thẳng <b>manhthanh.net/dang-nhap</b> bằng email '
+            + esc(d.email || '') + ' và mật khẩu vừa đặt.</p>';
+        })
+        .catch(function () {
+          msg.textContent = 'Không kết nối được. Anh chị thử lại giúp em.';
+          msg.style.color = '#c8123a';
+        })
+        .finally(function () { nut.disabled = false; });
+    });
+  }
 
   function load() {
-    fetch(api, { cache: 'no-store' })
+    fetch(duongTrang, { cache: 'no-store' })
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
       .then(function (res) {
+        /* Chưa đăng nhập và cũng không có mã: đưa thẳng tới màn hình đăng
+           nhập thay vì hiện một câu lỗi rồi để người ta đứng đó. */
+        if (res.ok === false && !token && res.d && res.d.error === 'Chưa đăng nhập.') {
+          location.href = '/dang-nhap';
+          return;
+        }
         if (!res.ok || !res.d.ok) return fail(res.d.error || 'Không mở được đường link này.');
         state = res.d;
         selectedDay = pickDay();

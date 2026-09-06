@@ -6,7 +6,8 @@ export interface Mail {
   subject: string;
   text: string;
   html: string;
-  template: 'order_paid' | 'workshop_registered' | 'password_reset';
+  template: 'order_paid' | 'workshop_registered' | 'password_reset' | 'student_access'
+    | 'affiliate_application' | 'affiliate_approved';
   refType: string;
   refId: string;
 }
@@ -198,6 +199,155 @@ export function passwordResetMail(
     subject: 'Đặt lại mật khẩu — Góc Creator',
     text, html,
     template: 'password_reset',
+    refType: 'password_reset',
+    refId: input.resetId,
+  };
+}
+
+/**
+ * Thư gửi đường link vào lớp.
+ *
+ * Đây là thư quan trọng nhất trong cả hệ: nó là thứ DUY NHẤT chuyển đường link
+ * riêng tới tay học viên. Thư này không tới thì khách đã trả tiền mà không vào
+ * được lớp, và cách duy nhất họ biết phải làm gì là nhắn Zalo hỏi.
+ */
+export function studentAccessMail(
+  env: Env,
+  input: { orderId: string; name: string; email: string | null; token: string },
+): Mail | null {
+  if (!input.email) return null;
+
+  const base = env.PUBLIC_BASE_URL.replace(/\/$/, '');
+  const link = `${base}/hoc/${input.token}`;
+  const ten = input.name.split(' ').slice(-1)[0] || input.name;
+
+  const text = [
+    `Chào ${ten},`,
+    '',
+    'Đây là đường link riêng để anh chị vào lớp Thử thách 21 ngày:',
+    link,
+    '',
+    'Trong đó anh chị nộp bài mỗi ngày, xem nhận xét của team, theo dõi',
+    'chuỗi ngày và đổi quà bằng coin tích được.',
+    '',
+    'GIỮ EMAIL NÀY LẠI. Đường link là chìa khoá vào lớp của riêng anh chị,',
+    'đừng chia sẻ cho ai. Mở link lần đầu, ở đầu trang có ô đặt mật khẩu —',
+    'đặt xong thì lần sau vào thẳng ' + base + '/dang-nhap, không cần link nữa.',
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  const html = shell('Đường link vào lớp của anh chị', [
+    p(`Chào <b>${esc(ten)}</b>,`),
+    p('Đây là đường link riêng để anh chị vào lớp Thử thách 21 ngày — nộp bài mỗi '
+      + 'ngày, xem nhận xét của team, theo dõi chuỗi ngày và đổi quà bằng coin.'),
+    btn('Vào lớp ngay', link),
+    p('<b>Giữ email này lại.</b> Đường link là chìa khoá vào lớp của riêng anh chị, '
+      + 'đừng chia sẻ cho ai.'),
+    p('<span style="color:#6a6a72;font-size:14px">Mở link lần đầu, ở đầu trang có ô '
+      + `đặt mật khẩu. Đặt xong thì lần sau vào thẳng ${esc(base)}/dang-nhap, không `
+      + 'cần tìm lại email này nữa.</span>'),
+  ]);
+
+  return {
+    toEmail: input.email,
+    toName: input.name,
+    subject: 'Đường link vào lớp Thử thách 21 ngày — Góc Creator',
+    text, html,
+    template: 'student_access',
+    refType: 'order',
+    refId: input.orderId,
+  };
+}
+
+/** Xác nhận đã nhận hồ sơ cộng tác viên. */
+export function affiliateApplicationMail(
+  env: Env,
+  input: { id: string; name: string; email: string },
+): Mail {
+  const ten = input.name.split(' ').slice(-1)[0] || input.name;
+  const text = [
+    `Chào ${ten},`,
+    '',
+    'Em đã nhận hồ sơ cộng tác viên của anh chị.',
+    '',
+    'Bên Thành sẽ xem trong 1–2 ngày làm việc. Được duyệt thì anh chị nhận',
+    'một email nữa kèm đường link đặt mật khẩu và mã giới thiệu riêng.',
+    '',
+    'Chưa cần làm gì thêm lúc này.',
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  return {
+    toEmail: input.email,
+    toName: input.name,
+    subject: 'Đã nhận hồ sơ cộng tác viên — Góc Creator',
+    text,
+    html: shell('Đã nhận hồ sơ của anh chị', [
+      p(`Chào <b>${esc(ten)}</b>,`),
+      p('Em đã nhận hồ sơ cộng tác viên. Bên Thành sẽ xem trong <b>1–2 ngày làm việc</b>.'),
+      p('Được duyệt thì anh chị nhận một email nữa, kèm đường link đặt mật khẩu và '
+        + 'mã giới thiệu riêng. Chưa cần làm gì thêm lúc này.'),
+    ]),
+    template: 'affiliate_application',
+    refType: 'affiliate',
+    refId: input.id,
+  };
+}
+
+/**
+ * Duyệt xong: gửi link đặt mật khẩu.
+ *
+ * Dùng lại đúng cơ chế password_resets thay vì sinh mật khẩu tạm rồi in ra cho
+ * admin chép tay. Mật khẩu tạm phải đi qua Zalo hoặc miệng người, và nó nằm lại
+ * ở đó mãi mãi.
+ *
+ * refId là id PHIẾU đặt lại, không phải id CTV — nếu admin duyệt lại lần nữa
+ * (hoặc CTV bị treo rồi mở lại) thì thư thứ hai vẫn gửi được.
+ */
+export function affiliateApprovedMail(
+  env: Env,
+  input: { resetId: string; token: string; name: string; email: string; code: string },
+): Mail {
+  const base = env.PUBLIC_BASE_URL.replace(/\/$/, '');
+  const link = `${base}/dat-lai-mat-khau?ma=${encodeURIComponent(input.token)}`;
+  const ten = input.name.split(' ').slice(-1)[0] || input.name;
+  const linkGioiThieu = `${base}/?ref=${encodeURIComponent(input.code)}`;
+
+  const text = [
+    `Chào ${ten},`,
+    '',
+    'Hồ sơ cộng tác viên của anh chị đã được duyệt.',
+    '',
+    'Đặt mật khẩu tại đây (link dùng một lần, hết hạn sau 1 giờ):',
+    link,
+    '',
+    `Mã giới thiệu của anh chị: ${input.code}`,
+    `Link giới thiệu: ${linkGioiThieu}`,
+    '',
+    `Đặt mật khẩu xong, anh chị đăng nhập ở ${base}/aff để xem lượt bấm,`,
+    'đơn hàng và hoa hồng của mình.',
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  return {
+    toEmail: input.email,
+    toName: input.name,
+    subject: 'Hồ sơ cộng tác viên đã được duyệt — Góc Creator',
+    text,
+    html: shell('Hồ sơ của anh chị đã được duyệt', [
+      p(`Chào <b>${esc(ten)}</b>,`),
+      p('Đặt mật khẩu để vào portal cộng tác viên. Link dùng <b>một lần</b> và hết '
+        + 'hạn sau <b>1 giờ</b>.'),
+      btn('Đặt mật khẩu', link),
+      p(`Mã giới thiệu của anh chị: <b>${esc(input.code)}</b>`),
+      p(`Link giới thiệu: <a href="${esc(linkGioiThieu)}" style="color:#26643f">${esc(linkGioiThieu)}</a>`),
+      p(`<span style="color:#6a6a72;font-size:14px">Đặt mật khẩu xong, đăng nhập ở `
+        + `${esc(base)}/aff để xem lượt bấm, đơn hàng và hoa hồng.</span>`),
+    ]),
+    template: 'affiliate_approved',
     refType: 'password_reset',
     refId: input.resetId,
   };

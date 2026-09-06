@@ -40,7 +40,7 @@ function makeClient() {
   return {
     setCsrf: (t) => { csrf = t; },
     async req(method, path, body) {
-      const headers = { cookie: cookieHeader(), 'cf-connecting-ip': '10.9.9.9' };
+      const headers = { cookie: cookieHeader(), 'cf-connecting-ip': RUN_IP };
       if (body !== undefined) headers['content-type'] = 'application/json';
       if (csrf) headers['x-csrf-token'] = csrf;
       const res = await fetch(BASE + path, {
@@ -56,6 +56,16 @@ function makeClient() {
     patch(p, b) { return this.req('PATCH', p, b ?? {}); },
   };
 }
+
+/**
+ * Một IP riêng cho mỗi lần chạy.
+ *
+ * Nhiều đường công khai có hạn mức theo IP (nộp hồ sơ CTV 5 lượt/giờ, xin đặt
+ * lại mật khẩu 10 lượt/giờ), và bộ đếm nằm trong KV — KV sống qua các lần chạy
+ * script. Dùng IP cố định thì lần chạy thứ hai trong vòng một giờ ăn 429, và
+ * cái đỏ đó không nói gì về sản phẩm cả.
+ */
+const RUN_IP = `10.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.7`;
 
 console.log(`\nKiểm chứng trang quản trị và portal CTV — ${BASE}\n`);
 
@@ -248,12 +258,75 @@ if (orderIds.length >= SO_DON) {
 }
 console.log('');
 
+// --------------------------------------------------------- CTV tự đăng ký
+console.log('Cộng tác viên tự đăng ký');
+{
+  const rnd = Date.now().toString().slice(-7);
+  const email = `ctv-tu-${rnd}@vidu.com`;
+  const nop = (extra = {}) => makeClient().req('POST', '/api/aff/dang-ky', {
+    name: 'Trần Tự Đăng Ký', email, phone: '09' + rnd + '1',
+    kenh: 'Trang Facebook cá nhân 5.000 bạn', website: '', ...extra,
+  });
+
+  ok('nộp hồ sơ được', (await nop()).status, 200);
+
+  const row = db.prepare('SELECT * FROM affiliates WHERE email_norm = ?').get(email);
+  ok('hồ sơ vào trạng thái chờ duyệt', row?.status, 'pending');
+  // Chưa duyệt mà đã có mật khẩu là đăng nhập được trước khi ai kịp xem hồ sơ.
+  ok('CHƯA có mật khẩu', row?.password_hash, null);
+  ok('có mã giới thiệu', typeof row?.code, 'string');
+  ok('ghi lại kênh họ khai', row?.notes?.includes('Facebook'), true);
+
+  ok('có thư xác nhận đã nhận hồ sơ',
+    db.prepare("SELECT COUNT(*) n FROM email_outbox WHERE template='affiliate_application' AND to_email=?")
+      .get(email).n, 1);
+
+  ok('nộp lại cùng email bị chặn', (await nop()).status, 409);
+  ok('bẫy bot: bot điền ô ẩn thì im lặng bỏ qua',
+    (await makeClient().req('POST', '/api/aff/dang-ky', {
+      name: 'Bot', email: `bot-${rnd}@vidu.com`, phone: '0900000000',
+      kenh: 'x', website: 'https://spam.example',
+    })).status, 200);
+  ok('và KHÔNG tạo hồ sơ nào cho bot',
+    db.prepare('SELECT COUNT(*) n FROM affiliates WHERE email_norm = ?').get(`bot-${rnd}@vidu.com`).n, 0);
+
+  // Chưa duyệt thì chưa đăng nhập được, kể cả khi đoán đúng mọi thứ.
+  ok('chưa duyệt thì không đăng nhập được',
+    (await makeClient().req('POST', '/api/aff/login', { email, password: 'bat-ky' })).status, 401);
+
+  // Duyệt: phải gửi thư kèm link đặt mật khẩu, không phải mật khẩu tạm chép tay.
+  ok('admin duyệt được', (await admin.patch(`/api/admin/affiliates/${row.id}`, { status: 'active' })).status, 200);
+  const thu = db.prepare("SELECT body_text FROM email_outbox WHERE template='affiliate_approved' AND to_email=?").get(email);
+  ok('có thư báo đã duyệt', !!thu, true);
+  ok('thư có mã giới thiệu', thu.body_text.includes(row.code), true);
+
+  const ma = thu.body_text.match(/ma=([A-Za-z0-9_-]+)/)?.[1];
+  ok('thư có link đặt mật khẩu', typeof ma, 'string');
+  ok('đặt mật khẩu qua link đó được',
+    (await makeClient().req('POST', '/api/dat-lai-mat-khau',
+      { ma, matKhau: 'CayXoaiBanPhim-73' })).status, 200);
+  ok('rồi đăng nhập portal CTV được',
+    (await makeClient().req('POST', '/api/aff/login',
+      { email, password: 'CayXoaiBanPhim-73' })).status, 200);
+
+  // Bản băm mật khẩu KHÔNG được lọt vào nhật ký — mọi quản trị viên đọc được
+  // bảng đó, và ghi bản băm vào đấy là hạ hết giá trị của việc băm nó.
+  const nk = db.prepare(
+    "SELECT before_json FROM audit_log WHERE action='affiliate.update' AND entity_id=?").all(row.id);
+  ok('nhật ký KHÔNG chứa bản băm mật khẩu',
+    nk.every((r) => !String(r.before_json ?? '').includes('password_hash')), true);
+}
+console.log('');
+
 // ------------------------------------------------------------ quên mật khẩu
 console.log('Quên mật khẩu qua email');
 {
   const layMa = (n = 1) => {
+    // Sắp theo rowid chứ KHÔNG theo created_at: created_at tính bằng giây, và
+    // hai thư xin liên tiếp thường rơi vào cùng một giây — lúc đó thứ tự do
+    // SQLite tuỳ ý chọn, và bài kiểm lúc xanh lúc đỏ mà mã không đổi gì.
     const rows = db.prepare(
-      "SELECT body_text FROM email_outbox WHERE template='password_reset' ORDER BY created_at DESC LIMIT ?"
+      "SELECT body_text FROM email_outbox WHERE template='password_reset' ORDER BY rowid DESC LIMIT ?"
     ).all(n);
     return rows.map((r) => r.body_text.match(/ma=([A-Za-z0-9_-]+)/)?.[1]);
   };

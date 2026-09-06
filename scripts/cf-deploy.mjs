@@ -116,6 +116,43 @@ if (DRY) {
 
 heading('Migration D1');
 
+/**
+ * Dò email trùng TRƯỚC khi áp migration.
+ *
+ * 0012 tạo UNIQUE INDEX trên students(email_norm) vì email trở thành tên đăng
+ * nhập của học viên. Nếu database đang có hai học viên cùng email thì câu lệnh
+ * đó thất bại, và nó thất bại giữa chừng một migration — dưới dạng đúng một
+ * dòng "UNIQUE constraint failed: students.email_norm" trong log build, không
+ * nói ai trùng với ai, không nói phải làm gì.
+ *
+ * Dò trước thì lỗi thành một câu đọc được, và quan trọng hơn: nó nêu đích danh
+ * những email cần xử lý.
+ */
+if (!DRY) {
+  let trung = null;
+  try {
+    const out = wr(['d1', 'execute', 'DB', '--remote', ...ENV_FLAG, '--json', '--command',
+      "SELECT email_norm, COUNT(*) AS n FROM students "
+      + "WHERE email_norm IS NOT NULL AND email_norm != '' "
+      + "GROUP BY email_norm HAVING n > 1 LIMIT 20"], { quiet: true });
+    const parsed = json(out);
+    trung = parsed?.[0]?.results ?? parsed?.results ?? [];
+  } catch {
+    // Bảng students chưa tồn tại (lần deploy đầu) — không có gì để trùng.
+    trung = [];
+  }
+
+  if (trung.length > 0) {
+    fatal('Có học viên trùng email — migration sẽ hỏng giữa chừng.',
+      'Email sắp thành tên đăng nhập của học viên, nên nó phải là duy nhất. Hai\n'
+      + '  người cùng email thì không ai vào được đúng lớp của mình.\n\n'
+      + '  Những email đang trùng:\n'
+      + trung.map((r) => `    · ${r.email_norm} (${r.n} học viên)`).join('\n')
+      + '\n\n  Vào /admin → Học viên, sửa hoặc xoá email của bên trùng, rồi deploy lại.');
+  }
+  done('Không có học viên nào trùng email');
+}
+
 try {
   wr(['d1', 'migrations', 'apply', 'DB', '--remote', ...ENV_FLAG]);
   done('Đã áp migration (những cái đã áp trước thì bỏ qua)');
