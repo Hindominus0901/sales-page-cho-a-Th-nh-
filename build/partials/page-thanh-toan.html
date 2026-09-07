@@ -26,9 +26,45 @@
     <div data-state="paid" hidden style="background:#a8d98d;border-radius:28px;padding:32px" class="fc2-shadow">
       <div style="font-size:22px;font-weight:800;margin-bottom:10px">Đã nhận được học phí ✓</div>
       <p style="font-size:15px;line-height:1.7;margin:0">
-        Cảm ơn anh chị. Chỗ của anh chị đã được giữ. Bên Thành sẽ nhắn Zalo gửi link vào nhóm và lịch học.
+        Cảm ơn anh chị. Chỗ của anh chị đã được giữ. Em vừa gửi link vào lớp qua email,
+        và anh chị cũng lấy được ngay tại đây.
       </p>
       <p data-paid-code style="font-size:14px;margin:16px 0 0;opacity:.75"></p>
+
+      <!-- Lấy link vào lớp ngay tại chỗ.
+           Hỏi lại số điện thoại vì mã đơn là mã ĐỐI SOÁT, không phải bí mật:
+           nó nằm trong nội dung chuyển khoản và trong sao kê ngân hàng. Trả link
+           lớp học cho bất cứ ai biết mã là mở lớp cho người lạ. -->
+      <div data-vaolop style="margin-top:22px;background:rgba(255,255,255,.55);border-radius:18px;padding:18px">
+        <div style="font-size:15px;font-weight:700;margin-bottom:10px">Vào lớp ngay</div>
+
+        <form data-vaolop-form style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <label for="vaolop-phone" style="font-size:14px">Số điện thoại đã đăng ký</label>
+          <input id="vaolop-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel"
+                 required placeholder="09xx xxx xxx"
+                 style="flex:1 1 190px;min-width:170px;padding:11px 14px;border:1px solid rgba(0,0,0,.2);border-radius:12px;font-size:15px" />
+          <button type="submit" class="fc2-btn"
+                  style="padding:11px 20px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+            Lấy link vào lớp
+          </button>
+        </form>
+
+        <p data-vaolop-err hidden role="alert"
+           style="font-size:14px;line-height:1.6;margin:12px 0 0;color:#7a2020"></p>
+
+        <div data-vaolop-ok hidden style="margin-top:14px">
+          <a data-vaolop-link href="#"
+             style="display:inline-block;padding:13px 22px;border-radius:12px;background:#1d1d20;color:#fff;text-decoration:none;font-weight:700;font-size:15px">
+            Mở lớp học của tôi
+          </a>
+          <p style="font-size:14px;line-height:1.7;margin:12px 0 0">
+            Anh chị lưu link này lại. Vào lớp rồi thì đặt mật khẩu ngay ở đầu trang —
+            có mật khẩu thì lần sau đăng nhập bằng email tại
+            <a href="/dang-nhap" style="color:#1d1d20">trang đăng nhập</a>,
+            không cần giữ link nữa.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Chờ chuyển khoản -->

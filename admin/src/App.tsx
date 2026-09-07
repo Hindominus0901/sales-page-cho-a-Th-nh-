@@ -41,7 +41,17 @@ function useHashRoute() {
   return { path: path || '/', query: new URLSearchParams(qs ?? '') };
 }
 
-interface NavItem { href: string; label: string; icon: string; badge?: string }
+/**
+ * `roles` bỏ trống nghĩa là ai cũng vào được. Có ghi thì chỉ những vai trò đó.
+ *
+ * Danh sách này phải khớp với `requireRole` ở phía máy chủ. Máy chủ mới là thứ
+ * chặn thật; đây chỉ để nhân viên không phải bấm vào rồi nhận hộp đỏ. Trước đây
+ * `role` được khai báo trong `Me` rồi không dùng ở đâu, nên nhân viên thấy đủ
+ * mười bảy mục và mục nào cũng từ chối họ.
+ */
+interface NavItem { href: string; label: string; icon: string; badge?: string; roles?: string[] }
+
+const QUAN_TRI = ['owner', 'admin'];
 
 /**
  * Chia nhóm theo việc: bán hàng, học viên, cộng tác viên, hệ thống.
@@ -58,20 +68,20 @@ const NAV: { section: string; items: NavItem[] }[] = [
   ]},
   { section: 'Học viên', items: [
     { href: '/hoc-vien',   label: 'Học viên',   icon: 'students' },
-    { href: '/duyet-bai',  label: 'Duyệt bài',  icon: 'approval', badge: 'pending_submissions' },
+    { href: '/duyet-bai',  label: 'Duyệt bài',  icon: 'approval', badge: 'pending_submissions', roles: QUAN_TRI },
     { href: '/xep-hang',   label: 'Bảng xếp hạng', icon: 'rank' },
-    { href: '/qua-tang',   label: 'Quà tặng',   icon: 'rewards', badge: 'pending_redemptions' },
+    { href: '/qua-tang',   label: 'Quà tặng',   icon: 'rewards', badge: 'pending_redemptions', roles: QUAN_TRI },
   ]},
   { section: 'Cộng tác viên', items: [
-    { href: '/ctv',        label: 'Cộng tác viên', icon: 'affiliate', badge: 'pending_affiliates' },
-    { href: '/hoa-hong',   label: 'Hoa hồng',   icon: 'commission', badge: 'held_commissions' },
-    { href: '/chi-tra',    label: 'Chi trả',    icon: 'payouts', badge: 'pending_payouts' },
+    { href: '/ctv',        label: 'Cộng tác viên', icon: 'affiliate', badge: 'pending_affiliates', roles: QUAN_TRI },
+    { href: '/hoa-hong',   label: 'Hoa hồng',   icon: 'commission', badge: 'held_commissions', roles: QUAN_TRI },
+    { href: '/chi-tra',    label: 'Chi trả',    icon: 'payouts', badge: 'pending_payouts', roles: QUAN_TRI },
   ]},
   { section: 'Hệ thống', items: [
-    { href: '/co-che',     label: 'Cơ chế',     icon: 'mechanics' },
-    { href: '/cai-dat',    label: 'Cài đặt',    icon: 'settings' },
-    { href: '/nhan-su',    label: 'Nhân sự',    icon: 'staff' },
-    { href: '/hop-thu',    label: 'Hộp thư đi', icon: 'audit' },
+    { href: '/co-che',     label: 'Cơ chế',     icon: 'mechanics', roles: QUAN_TRI },
+    { href: '/cai-dat',    label: 'Cài đặt',    icon: 'settings', roles: QUAN_TRI },
+    { href: '/nhan-su',    label: 'Nhân sự',    icon: 'staff', roles: ['owner'] },
+    { href: '/hop-thu',    label: 'Hộp thư đi', icon: 'audit', roles: QUAN_TRI },
     { href: '/nhat-ky',    label: 'Nhật ký',    icon: 'audit' },
   ]},
 ];
@@ -121,7 +131,10 @@ export default function App() {
     <div className="shell">
       <nav className="side">
         <div className="side-brand">Góc Creator</div>
-        {NAV.map((group) => (
+        {NAV.map((group) => ({
+          ...group,
+          items: group.items.filter((i) => !i.roles || i.roles.includes(me.user.role)),
+        })).filter((group) => group.items.length > 0).map((group) => (
           <div key={group.section} style={{ display: 'contents' }}>
             <div className="side-sec">{group.section}</div>
             {group.items.map((item) => {

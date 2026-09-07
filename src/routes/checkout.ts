@@ -149,6 +149,66 @@ checkoutRoutes.get('/api/order/:code', async (c) => {
   });
 });
 
+/**
+ * Lấy link vào lớp của một đơn đã thanh toán.
+ *
+ * Đây là LƯỚI ĐỠ để việc giao hàng không phụ thuộc email. Trước đây màn hình
+ * "đã thanh toán" chỉ hứa "bên Thành sẽ nhắn Zalo", và đường duy nhất chuyển mã
+ * truy cập tới học viên là thư `student_access` — chưa cắm Resend là khách trả
+ * hai triệu xong không có cách nào tự vào lớp.
+ *
+ * Vì sao đòi số điện thoại chứ không trả thẳng theo mã đơn: mã đơn chỉ có 6 ký
+ * tự từ bảng chữ 25 phần tử (~244 triệu tổ hợp) và cố tình dễ gõ tay, vì nó
+ * phải sống sót qua nội dung chuyển khoản ngân hàng. Nó là mã ĐỐI SOÁT, không
+ * phải bí mật — nhân viên ngân hàng đọc được, và nó nằm trong sao kê. Trả link
+ * vào lớp cho bất cứ ai đoán trúng mã là biến một mã đối soát thành chìa khoá
+ * lớp học. Số điện thoại thì chính khách vừa gõ vài phút trước.
+ */
+checkoutRoutes.post('/api/order/:code/vao-lop', async (c) => {
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+  const limited = await rateLimit(c.env, `vl:${ip}`, 8, 600);
+  if (!limited.ok) {
+    return c.json({ ok: false, error: 'Anh chị thử hơi nhiều lần rồi. Đợi ít phút giúp em nhé.' }, 429);
+  }
+
+  const body = await readBody(c.req.raw);
+  const phoneNorm = toPhoneNorm((body as Record<string, unknown>).phone);
+  if (!phoneNorm) {
+    return c.json({ ok: false, error: 'Số điện thoại chưa đúng. Anh chị nhập lại giúp em.' }, 400);
+  }
+
+  const row = await c.env.DB.prepare(
+    `SELECT e.access_token, s.email, s.password_hash
+     FROM orders o
+     JOIN leads l       ON l.id = o.lead_id
+     JOIN enrollments e ON e.order_id = o.id
+     JOIN students s    ON s.id = e.student_id
+     WHERE o.order_code = ? AND l.phone_norm = ?
+       AND o.status IN ('paid','overpaid')`,
+  ).bind(c.req.param('code').toUpperCase(), phoneNorm)
+    .first<{ access_token: string; email: string | null; password_hash: string | null }>();
+
+  // Cùng một câu cho "sai số điện thoại" và "đơn chưa thanh toán": khác nhau là
+  // biến chỗ này thành công cụ dò xem số nào đã mua hàng.
+  if (!row) {
+    return c.json({
+      ok: false,
+      error: 'Chưa tìm thấy lớp học ứng với mã đơn và số điện thoại này. '
+        + 'Anh chị kiểm tra lại số, hoặc nhắn Zalo để bên Thành mở giúp.',
+    }, 404);
+  }
+
+  c.header('Cache-Control', 'no-store');
+  return c.json({
+    ok: true,
+    // Đường dẫn tương đối: trang gọi từ cùng tên miền, nên không phải dựng URL
+    // tuyệt đối và không lo lệch khi đổi tên miền.
+    link: `/hoc/${row.access_token}`,
+    email: row.email,
+    daDatMatKhau: Boolean(row.password_hash),
+  });
+});
+
 /** Khách tự báo "đã chuyển khoản" — chỉ để ghi nhận, không đổi trạng thái đơn. */
 checkoutRoutes.post('/api/order/:code/confirm', async (c) => {
   const code = c.req.param('code').toUpperCase();

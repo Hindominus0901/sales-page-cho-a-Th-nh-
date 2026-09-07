@@ -6,6 +6,7 @@ interface Aff {
   id: string; code: string; name: string; email: string; phone: string | null;
   status: string; commission_rate: number; created_at: number;
   bank_name: string | null; bank_account_no: string | null;
+  notes: string | null; da_dat_mat_khau: number;
   clicks: number; leads: number; paid_orders: number; paid_amount: number; owed_amount: number;
 }
 
@@ -40,6 +41,14 @@ export default function Affiliates() {
   async function setStatus(id: string, status: string) {
     try { await api.patch(`/api/admin/affiliates/${id}`, { status }); toast.show('Đã cập nhật.'); reload(); }
     catch (e) { toast.fail((e as Error).message); }
+  }
+
+  async function guiLaiLink(id: string) {
+    try {
+      const r = await api.post<{ message: string }>(`/api/admin/affiliates/${id}/gui-lai-link`, {});
+      toast.show(r.message);
+      reload();
+    } catch (e) { toast.fail((e as Error).message); }
   }
 
   return (
@@ -126,6 +135,14 @@ export default function Affiliates() {
                       {!a.bank_account_no && (
                         <div className="note" style={{ color: 'var(--canh)' }}>chưa có tài khoản ngân hàng</div>
                       )}
+                      {a.status === 'active' && !a.da_dat_mat_khau && (
+                        <div className="note" style={{ color: 'var(--canh)' }}>
+                          chưa đặt mật khẩu — chưa vào được portal
+                        </div>
+                      )}
+                      {a.notes && (
+                        <div className="note" title={a.notes}>{a.notes}</div>
+                      )}
                     </td>
                     <td className="right">{a.clicks}</td>
                     <td className="right">{a.leads}</td>
@@ -137,9 +154,19 @@ export default function Affiliates() {
                     <td><Badge kind={kind}>{text}</Badge>
                         <div className="note">{a.commission_rate / 100}%</div></td>
                     <td className="right">
-                      {a.status === 'active'
-                        ? <button className="btn sm" onClick={() => setStatus(a.id, 'suspended')}>Tạm ngưng</button>
-                        : <button className="btn sm primary" onClick={() => setStatus(a.id, 'active')}>Kích hoạt</button>}
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        {a.status === 'active'
+                          ? <button className="btn sm" onClick={() => setStatus(a.id, 'suspended')}>Tạm ngưng</button>
+                          : <button className="btn sm primary" onClick={() => setStatus(a.id, 'active')}>Kích hoạt</button>}
+                        {a.status === 'active' && !a.da_dat_mat_khau && (
+                          <button className="btn sm primary" onClick={() => guiLaiLink(a.id)}>
+                            Gửi lại link đặt mật khẩu
+                          </button>
+                        )}
+                        {a.status === 'pending' && (
+                          <button className="btn sm" onClick={() => setStatus(a.id, 'rejected')}>Từ chối</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

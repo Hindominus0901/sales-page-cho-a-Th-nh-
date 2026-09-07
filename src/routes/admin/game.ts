@@ -61,7 +61,7 @@ async function counts(env: HonoEnv['Bindings']) {
   return row ?? {};
 }
 
-adminGameRoutes.post('/api/admin/submissions/:id/review', async (c) => {
+adminGameRoutes.post('/api/admin/submissions/:id/review', requireRole('owner', 'admin'), async (c) => {
   const admin = adminUserOf(c);
   const id = c.req.param('id');
   const body = await c.req.json<{ action?: string; feedback?: string }>()

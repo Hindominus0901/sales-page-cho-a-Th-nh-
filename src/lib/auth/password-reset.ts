@@ -6,8 +6,27 @@ import { checkPassword } from '../security/password-policy';
 
 export type SubjectType = 'admin' | 'affiliate' | 'student';
 
+/**
+ * Phiếu sinh ra vì ai bấm xin.
+ *
+ * `quen`    — chính người dùng vừa bấm "quên mật khẩu", họ đang chờ thư.
+ * `lan_dau` — admin duyệt hồ sơ, người nhận không biết trước. Sống lâu hơn.
+ */
+export type LoaiPhieu = 'quen' | 'lan_dau';
+
 /** Một giờ. Đủ để mở hộp thư và bấm vào, ngắn để một email bị chuyển tiếp không thành chìa khoá vĩnh viễn. */
 const HAN_GIO = 1;
+
+/**
+ * Phiếu ĐẶT MẬT KHẨU LẦN ĐẦU sống lâu hơn hẳn: 72 giờ.
+ *
+ * Lý do khác nhau. Phiếu quên-mật-khẩu là do chính người dùng vừa bấm xin, họ
+ * đang ngồi trước hộp thư — một giờ là thoải mái. Phiếu đặt lần đầu thì do
+ * admin duyệt hồ sơ mà sinh ra, người nhận không hề biết trước và có thể mở thư
+ * sau hai ngày. Để một giờ là đẩy họ vào ngõ cụt: link chết, mà quên-mật-khẩu
+ * lại chưa dùng được vì họ chưa từng có mật khẩu.
+ */
+const HAN_GIO_LAN_DAU = 72;
 
 /** Tối đa 3 phiếu trong 1 giờ cho cùng một người — chặn kẻ spam hộp thư của họ. */
 const TOI_DA_MOI_GIO = 3;
@@ -37,6 +56,7 @@ export async function capPhieu(
   subjectId: string,
   email: string,
   ip: string | null,
+  loai: LoaiPhieu = 'quen',
 ): Promise<CapKetQua | null> {
   const gan = await env.DB.prepare(
     `SELECT COUNT(*) AS n FROM password_resets
@@ -53,7 +73,8 @@ export async function capPhieu(
      VALUES (?,?,?,?,?,?,?,?)`,
   ).bind(resetId, subjectType, subjectId, email,
     await hmacSha256(env.SESSION_SECRET, token),
-    hoursFromNow(HAN_GIO), await hashIp(env, ip), now()).run();
+    hoursFromNow(loai === 'lan_dau' ? HAN_GIO_LAN_DAU : HAN_GIO),
+    await hashIp(env, ip), now()).run();
 
   return { token, resetId };
 }

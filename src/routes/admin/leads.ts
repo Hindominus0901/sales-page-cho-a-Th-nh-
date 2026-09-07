@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { HonoEnv } from '../../types';
-import { requireAdmin, adminUserOf } from '../../lib/auth/guards';
+import { requireAdmin, requireRole, adminUserOf } from '../../lib/auth/guards';
 import { audit } from '../../lib/db/audit';
 import { uuid } from '../../lib/util/id';
 import { now, ictDateTime } from '../../lib/util/datetime';
@@ -205,7 +205,7 @@ adminLeadRoutes.post('/api/admin/leads/rescore', async (c) => {
 });
 
 /** Xuất CSV — UTF-8 có BOM để Excel tiếng Việt mở không bị lỗi font. */
-adminLeadRoutes.get('/api/admin/leads/export.csv', async (c) => {
+adminLeadRoutes.get('/api/admin/leads/export.csv', requireRole('owner', 'admin'), async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT l.code, l.full_name, l.phone, l.email, l.source, l.score, l.score_band, l.status,
             l.created_at, a.code AS affiliate_code,

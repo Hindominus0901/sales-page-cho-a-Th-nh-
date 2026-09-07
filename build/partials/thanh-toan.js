@@ -135,4 +135,48 @@
         });
     });
   }
+
+  /* Lấy link vào lớp ngay trên trang, không chờ email.
+     Đây là lưới đỡ: nếu Resend chưa cắm hoặc thư rơi vào spam, khách vẫn tự
+     vào lớp được bằng số điện thoại họ vừa gõ lúc đăng ký. */
+  var vlForm = $('[data-vaolop-form]');
+  if (vlForm) {
+    vlForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var err = $('[data-vaolop-err]');
+      var ok = $('[data-vaolop-ok]');
+      var btn = vlForm.querySelector('button[type="submit"]');
+      var phone = (vlForm.querySelector('[name="phone"]').value || '').trim();
+
+      err.hidden = true;
+      ok.hidden = true;
+      btn.disabled = true;
+      btn.textContent = 'Đang tìm…';
+
+      fetch('/api/order/' + encodeURIComponent(code) + '/vao-lop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phone }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (b) {
+          if (!b.ok) {
+            err.textContent = b.error || 'Chưa lấy được link. Anh chị nhắn Zalo giúp Thành nhé.';
+            err.hidden = false;
+            return;
+          }
+          $('[data-vaolop-link]').href = b.link;
+          ok.hidden = false;
+          vlForm.hidden = true;
+        })
+        .catch(function () {
+          err.textContent = 'Mạng đang trục trặc. Anh chị thử lại giúp em.';
+          err.hidden = false;
+        })
+        .finally(function () {
+          btn.disabled = false;
+          btn.textContent = 'Lấy link vào lớp';
+        });
+    });
+  }
 })();

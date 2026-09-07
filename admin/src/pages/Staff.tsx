@@ -18,8 +18,8 @@ const ROLE_LABEL: Record<string, string> = {
  */
 const ROLE_CAN: { role: string; can: string }[] = [
   { role: 'Chủ hệ thống', can: 'Tất cả, và là vai trò duy nhất quản lý được nhân sự.' },
-  { role: 'Quản trị', can: 'Duyệt bài, duyệt và chi hoa hồng, sửa nội dung trang, đổi cơ chế thưởng.' },
-  { role: 'Nhân viên', can: 'Xem và chăm lead, xem đơn hàng. KHÔNG đụng được vào tiền và cơ chế.' },
+  { role: 'Quản trị', can: 'Duyệt bài, duyệt và chi hoa hồng, sửa nội dung trang, đổi cơ chế thưởng, xem thông tin ngân hàng của cộng tác viên.' },
+  { role: 'Nhân viên', can: 'Xem và chăm lead, xem đơn hàng, đối soát giao dịch, xem học viên và bảng xếp hạng, đọc nhật ký. KHÔNG duyệt bài, KHÔNG thấy cộng tác viên hay bất cứ thông tin ngân hàng nào, KHÔNG tải được danh sách lead ra file.' },
 ];
 
 export default function Staff() {

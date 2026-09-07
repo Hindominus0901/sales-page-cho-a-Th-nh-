@@ -132,7 +132,7 @@ adminContentRoutes.get('/api/admin/students', async (c) => {
  * Cấp lại link học viên. Mã cũ chết ngay lúc mã mới ghi đè — dùng khi học viên
  * lỡ đăng link vào nhóm chung, hoặc mất điện thoại.
  */
-adminContentRoutes.post('/api/admin/enrollments/:id/cap-lai-link', async (c) => {
+adminContentRoutes.post('/api/admin/enrollments/:id/cap-lai-link', requireRole('owner', 'admin'), async (c) => {
   const admin = adminUserOf(c);
   const id = c.req.param('id');
   const token = accessToken();
@@ -152,7 +152,7 @@ adminContentRoutes.post('/api/admin/enrollments/:id/cap-lai-link', async (c) => 
   return c.json({ ok: true, token });
 });
 
-adminContentRoutes.patch('/api/admin/enrollments/:id', async (c) => {
+adminContentRoutes.patch('/api/admin/enrollments/:id', requireRole('owner', 'admin'), async (c) => {
   const admin = adminUserOf(c);
   const id = c.req.param('id');
   const b = await c.req.json<{ cohort?: string; status?: string; progressDay?: number; postsDone?: number }>()

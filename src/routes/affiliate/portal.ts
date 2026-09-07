@@ -87,15 +87,23 @@ affiliateRoutes.post('/api/aff/quen-mat-khau', async (c) => {
   const limited = await rateLimit(c.env, `reset:${ip}`, 10, 3600);
   if (!limited.ok || !emailNorm) return c.json(cauTraLoi);
 
-  // CTV chưa được duyệt cũng không cấp phiếu: họ chưa có mật khẩu để đặt lại,
-  // và gửi thư "đặt lại mật khẩu" cho người chưa có tài khoản là khó hiểu.
+  // CTV chưa được duyệt thì không cấp phiếu — họ chưa có tài khoản.
+  //
+  // Nhưng CTV ĐÃ được duyệt mà chưa từng đặt mật khẩu (password_hash NULL) thì
+  // PHẢI cấp. Trước đây chỗ này đòi `password_hash IS NOT NULL`, tức là loại bỏ
+  // đúng nhóm cần nó nhất: người được duyệt, thư đặt mật khẩu hết hạn hoặc lạc,
+  // và không còn đường nào khác để vào. Họ bấm "quên mật khẩu", nhận câu trả lời
+  // trấn an, rồi đợi mãi một lá thư không bao giờ tới.
   const aff = await c.env.DB.prepare(
-    `SELECT id, name, email FROM affiliates
-     WHERE email_norm = ? AND status = 'active' AND password_hash IS NOT NULL`,
-  ).bind(emailNorm).first<{ id: string; name: string; email: string }>();
+    `SELECT id, name, email, password_hash FROM affiliates
+     WHERE email_norm = ? AND status = 'active'`,
+  ).bind(emailNorm).first<{ id: string; name: string; email: string; password_hash: string | null }>();
   if (!aff) return c.json(cauTraLoi);
 
-  const phieu = await capPhieu(c.env, 'affiliate', aff.id, aff.email, c.req.header('cf-connecting-ip') ?? null);
+  const phieu = await capPhieu(
+    c.env, 'affiliate', aff.id, aff.email, c.req.header('cf-connecting-ip') ?? null,
+    aff.password_hash ? 'quen' : 'lan_dau',
+  );
   if (!phieu) return c.json(cauTraLoi);
 
   await queueMail(c.env, passwordResetMail(c.env, {

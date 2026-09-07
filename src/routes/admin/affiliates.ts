@@ -15,10 +15,14 @@ import { toPhoneNorm } from '../../lib/validation/phone';
 export const adminAffiliateRoutes = new Hono<HonoEnv>();
 adminAffiliateRoutes.use('/api/admin/*', requireAdmin);
 
-adminAffiliateRoutes.get('/api/admin/affiliates', async (c) => {
+adminAffiliateRoutes.get('/api/admin/affiliates', requireRole('owner', 'admin'), async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT a.id, a.code, a.name, a.email, a.phone, a.status, a.commission_rate,
-            a.bank_name, a.bank_account_no, a.bank_account_name, a.created_at,
+            a.bank_name, a.bank_account_no, a.bank_account_name, a.created_at, a.notes,
+            -- Cờ, KHÔNG phải bản băm. Giao diện cần biết ai chưa vào được lần
+            -- nào để chỉ ra nút gửi lại link; gửi cả bản băm ra ngoài thì thừa
+            -- và nguy hiểm.
+            CASE WHEN a.password_hash IS NULL THEN 0 ELSE 1 END               da_dat_mat_khau,
             (SELECT COUNT(*) FROM affiliate_clicks WHERE affiliate_id = a.id) clicks,
             (SELECT COUNT(*) FROM leads WHERE affiliate_id = a.id)            leads,
             (SELECT COUNT(*) FROM orders WHERE affiliate_id = a.id
@@ -132,7 +136,8 @@ adminAffiliateRoutes.patch('/api/admin/affiliates/:id', requireRole('owner', 'ad
   const truoc = before as { status?: string; password_hash?: string | null;
     name?: string; email?: string; code?: string };
   if (body.status === 'active' && truoc.status !== 'active' && !truoc.password_hash) {
-    const phieu = await capPhieu(c.env, 'affiliate', id, String(truoc.email ?? ''), null);
+    const phieu = await capPhieu(
+      c.env, 'affiliate', id, String(truoc.email ?? ''), null, 'lan_dau');
     if (phieu) {
       await queueMail(c.env, affiliateApprovedMail(c.env, {
         resetId: phieu.resetId, token: phieu.token,
@@ -165,9 +170,63 @@ adminAffiliateRoutes.patch('/api/admin/affiliates/:id', requireRole('owner', 'ad
   return c.json({ ok: true });
 });
 
+/**
+ * Gửi lại link đặt mật khẩu cho một CTV đã kích hoạt.
+ *
+ * Đây là đường thoát cho tình huống hay gặp nhất: admin duyệt hồ sơ khi email
+ * chưa bật, hoặc CTV mở thư sau khi phiếu hết hạn. Trước khi có route này, CTV
+ * đó kẹt vĩnh viễn — PATCH lần nữa không cấp phiếu mới (điều kiện
+ * `truoc.status !== 'active'` đã hết đúng), tạo lại thì đụng UNIQUE(email_norm),
+ * và không ai sửa được ngoài việc vào thẳng D1.
+ *
+ * Không sinh mật khẩu tạm rồi bắt admin đọc qua Zalo: mật khẩu đi qua Zalo thì
+ * nằm lại trong lịch sử trò chuyện mãi mãi.
+ */
+adminAffiliateRoutes.post(
+  '/api/admin/affiliates/:id/gui-lai-link',
+  requireRole('owner', 'admin'),
+  async (c) => {
+    const admin = adminUserOf(c);
+    const id = c.req.param('id');
+
+    const aff = await c.env.DB.prepare(
+      `SELECT id, name, email, code, status FROM affiliates WHERE id = ?`,
+    ).bind(id).first<{ id: string; name: string; email: string; code: string; status: string }>();
+    if (!aff) return c.json({ ok: false, error: 'Không tìm thấy cộng tác viên này.' }, 404);
+    if (aff.status !== 'active') {
+      return c.json({
+        ok: false,
+        error: 'Chỉ gửi được cho cộng tác viên đang hoạt động. Kích hoạt hồ sơ trước đã.',
+      }, 400);
+    }
+
+    const phieu = await capPhieu(c.env, 'affiliate', id, aff.email, null, 'lan_dau');
+    if (!phieu) {
+      return c.json({
+        ok: false,
+        error: 'Đã cấp 3 link cho người này trong một giờ qua. Chờ hết giờ rồi thử lại.',
+      }, 429);
+    }
+
+    await queueMail(c.env, affiliateApprovedMail(c.env, {
+      resetId: phieu.resetId, token: phieu.token,
+      name: aff.name, email: aff.email, code: aff.code,
+    }));
+    c.executionCtx.waitUntil(
+      drainOutbox(c.env).catch((err) => console.error('[email] lượt gửi lỗi', err)));
+
+    await audit(c.env, {
+      actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+      action: 'affiliate.resend_setup_link', entityType: 'affiliate', entityId: id,
+    });
+
+    return c.json({ ok: true, message: `Đã xếp thư gửi tới ${aff.email}.` });
+  },
+);
+
 // ---------------------------------------------------------------- hoa hồng
 
-adminAffiliateRoutes.get('/api/admin/commissions', async (c) => {
+adminAffiliateRoutes.get('/api/admin/commissions', requireRole('owner', 'admin'), async (c) => {
   const status = c.req.query('status');
   const rows = await c.env.DB.prepare(
     `SELECT c.id, c.amount, c.base_amount, c.rate, c.status, c.hold_reason,
@@ -211,7 +270,7 @@ adminAffiliateRoutes.post('/api/admin/commissions/:id/:action', requireRole('own
 
 // ---------------------------------------------------------------- chi trả
 
-adminAffiliateRoutes.get('/api/admin/payouts', async (c) => {
+adminAffiliateRoutes.get('/api/admin/payouts', requireRole('owner', 'admin'), async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT p.*, a.code AS affiliate_code, a.name AS affiliate_name
      FROM payouts p JOIN affiliates a ON a.id = p.affiliate_id
@@ -227,7 +286,7 @@ adminAffiliateRoutes.get('/api/admin/payouts', async (c) => {
   });
 });
 
-adminAffiliateRoutes.get('/api/admin/payouts/:id', async (c) => {
+adminAffiliateRoutes.get('/api/admin/payouts/:id', requireRole('owner', 'admin'), async (c) => {
   const id = c.req.param('id');
   const payout = await c.env.DB.prepare(
     `SELECT p.*, a.code AS affiliate_code, a.name AS affiliate_name

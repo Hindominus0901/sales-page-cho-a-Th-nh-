@@ -336,6 +336,68 @@ function seedWorkshopSession() {
  */
 const runBlock = Math.floor(Math.random() * 65536);
 
+/**
+ * Lưới đỡ giao hàng: khách lấy được link vào lớp ngay trên trang, không chờ email.
+ *
+ * Kịch bản này canh đúng cái lỗ đã có: trang "đã thanh toán" chỉ hứa "bên Thành
+ * sẽ nhắn Zalo", mà đường duy nhất chuyển mã truy cập là thư `student_access` —
+ * chưa cắm Resend là khách trả hai triệu xong không có cách nào tự vào lớp.
+ */
+test('Đã thanh toán: lấy được link vào lớp bằng số điện thoại, không cần email', async () => {
+  const code = await createOrder();
+  await hook({ id: nextTx(), transferType: 'in', transferAmount: 2000000, content: code });
+
+  const dung = await post(`/api/order/${code}/vao-lop`, { phone: '0987654321' },
+    { 'cf-connecting-ip': scenarioIp });
+  const b = await dung.json();
+  ok('lấy được link', b.ok, true);
+
+  const token = db.prepare(
+    'SELECT e.access_token t FROM enrollments e JOIN orders o ON o.id = e.order_id WHERE o.order_code = ?',
+  ).get(code).t;
+  ok('link đúng mã trong database', b.link, `/hoc/${token}`);
+
+  const mo = await fetch(`${BASE}${b.link}`);
+  ok('mở link thì vào được lớp', mo.status, 200);
+
+  // Mã đơn là mã ĐỐI SOÁT — nó nằm trong nội dung chuyển khoản và trong sao kê
+  // ngân hàng. Ai biết mã mà không biết số điện thoại thì không được vào lớp.
+  const sai = await post(`/api/order/${code}/vao-lop`, { phone: '0900000000' },
+    { 'cf-connecting-ip': scenarioIp });
+  ok('sai số điện thoại thì bị từ chối', sai.status, 404);
+});
+
+/**
+ * CTV được duyệt mà chưa từng đặt mật khẩu vẫn xin lại được link.
+ *
+ * Trước đây `/api/aff/quen-mat-khau` đòi `password_hash IS NOT NULL`, tức là
+ * loại bỏ đúng nhóm cần nó nhất: người vừa được duyệt, thư đặt mật khẩu hết hạn
+ * hoặc chưa bao giờ gửi được, và không còn đường nào khác để vào.
+ */
+test('CTV chưa từng đặt mật khẩu vẫn xin được link đặt mật khẩu', async () => {
+  const id = 'aff-chua-mk';
+  db.prepare(
+    `INSERT INTO affiliates (id, code, name, email, email_norm, password_hash,
+       status, commission_rate, approved_at, created_at, updated_at)
+     VALUES (?,?,?,?,?, NULL, 'active', 2000, ?,?,?)`,
+  ).run(id, 'CHUAMK', 'Lê Chưa Mật Khẩu', 'chuamk@vidu.com', 'chuamk@vidu.com',
+    Math.floor(Date.now() / 1000), Math.floor(Date.now() / 1000), Math.floor(Date.now() / 1000));
+
+  const r = await post('/api/aff/quen-mat-khau', { email: 'chuamk@vidu.com' },
+    { 'cf-connecting-ip': scenarioIp });
+  ok('trả lời không lộ tài khoản có hay không', r.status, 200);
+
+  ok('có cấp phiếu đặt mật khẩu',
+    count(`SELECT COUNT(*) n FROM password_resets WHERE subject_id = '${id}'`), 1);
+
+  // Phiếu lần đầu phải sống 72 giờ, không phải 1 giờ: người nhận không hề biết
+  // trước là sẽ có thư, và có thể mở hộp thư sau hai ngày.
+  const phieu = db.prepare(
+    'SELECT expires_at, created_at FROM password_resets WHERE subject_id = ?').get(id);
+  const gio = Math.round((phieu.expires_at - phieu.created_at) / 3600);
+  ok('phiếu sống 72 giờ', gio, 72);
+});
+
 console.log(`\nKiểm chứng luồng thanh toán — ${BASE}\n`);
 seedAffiliates();
 seedWorkshopSession();
