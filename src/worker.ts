@@ -128,7 +128,14 @@ app.get('/aff/*',   spaShell('aff'));
  */
 app.get('/', async (c) => {
   const res = await c.env.ASSETS.fetch(c.req.raw);
-  return apGhiDe(c.env, 'sales_21d', res);
+  try {
+    return await apGhiDe(c.env, 'sales_21d', res);
+  } catch (err) {
+    // Lưới đỡ thứ hai. Trang bán là trang duy nhất mang tiền về — hỏng lớp ghi
+    // đè thì trả bản dựng sẵn, đừng trả 500.
+    console.error('[cms] áp ghi đè lỗi, trả bản dựng sẵn:', err);
+    return res;
+  }
 });
 
 // Mọi đường dẫn còn lại rơi về file tĩnh do `npm run build:pages` sinh ra.

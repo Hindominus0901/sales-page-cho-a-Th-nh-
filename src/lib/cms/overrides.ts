@@ -28,13 +28,23 @@ export interface CauHoi { q: string; a: string }
 export async function docGhiDe(
   env: Env, pageKey: string,
 ): Promise<Map<string, unknown>> {
-  const rows = await env.DB.prepare(
-    'SELECT block_key, value_json FROM page_content WHERE page_key = ?',
-  ).bind(pageKey).all<{ block_key: string; value_json: string }>();
-
   const m = new Map<string, unknown>();
-  for (const r of rows.results ?? []) {
-    try { m.set(r.block_key, JSON.parse(r.value_json)); } catch { /* dòng hỏng: bỏ qua */ }
+  try {
+    const rows = await env.DB.prepare(
+      'SELECT block_key, value_json FROM page_content WHERE page_key = ?',
+    ).bind(pageKey).all<{ block_key: string; value_json: string }>();
+    for (const r of rows.results ?? []) {
+      try { m.set(r.block_key, JSON.parse(r.value_json)); } catch { /* dòng hỏng: bỏ qua */ }
+    }
+  } catch (err) {
+    /**
+     * Database trục trặc thì trang bán vẫn phải mở được.
+     *
+     * Đây là trang duy nhất trong hệ mang tiền về. Nó đã render hoàn chỉnh từ
+     * lúc dựng; lớp ghi đè chỉ là phần thêm. Để một câu SELECT hỏng kéo sập cả
+     * trang là đánh đổi sai hoàn toàn — thà mất phần ghi đè còn hơn mất trang.
+     */
+    console.error('[cms] không đọc được ghi đè nội dung, dùng bản dựng sẵn:', err);
   }
   return m;
 }
