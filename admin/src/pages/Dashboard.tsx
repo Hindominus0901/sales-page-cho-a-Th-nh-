@@ -2,7 +2,11 @@ import { api, vnd, relativeTime, displayPhone } from '../api';
 import { Kpi, Bars, ScoreBadge, LeadStatus, Loading, ErrorBox, useLoad } from '../ui';
 
 interface Stats {
-  totals: Record<string, number | null>;
+  // Phần lớn là số; ba trường dưới là chữ, nên tách ra thay vì nới cả Record —
+  // nới thì mọi chỗ dùng số khác phải ép kiểu.
+  totals: Record<string, number | null> & {
+    cohort?: string | null; ngayKhaiGiang?: string | null; startDate?: string | null;
+  };
   todo: Record<string, number>;
   funnel: { stat_date: string; page_key: string; views: number; leads: number; orders: number; paid_orders: number; revenue: number }[];
   bands: { score_band: string; n: number }[];
@@ -20,6 +24,7 @@ const SOURCE_LABEL: Record<string, string> = {
  * dòng này là tiền đang kẹt và khách đang chờ.
  */
 const TODO: { key: string; label: string; href: string }[] = [
+  { key: 'hoc_vien_tut_lai',    label: 'học viên đã 3+ ngày không nộp bài', href: '#/hoc-vien?loc=tut-lai' },
   { key: 'unmatched_payments',  label: 'giao dịch chưa khớp đơn',       href: '#/thanh-toan' },
   { key: 'pending_submissions', label: 'bài nộp chờ duyệt',             href: '#/duyet-bai' },
   { key: 'pending_redemptions', label: 'yêu cầu đổi quà chờ duyệt',     href: '#/qua-tang' },
@@ -79,6 +84,22 @@ export default function Dashboard() {
               </a>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Câu đầu tiên người quản lớp cần mỗi sáng. Dashboard trước đây không
+          trả lời được, dù dữ liệu đã có sẵn. */}
+      {t.ngayThu != null && (
+        <div className="card card-pad" style={{ marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 16 }}>
+            Hôm nay là ngày {t.ngayThu}/21 của khoá{t.cohort ? ` ${t.cohort}` : ''}
+          </div>
+          <p className="muted" style={{ margin: '4px 0 0', fontSize: 13.5 }}>
+            {t.da_nop_hom_nay ?? 0}/{t.dang_hoc ?? 0} học viên đã nộp bài hôm nay
+            {(data.todo.hoc_vien_tut_lai ?? 0) > 0
+              ? ` · ${data.todo.hoc_vien_tut_lai} người đã 3+ ngày im lặng`
+              : ' · không ai bị bỏ lại'}
+          </p>
         </div>
       )}
 

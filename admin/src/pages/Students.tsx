@@ -22,11 +22,34 @@ function chuoiConSong(lastSubmitDate: string | null): boolean {
   return lastSubmitDate === homNay || lastSubmitDate === homQua;
 }
 
+/** Bao nhiêu ngày im lặng thì coi là đang tụt lại. Khớp với con số ở Dashboard. */
+const NGAY_TUT_LAI = 3;
+
+function soNgayIm(lastSubmitDate: string | null): number | null {
+  if (!lastSubmitDate) return null;
+  const homNay = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+  return Math.round(
+    (Date.parse(homNay + 'T00:00:00Z') - Date.parse(lastSubmitDate + 'T00:00:00Z')) / 86400000);
+}
+
 export default function Students() {
   const toast = useToast();
   const { data, error, loading, reload } = useLoad<{ students: Student[] }>(
     () => api.get('/api/admin/students'));
   const [busy, setBusy] = useState<string | null>(null);
+
+  /* Lọc "đang tụt lại" — chỗ mà dòng cảnh báo trên Dashboard dẫn tới.
+     Lọc ở phía trình duyệt vì danh sách tối đa 300 dòng; thêm tham số truy vấn
+     cho máy chủ chỉ để lọc bấy nhiêu là thừa. */
+  const loc = new URLSearchParams(location.hash.split('?')[1] ?? '').get('loc');
+  const [chiTutLai, setChiTutLai] = useState(loc === 'tut-lai');
+
+  const danhSach = (data?.students ?? []).filter((s) => {
+    if (!chiTutLai) return true;
+    if (s.enrollment_status !== 'active') return false;
+    const n = soNgayIm(s.last_submit_date);
+    return n === null || n >= NGAY_TUT_LAI;
+  });
 
   const linkOf = (token: string) => `${location.origin}/hoc/${token}`;
 
@@ -69,6 +92,64 @@ export default function Students() {
     }
   }
 
+  /**
+   * Xếp khoá, đóng khoá, tạm dừng.
+   *
+   * Endpoint PATCH /api/admin/enrollments/:id đã có từ lâu, đã kiểm tra hợp lệ,
+   * đã ghi nhật ký — chỉ thiếu cái nút. Không có nút thì ba việc này phải làm
+   * bằng wrangler d1 execute, và trên thực tế là không ai làm.
+   */
+  async function suaGhiDanh(s: Student, thayDoi: Record<string, unknown>, loiBao: string) {
+    if (!s.enrollment_id) return;
+    setBusy(s.id);
+    try {
+      await api.patch(`/api/admin/enrollments/${s.enrollment_id}`, thayDoi);
+      toast.show(loiBao);
+      reload();
+    } catch (e) {
+      toast.fail(e instanceof Error ? e.message : 'Không lưu được.');
+    } finally { setBusy(null); }
+  }
+
+  function xepKhoa(s: Student) {
+    const k = prompt(`Xếp ${s.full_name} vào khoá nào? (ví dụ K1-2026-09)`, s.cohort ?? '');
+    if (k === null) return;
+    suaGhiDanh(s, { cohort: k.trim() }, k.trim() ? `Đã xếp vào khoá ${k.trim()}.` : 'Đã bỏ khoá.');
+  }
+
+  function doiTrangThai(s: Student, status: string, nhan: string) {
+    if (!confirm(`${nhan} cho ${s.full_name}?`)) return;
+    suaGhiDanh(s, { status }, `${nhan} xong.`);
+  }
+
+  /**
+   * Cộng hoặc trừ coin bằng tay.
+   *
+   * Endpoint đã có, sổ cái đã có, và hai trường trong màn hình Cơ chế ("coin mỗi
+   * buổi gọi", "coin mỗi nội dung thêm") được thiết kế để dùng đúng đường này.
+   * Không có nút thì đặt xong hai con số đó cũng chẳng cộng được cho ai.
+   */
+  async function chinhCoin(s: Student) {
+    const raw = prompt(
+      `Cộng hoặc trừ bao nhiêu coin cho ${s.full_name}?\n`
+      + `Số dương là cộng, số âm là trừ. Hiện có ${s.coin ?? 0} coin.`, '');
+    if (raw === null) return;
+    const delta = Number(String(raw).replace(/[^0-9-]/g, ''));
+    if (!Number.isFinite(delta) || delta === 0) {
+      toast.fail('Anh nhập một con số khác 0 giúp em.');
+      return;
+    }
+    const note = prompt('Lý do? (ghi vào sổ cái coin, học viên không thấy)', '') ?? '';
+    setBusy(s.id);
+    try {
+      await api.post(`/api/admin/students/${s.id}/coin`, { delta, note });
+      toast.show(`Đã ${delta > 0 ? 'cộng' : 'trừ'} ${Math.abs(delta)} coin.`);
+      reload();
+    } catch (e) {
+      toast.fail(e instanceof Error ? e.message : 'Không chỉnh được coin.');
+    } finally { setBusy(null); }
+  }
+
   return (
     <>
       {toast.node}
@@ -78,12 +159,22 @@ export default function Students() {
           <p>Học viên được tạo tự động ngay khi đơn hàng nhận đủ tiền. Mỗi người có
              một đường link riêng để tự nộp bài — chép rồi gửi Zalo cho họ.</p>
         </div>
+        <div className="row">
+          <button className={`btn sm ${chiTutLai ? 'primary' : ''}`}
+                  onClick={() => setChiTutLai(!chiTutLai)}>
+            {chiTutLai ? 'Đang xem người tụt lại' : `Lọc người ${NGAY_TUT_LAI}+ ngày không nộp`}
+          </button>
+        </div>
       </div>
 
       {loading && <Loading what="học viên" />}
       {error && <ErrorBox message={error} />}
-      {data && data.students.length === 0 && (
-        <Empty>Chưa có học viên nào. Học viên xuất hiện ở đây sau khi có đơn thanh toán thành công.</Empty>
+      {data && danhSach.length === 0 && (
+        <Empty>
+          {chiTutLai
+            ? 'Không ai đang tụt lại. Cả lớp đều nộp bài trong ba ngày qua.'
+            : 'Chưa có học viên nào. Học viên xuất hiện ở đây sau khi có đơn thanh toán thành công.'}
+        </Empty>
       )}
 
       {data && data.students.length > 0 && (
@@ -94,7 +185,7 @@ export default function Students() {
                   <th>Coin</th><th>Chuỗi</th><th>Link nộp bài</th><th>Trạng thái</th></tr>
             </thead>
             <tbody>
-              {data.students.map((s) => (
+              {danhSach.map((s) => (
                 <tr key={s.id}>
                   <td style={{ fontWeight: 600 }}>
                     {s.full_name}
@@ -139,6 +230,11 @@ export default function Students() {
                         </button>
                         <div className="muted" style={{ fontSize: 12, width: '100%' }}>
                           {s.last_seen_at ? `Mở lần cuối ${dateTime(s.last_seen_at)}` : 'Chưa mở lần nào'}
+                      {s.enrollment_status === 'active' && (() => {
+                        const n = soNgayIm(s.last_submit_date);
+                        if (n === null) return ' · chưa nộp bài nào';
+                        return n >= NGAY_TUT_LAI ? ` · ${n} ngày chưa nộp` : '';
+                      })()}
                         </div>
                       </div>
                     ) : <span className="muted">—</span>}
@@ -152,6 +248,32 @@ export default function Students() {
                     <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>
                       Vào lớp {dateTime(s.created_at)}
                     </div>
+                    {s.enrollment_id && (
+                      <div className="row" style={{ gap: 5, marginTop: 6, flexWrap: 'wrap' }}>
+                        <button className="btn sm" disabled={busy === s.id}
+                                onClick={() => xepKhoa(s)}>Xếp khoá</button>
+                        <button className="btn sm" disabled={busy === s.id}
+                                onClick={() => chinhCoin(s)}>± coin</button>
+                        {s.enrollment_status === 'active' && (
+                          <>
+                            <button className="btn sm" disabled={busy === s.id}
+                                    onClick={() => doiTrangThai(s, 'paused', 'Tạm dừng')}>
+                              Tạm dừng
+                            </button>
+                            <button className="btn sm" disabled={busy === s.id}
+                                    onClick={() => doiTrangThai(s, 'completed', 'Đánh dấu hoàn thành')}>
+                              Hoàn thành
+                            </button>
+                          </>
+                        )}
+                        {s.enrollment_status !== 'active' && (
+                          <button className="btn sm" disabled={busy === s.id}
+                                  onClick={() => doiTrangThai(s, 'active', 'Mở lại lớp')}>
+                            Mở lại
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

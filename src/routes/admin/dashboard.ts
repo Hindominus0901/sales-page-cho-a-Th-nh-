@@ -47,7 +47,19 @@ adminDashboardRoutes.get('/api/admin/stats', async (c) => {
         (SELECT COUNT(*) FROM affiliates WHERE status = 'pending')                     pending_affiliates,
         (SELECT COUNT(*) FROM leads WHERE status = 'new' AND score_band = 'hot')        hot_uncontacted,
         (SELECT COUNT(*) FROM submissions WHERE status = 'pending')                     pending_submissions,
-        (SELECT COUNT(*) FROM reward_redemptions WHERE status = 'requested')            pending_redemptions`,
+        (SELECT COUNT(*) FROM reward_redemptions WHERE status = 'requested')            pending_redemptions,
+        -- Học viên đang tụt lại.
+        --
+        -- Đây là việc quan trọng nhất của người vận hành lớp, và trước đây hệ
+        -- thống mù hoàn toàn: dữ liệu (last_submit_date, posts_done) có sẵn,
+        -- không ai đọc. Đến ngày 9 có chừng chục người đã ngừng nộp, mà con số
+        -- "bài chờ duyệt" lại GIẢM đi nên trông càng nhẹ nhàng — anh Thành phát
+        -- hiện vào cuối khoá, khi không cứu được ai nữa.
+        (SELECT COUNT(*) FROM enrollments e JOIN students st ON st.id = e.student_id
+          WHERE e.status = 'active'
+            AND e.started_at <= unixepoch()
+            AND (st.last_submit_date IS NULL
+                 OR st.last_submit_date < date('now','+7 hours','-3 days')))      hoc_vien_tut_lai`,
     ),
 
     c.env.DB.prepare(
@@ -58,10 +70,21 @@ adminDashboardRoutes.get('/api/admin/stats', async (c) => {
         (SELECT COALESCE(SUM(amount_total),0) FROM orders WHERE status IN ('paid','overpaid')) revenue,
         (SELECT COUNT(*) FROM orders WHERE status = 'pending')                    pending_orders,
         (SELECT COALESCE(SUM(amount),0) FROM commissions WHERE status IN ('pending','approved','payout_requested')) commission_owed,
+        -- "Hôm nay" = ngày lịch Việt Nam, không phải 24 giờ trượt.
+        --
+        -- Với 24 giờ trượt, anh Thành duyệt bài lúc 22h thứ Hai thì 9h sáng thứ
+        -- Ba con số vẫn đang tính cả mẻ tối qua — anh tưởng sáng nay đã làm rồi.
+        -- Đến 23h thứ Ba nó tự tụt về 0 dù anh chưa động vào gì.
         (SELECT COUNT(*) FROM submissions WHERE status = 'approved'
-           AND reviewed_at > unixepoch() - 86400)                                       approved_today,
+           AND date(reviewed_at,'unixepoch','+7 hours') = date('now','+7 hours'))       approved_today,
         (SELECT COUNT(DISTINCT student_id) FROM submissions
-           WHERE created_at > unixepoch() - 86400)                                      active_today`,
+           WHERE date(created_at,'unixepoch','+7 hours') = date('now','+7 hours'))      active_today,
+        -- Hôm nay là ngày thứ mấy của khoá, và bao nhiêu người đã nộp.
+        (SELECT COUNT(*) FROM enrollments WHERE status = 'active')                      dang_hoc,
+        (SELECT COUNT(DISTINCT s.student_id) FROM submissions s
+           JOIN enrollments e ON e.id = s.enrollment_id
+          WHERE e.status = 'active'
+            AND date(s.created_at,'unixepoch','+7 hours') = date('now','+7 hours'))     da_nop_hom_nay`,
     ),
 
     c.env.DB.prepare(
@@ -79,12 +102,27 @@ adminDashboardRoutes.get('/api/admin/stats', async (c) => {
    * Chưa đặt mốc thì giữ nguyên nếp cũ — đếm tất, đúng cho khoá đầu tiên.
    */
   const product = await c.env.DB.prepare(
-    `SELECT seats_total, seats_offset, start_date, cohort_hien_tai, cohort_bat_dau_tu
+    `SELECT seats_total, seats_offset, start_date, cohort_hien_tai, cohort_khai_giang,
+            cohort_bat_dau_tu
      FROM products WHERE slug = 'thu-thach-21-ngay'`,
   ).first<{
     seats_total: number | null; seats_offset: number; start_date: string | null;
-    cohort_hien_tai: string | null; cohort_bat_dau_tu: number | null;
+    cohort_hien_tai: string | null; cohort_khai_giang: string | null;
+    cohort_bat_dau_tu: number | null;
   }>();
+
+  /**
+   * Hôm nay là ngày thứ mấy của khoá.
+   *
+   * Dashboard trước đây không trả lời được câu này, dù nó là câu đầu tiên người
+   * quản lớp cần biết mỗi sáng. start_date có được đọc, nhưng chỉ để in chuỗi
+   * ngày cạnh số chỗ còn lại.
+   */
+  const ngayKhaiGiang = product?.cohort_khai_giang ?? product?.start_date ?? null;
+  const ngayThu = ngayKhaiGiang
+    ? Math.floor(
+      (Date.now() / 1000 - Date.parse(`${ngayKhaiGiang}T00:00:00+07:00`) / 1000) / 86400) + 1
+    : null;
 
   const t = firstOf<Record<string, number>>(batch, 4) ?? {};
 
@@ -108,6 +146,10 @@ adminDashboardRoutes.get('/api/admin/stats', async (c) => {
       startDate: product?.start_date ?? null,
       cohort: product?.cohort_hien_tai ?? null,
       daBanKhoaNay,
+      ngayKhaiGiang,
+      // null khi chưa đặt ngày; ngoài 1..21 nghĩa là chưa khai giảng hoặc đã xong.
+      ngayThu: ngayThu !== null && ngayThu >= 1 && ngayThu <= 21 ? ngayThu : null,
+      ngayThuTho: ngayThu,
     },
     todo: firstOf<Record<string, number>>(batch, 3) ?? {},
     funnel: rowsOf(batch, 0),

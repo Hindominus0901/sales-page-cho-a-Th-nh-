@@ -22,15 +22,34 @@ const CHANNEL: Record<string, string> = {
   facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube', khac: 'Kênh khác',
 };
 
+/** Mẫu nhận xét hay dùng. Bấm là nối vào ô, vẫn sửa tiếp được. */
+const MAU_NHAN_XET = [
+  'Bài tới rồi, giữ nhịp này.',
+  'Mở đầu dài quá, cắt còn 2 câu.',
+  'Thiếu lời kêu gọi ở cuối bài.',
+  'Ảnh bìa chưa có chữ.',
+  'Nội dung ổn nhưng chưa rõ dành cho ai.',
+];
+
 export default function Submissions() {
   const toast = useToast();
   const [status, setStatus] = useState('pending');
+  const [day, setDay] = useState('');
+  const [cohort, setCohort] = useState('');
+  const [trang, setTrang] = useState(1);
   const [busy, setBusy] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
+  /* Bài đã xử lý xong trong phiên này. Giữ ở đây thay vì reload() cả danh sách:
+     reload() làm card biến mất, danh sách dịch lên, vị trí cuộn nhảy — lặp lại
+     ba mươi lần mỗi sáng. Ẩn tại chỗ thì mọi thứ khác đứng yên. */
+  const [xong, setXong] = useState<Record<string, string>>({});
 
   const { data, error, loading, reload } = useLoad<{
     submissions: Sub[]; counts: Record<string, number>;
-  }>(() => api.get(`/api/admin/submissions?status=${status}`), [status]);
+    trang: number; kichThuocTrang: number; tong: number; khoaHoc: string[];
+  }>(() => api.get(`/api/admin/submissions?status=${status}`
+    + (day ? `&day=${day}` : '') + (cohort ? `&cohort=${encodeURIComponent(cohort)}` : '')
+    + `&trang=${trang}`), [status, day, cohort, trang]);
 
   async function review(id: string, action: 'approve' | 'needs_work') {
     setBusy(id);
@@ -39,10 +58,14 @@ export default function Submissions() {
         { action, feedback: notes[id] ?? '' });
       toast.show(r.message);
       setNotes((n) => ({ ...n, [id]: '' }));
-      reload();
+      setXong((x) => ({ ...x, [id]: action === 'approve' ? 'Đã duyệt' : 'Đã gửi yêu cầu sửa' }));
     } catch (e) { toast.fail((e as Error).message); }
     finally { setBusy(null); }
   }
+
+  /* Đổi bộ lọc thì về trang 1 và quên danh sách đã xử lý — chúng thuộc về bộ
+     lọc cũ. */
+  function doiLoc(fn: () => void) { fn(); setTrang(1); setXong({}); }
 
   return (
     <>
@@ -64,11 +87,35 @@ export default function Submissions() {
         )}
       </div>
 
-      <div className="bar">
+      <div className="bar" style={{ flexWrap: 'wrap', gap: 8 }}>
         {FILTERS.map(([v, l]) => (
           <button key={v} className={`btn sm ${status === v ? 'primary' : ''}`}
-                  onClick={() => setStatus(v!)}>{l}</button>
+                  onClick={() => doiLoc(() => setStatus(v!))}>{l}</button>
         ))}
+
+        <span style={{ width: 1, height: 24, background: 'var(--vien)', margin: '0 4px' }} />
+
+        <select value={day} onChange={(e) => doiLoc(() => setDay(e.target.value))}
+                style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--vien)' }}>
+          <option value="">Mọi ngày</option>
+          {Array.from({ length: 21 }, (_, i) => i + 1).map((d) => (
+            <option key={d} value={d}>Ngày {d}</option>
+          ))}
+        </select>
+
+        {(data?.khoaHoc.length ?? 0) > 0 && (
+          <select value={cohort} onChange={(e) => doiLoc(() => setCohort(e.target.value))}
+                  style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--vien)' }}>
+            <option value="">Mọi khoá</option>
+            {data?.khoaHoc.map((k) => <option key={k} value={k}>Khoá {k}</option>)}
+          </select>
+        )}
+
+        {Object.keys(xong).length > 0 && (
+          <button className="btn sm" onClick={() => { setXong({}); reload(); }}>
+            Làm mới danh sách
+          </button>
+        )}
       </div>
 
       {loading && <Loading what="bài nộp" />}
@@ -83,7 +130,8 @@ export default function Submissions() {
 
       <div className="stack">
         {data?.submissions.map((s) => (
-          <div className="card card-pad" key={s.id}>
+          <div className="card card-pad" key={s.id}
+               style={xong[s.id] ? { opacity: .55 } : undefined}>
             <div className="spread" style={{ alignItems: 'flex-start', marginBottom: 12 }}>
               <div>
                 <div className="row" style={{ gap: 8 }}>
@@ -141,16 +189,32 @@ export default function Submissions() {
                             placeholder="Chỗ nào tới, chỗ nào chưa tới, sửa thế nào…"
                             value={notes[s.id] ?? ''}
                             onChange={(e) => setNotes((n) => ({ ...n, [s.id]: e.target.value }))} />
+                  {/* Ba mươi bài mỗi sáng mà gõ tay từ đầu thì tới tuần thứ hai
+                      sẽ bắt đầu duyệt lấy lệ. Mẫu để nối thêm, không thay thế. */}
+                  <div className="row" style={{ gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                    {MAU_NHAN_XET.map((m) => (
+                      <button key={m} type="button" className="btn sm"
+                              onClick={() => setNotes((n) => ({
+                                ...n, [s.id]: (n[s.id] ? n[s.id] + ' ' : '') + m,
+                              }))}>{m}</button>
+                    ))}
+                  </div>
                 </div>
-                <div className="row">
-                  <button className="btn primary" disabled={busy === s.id}
-                          onClick={() => review(s.id, 'approve')}>Duyệt và cộng coin</button>
-                  <button className="btn" disabled={busy === s.id}
-                          onClick={() => review(s.id, 'needs_work')}>Yêu cầu sửa lại</button>
-                  <span className="note">
-                    Yêu cầu sửa thì bắt buộc có nhận xét — học viên cần biết sửa chỗ nào.
-                  </span>
-                </div>
+                {xong[s.id] ? (
+                  <div className="note" style={{ color: 'var(--tot)', fontWeight: 600 }}>
+                    {xong[s.id]} ✓
+                  </div>
+                ) : (
+                  <div className="row">
+                    <button className="btn primary" disabled={busy === s.id}
+                            onClick={() => review(s.id, 'approve')}>Duyệt và cộng coin</button>
+                    <button className="btn" disabled={busy === s.id}
+                            onClick={() => review(s.id, 'needs_work')}>Yêu cầu sửa lại</button>
+                    <span className="note">
+                      Yêu cầu sửa thì bắt buộc có nhận xét — học viên cần biết sửa chỗ nào.
+                    </span>
+                  </div>
+                )}
               </>
             ) : s.feedback ? (
               <div style={{ borderLeft: '2px solid var(--xanh)', paddingLeft: 12, fontSize: 13.5 }}>
@@ -163,6 +227,19 @@ export default function Submissions() {
           </div>
         ))}
       </div>
+
+      {data && data.tong > data.kichThuocTrang && (
+        <div className="row" style={{ justifyContent: 'center', gap: 10, marginTop: 16 }}>
+          <button className="btn sm" disabled={trang <= 1}
+                  onClick={() => { setTrang(trang - 1); setXong({}); }}>Trang trước</button>
+          <span className="note">
+            Trang {trang} / {Math.ceil(data.tong / data.kichThuocTrang)} · {data.tong} bài
+          </span>
+          <button className="btn sm"
+                  disabled={trang >= Math.ceil(data.tong / data.kichThuocTrang)}
+                  onClick={() => { setTrang(trang + 1); setXong({}); }}>Trang sau</button>
+        </div>
+      )}
     </>
   );
 }

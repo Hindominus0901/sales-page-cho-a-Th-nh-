@@ -66,8 +66,31 @@ async function tiers(env: HonoEnv['Bindings']) {
 
 // ---------------------------------------------------------------- duyệt bài
 
+/**
+ * Danh sách bài nộp.
+ *
+ * Lọc theo ngày và theo khoá, có phân trang. Trước đây chỉ lọc theo trạng thái
+ * và `LIMIT 200` cứng: 30 người × 21 ngày = 630 bài, nên từ tuần thứ hai tab
+ * "Tất cả" bắt đầu mất dữ liệu mà không có dấu hiệu gì. Và khi khoá 2 chạy song
+ * song, danh sách "Chờ duyệt" trộn bài ngày-18 của khoá 1 với bài ngày-1 của
+ * khoá 2, không có cách nào tách.
+ */
+const TRANG = 50;
+
 adminGameRoutes.get('/api/admin/submissions', async (c) => {
   const status = c.req.query('status') ?? 'pending';
+  const day = Number(c.req.query('day'));
+  const cohort = c.req.query('cohort');
+  const trang = Math.max(1, Number(c.req.query('trang') ?? 1));
+  const dieuKien = (() => {
+    const menh: string[] = [];
+    const tham: unknown[] = [];
+    if (status !== 'all') { menh.push('s.status = ?'); tham.push(status); }
+    if (Number.isFinite(day) && day >= 1 && day <= 21) { menh.push('s.day = ?'); tham.push(day); }
+    if (cohort) { menh.push('e.cohort = ?'); tham.push(cohort); }
+    return { menh: menh.length ? 'WHERE ' + menh.join(' AND ') : '', tham };
+  })();
+
   const rows = await c.env.DB.prepare(
     `SELECT s.id, s.day, s.post_url, s.content, s.channel, s.status, s.feedback,
             s.is_late, s.coin_awarded, s.xp_awarded, s.created_at, s.reviewed_at,
@@ -90,9 +113,15 @@ adminGameRoutes.get('/api/admin/submissions', async (c) => {
      JOIN students st ON st.id = s.student_id
      LEFT JOIN enrollments e ON e.id = s.enrollment_id
      LEFT JOIN admin_users u ON u.id = s.reviewed_by
-     ${status === 'all' ? '' : 'WHERE s.status = ?'}
-     ORDER BY s.created_at ASC LIMIT 200`,
-  ).bind(...(status === 'all' ? [] : [status])).all<Record<string, unknown>>();
+     ${dieuKien.menh}
+     ORDER BY s.created_at ASC
+     LIMIT ${TRANG} OFFSET ${(trang - 1) * TRANG}`,
+  ).bind(...dieuKien.tham).all<Record<string, unknown>>();
+
+  const tong = await c.env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM submissions s
+     LEFT JOIN enrollments e ON e.id = s.enrollment_id ${dieuKien.menh}`,
+  ).bind(...dieuKien.tham).first<{ n: number }>();
 
   const list = await tiers(c.env);
   const today = ictDate();
@@ -104,6 +133,12 @@ adminGameRoutes.get('/api/admin/submissions', async (c) => {
       rank: rankOf(Number(r.xp ?? 0), list).tier,
       streakAlive: isStreakAlive((r.last_submit_date as string) ?? null, today),
     })),
+    trang,
+    kichThuocTrang: TRANG,
+    tong: tong?.n ?? 0,
+    khoaHoc: (await c.env.DB.prepare(
+      `SELECT DISTINCT cohort FROM enrollments WHERE cohort IS NOT NULL ORDER BY cohort DESC`,
+    ).all<{ cohort: string }>()).results?.map((r) => r.cohort) ?? [],
     counts: await counts(c.env),
   });
 });
