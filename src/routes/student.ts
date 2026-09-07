@@ -85,8 +85,53 @@ async function xemTrang(c: Context<HonoEnv>, session: StudentSession) {
      ORDER BY r.created_at ASC`,
   ).bind(session.enrollmentId).all();
 
+  /**
+   * Đề bài 21 ngày.
+   *
+   * Trước đây học viên vào ngày 1 thấy một ô trống hỏi "Link bài đăng" mà không
+   * nói phải đăng gì — đề bài chỉ có trong nhóm Zalo, ai bỏ lỡ tin nhắn ngày 7
+   * thì không có chỗ nào tra lại. Lấy theo khoá của học viên, và rơi về hàng
+   * dùng chung (cohort NULL) khi khoá đó chưa soạn riêng.
+   */
+  const noiDung = await c.env.DB.prepare(
+    `SELECT day, title, brief, video_url, tips FROM challenge_days
+     WHERE COALESCE(cohort,'') IN (COALESCE(?,''), '')
+     ORDER BY day, CASE WHEN cohort IS NULL THEN 1 ELSE 0 END`,
+  ).bind(session.cohort ?? null).all<{
+    day: number; title: string; brief: string | null;
+    video_url: string | null; tips: string | null;
+  }>();
+
+  // Hàng của đúng khoá thắng hàng dùng chung (ORDER BY ở trên đưa nó lên trước).
+  const deBai = new Map<number, unknown>();
+  for (const r of noiDung.results ?? []) if (!deBai.has(r.day)) deBai.set(r.day, r);
+
+  /**
+   * Bài của cả lớp hôm nay.
+   *
+   * Chỉ bài ĐÃ ĐƯỢC DUYỆT — bài chờ duyệt là riêng tư cho tới khi team xem xong.
+   * Các bài này vốn đã công khai trên Facebook/TikTok, nên không lộ thêm gì; cái
+   * lộ ra là việc ai đang đi cùng mình, và đó chính là điểm.
+   *
+   * Trước mục này, nền tảng không có MỘT tương tác học viên–học viên nào: 21
+   * ngày là 21 ngày một mình, trong khi khoá học được bán bằng lời hứa đồng hành.
+   */
+  const baiCaLop = await c.env.DB.prepare(
+    `SELECT s.day, s.post_url, s.channel, st.full_name
+     FROM submissions s
+     JOIN students st ON st.id = s.student_id
+     JOIN enrollments e ON e.id = s.enrollment_id
+     WHERE s.status = 'approved'
+       AND s.post_url IS NOT NULL
+       AND COALESCE(e.cohort,'') = COALESCE(?,'')
+       AND date(s.created_at,'unixepoch','+7 hours') >= date('now','+7 hours','-2 days')
+     ORDER BY s.created_at DESC LIMIT 40`,
+  ).bind(session.cohort ?? null).all();
+
   return c.json({
     ok: true,
+    deBai: Array.from(deBai.values()),
+    baiCaLop: baiCaLop.results ?? [],
     student: {
       name: session.fullName,
       cohort: session.cohort,

@@ -218,6 +218,88 @@ adminContentRoutes.patch('/api/admin/enrollments/:id', requireRole('owner', 'adm
   return c.json({ ok: true });
 });
 
+
+// ------------------------------------------------------- nội dung 21 ngày
+
+/**
+ * Nội dung từng ngày của thử thách.
+ *
+ * Trước bảng này, nội dung khoá học KHÔNG TỒN TẠI trong hệ thống — không bảng,
+ * không màn hình, không API. Học viên vào ngày 1 thấy lời chào, huy hiệu, lưới
+ * 21 ô xám trơn, và một form hỏi "Link bài đăng" mà không nói phải đăng gì. Đề
+ * bài nằm trong nhóm Zalo; ai bỏ lỡ tin nhắn ngày 7 thì không có chỗ nào tra
+ * lại, kể cả khi họ đã trả hai triệu.
+ *
+ * Trả đủ 21 dòng kể cả ngày chưa điền, để màn hình quản trị là một bảng 21 dòng
+ * sửa tại chỗ chứ không phải một danh sách phải bấm "thêm" từng ngày.
+ */
+adminContentRoutes.get('/api/admin/noi-dung-21-ngay', requireRole('owner', 'admin'), async (c) => {
+  const sp = await c.env.DB.prepare(
+    `SELECT id, cohort_hien_tai FROM products WHERE slug = 'thu-thach-21-ngay'`,
+  ).first<{ id: string; cohort_hien_tai: string | null }>();
+  if (!sp) return c.json({ ok: false, error: 'Chưa có sản phẩm.' }, 503);
+
+  const cohort = c.req.query('cohort') ?? sp.cohort_hien_tai ?? null;
+
+  const rows = await c.env.DB.prepare(
+    `SELECT day, title, brief, video_url, tips FROM challenge_days
+     WHERE product_id = ? AND COALESCE(cohort,'') = COALESCE(?,'')
+     ORDER BY day`,
+  ).bind(sp.id, cohort).all<{
+    day: number; title: string; brief: string | null;
+    video_url: string | null; tips: string | null;
+  }>();
+
+  const theoNgay = new Map((rows.results ?? []).map((r) => [r.day, r]));
+  const ngay = Array.from({ length: 21 }, (_, i) => theoNgay.get(i + 1) ?? {
+    day: i + 1, title: '', brief: null, video_url: null, tips: null,
+  });
+
+  return c.json({ ok: true, cohort, ngay, daDien: rows.results?.length ?? 0 });
+});
+
+adminContentRoutes.put('/api/admin/noi-dung-21-ngay/:day', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const day = Number(c.req.param('day'));
+  if (!Number.isInteger(day) || day < 1 || day > 21) {
+    return c.json({ ok: false, error: 'Ngày phải nằm trong khoảng 1–21.' }, 400);
+  }
+
+  const b = await c.req.json<{
+    cohort?: string | null; title?: string; brief?: string; videoUrl?: string; tips?: string;
+  }>().catch(() => ({} as Record<string, never>));
+
+  const sp = await c.env.DB.prepare(
+    `SELECT id, cohort_hien_tai FROM products WHERE slug = 'thu-thach-21-ngay'`,
+  ).first<{ id: string; cohort_hien_tai: string | null }>();
+  if (!sp) return c.json({ ok: false, error: 'Chưa có sản phẩm.' }, 503);
+
+  const cohort = b.cohort !== undefined ? (b.cohort || null) : sp.cohort_hien_tai;
+  const title = String(b.title ?? '').trim().slice(0, 200);
+  if (!title) return c.json({ ok: false, error: 'Anh đặt tiêu đề cho ngày này giúp em.' }, 400);
+
+  const ts = now();
+  await c.env.DB.prepare(
+    `INSERT INTO challenge_days
+       (id, product_id, cohort, day, title, brief, video_url, tips, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?)
+     ON CONFLICT(product_id, COALESCE(cohort,''), day) DO UPDATE SET
+       title = excluded.title, brief = excluded.brief,
+       video_url = excluded.video_url, tips = excluded.tips, updated_at = excluded.updated_at`,
+  ).bind(uuid(), sp.id, cohort, day, title,
+    String(b.brief ?? '').trim().slice(0, 4000) || null,
+    String(b.videoUrl ?? '').trim().slice(0, 500) || null,
+    String(b.tips ?? '').trim().slice(0, 2000) || null, ts, ts).run();
+
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'challenge_day.update', entityType: 'challenge_day', entityId: `${cohort ?? ''}:${day}`,
+    after: { day, title },
+  });
+
+  return c.json({ ok: true });
+});
+
 // ---------------------------------------------------------------- cài đặt
 
 /**

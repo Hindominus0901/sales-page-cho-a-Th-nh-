@@ -168,8 +168,10 @@
     renderGrid();
     renderForm();
     renderLichSu();
+    renderDeBai();
     renderRewards();
     renderRedemptions();
+    renderBaiCaLop();
   }
 
   function renderGrid() {
@@ -296,6 +298,58 @@
     } catch (e) { return ''; }
   }
 
+  var KENH_NHAN = {
+    facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube',
+    instagram: 'Instagram', threads: 'Threads', khac: 'Kênh khác'
+  };
+
+  /* Đề bài của ngày đang chọn. */
+  function renderDeBai() {
+    var khung = $('[data-debai]');
+    var trong = $('[data-debai-trong]');
+    if (!khung || !trong) return;
+
+    var d = (state.deBai || []).find(function (x) { return Number(x.day) === selectedDay; });
+    if (!d || !d.title) {
+      khung.hidden = true;
+      trong.hidden = false;
+      return;
+    }
+    trong.hidden = true;
+    khung.hidden = false;
+
+    $('[data-debai-tieude]').textContent = 'Ngày ' + d.day + ' — ' + d.title;
+    $('[data-debai-noidung]').textContent = d.brief || '';
+
+    var video = $('[data-debai-video]');
+    video.hidden = !d.video_url;
+    if (d.video_url) $('[data-debai-video-link]').href = d.video_url;
+
+    var tips = $('[data-debai-tips]');
+    tips.hidden = !d.tips;
+    if (d.tips) $('[data-debai-tips-noidung]').textContent = d.tips;
+  }
+
+  /* Bài của cả lớp. */
+  function renderBaiCaLop() {
+    var khung = $('[data-balop]');
+    if (!khung) return;
+    var list = state.baiCaLop || [];
+    khung.hidden = list.length === 0;
+    if (!list.length) return;
+
+    $('[data-balop-list]').innerHTML = list.map(function (b) {
+      return '<a href="' + esc(b.post_url) + '" target="_blank" rel="noopener" '
+        + 'style="display:flex;justify-content:space-between;gap:12px;align-items:center;'
+        + 'background:#fff;border-radius:14px;padding:12px 15px;text-decoration:none;color:inherit">'
+        + '<span style="font-size:14px"><b>' + esc(b.full_name) + '</b>'
+        + '<span style="color:#77777d"> · ngày ' + esc(b.day) + '</span></span>'
+        + '<span style="font-size:13px;color:#26643f;font-weight:600;white-space:nowrap">'
+        + esc(KENH_NHAN[b.channel] || 'Xem bài') + ' →</span>'
+        + '</a>';
+    }).join('');
+  }
+
   // ----------------------------------------------------------------- sự kiện
 
   $('[data-grid]').addEventListener('click', function (e) {
@@ -305,6 +359,7 @@
     renderGrid();
     renderForm();
     renderLichSu();
+    renderDeBai();
   });
 
   $('[data-form]').addEventListener('change', function (e) {
@@ -313,6 +368,7 @@
     renderGrid();
     renderForm();
     renderLichSu();
+    renderDeBai();
   });
 
   $('[data-form]').addEventListener('submit', function (e) {

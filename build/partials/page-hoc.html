@@ -90,6 +90,27 @@
         <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 4px">Nộp bài</h2>
         <p data-submit-hint style="font-size:14px;color:#55555c;line-height:1.65;margin:0 0 18px"></p>
 
+        <!-- Đề bài của ngày đang chọn.
+             Trước khối này, học viên vào lớp thấy một ô trống hỏi "Link bài
+             đăng" mà không biết phải đăng gì — đề bài chỉ có trong nhóm Zalo. -->
+        <div data-debai hidden style="background:rgba(168,217,141,.16);border-radius:16px;padding:18px;margin-bottom:18px">
+          <div data-debai-tieude style="font-size:17px;font-weight:800;margin-bottom:8px"></div>
+          <div data-debai-noidung style="font-size:15px;line-height:1.75;white-space:pre-wrap"></div>
+          <div data-debai-video hidden style="margin-top:12px">
+            <a data-debai-video-link href="#" target="_blank" rel="noopener"
+               style="color:#26643f;font-weight:600;font-size:14px">Xem video hướng dẫn ngày này →</a>
+          </div>
+          <details data-debai-tips hidden style="margin-top:12px">
+            <summary style="font-size:13px;font-weight:700;cursor:pointer;color:#55555c">Gợi ý làm bài</summary>
+            <div data-debai-tips-noidung style="font-size:14px;line-height:1.7;margin-top:8px;white-space:pre-wrap"></div>
+          </details>
+        </div>
+
+        <div data-debai-trong hidden style="background:rgba(25,25,25,.05);border-radius:16px;padding:16px 18px;margin-bottom:18px;font-size:14px;line-height:1.7;color:#55555c">
+          Đề bài ngày này sẽ có trước buổi học. Trong lúc chờ, anh chị xem lại
+          đề trong nhóm Zalo giúp em.
+        </div>
+
         <!-- Nhận xét của team cho ngày đang chọn -->
         <div data-feedback hidden style="border-left:3px solid #e2a33c;background:rgba(226,163,60,.09);border-radius:0 14px 14px 0;padding:14px 16px;margin-bottom:18px">
           <div style="font-size:13px;font-weight:700;margin-bottom:4px">Nhận xét của team</div>
@@ -144,6 +165,17 @@
       <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 4px">Đổi quà</h2>
       <p style="font-size:14px;color:#55555c;line-height:1.65;margin:0 0 14px">Coin tích được đổi lấy phần quà bên dưới. Đổi xong team sẽ nhắn Zalo để gửi quà.</p>
       <div data-rewards style="display:grid;gap:12px;margin-bottom:26px"></div>
+
+      <!-- Bài của cả lớp.
+           Chỉ bài đã được duyệt, và vốn đã công khai trên Facebook/TikTok nên
+           không lộ thêm gì. Cái lộ ra là việc ai đang đi cùng mình — đó là điểm. -->
+      <div data-balop hidden style="margin-bottom:26px">
+        <h2 style="font-family:Oswald,sans-serif;text-transform:uppercase;font-size:19px;font-weight:600;letter-spacing:.02em;margin:0 0 4px">Bài của cả lớp</h2>
+        <p style="font-size:14px;color:#55555c;line-height:1.65;margin:0 0 14px">
+          Bài đã duyệt trong ba ngày gần đây. Xem người khác làm gì cũng là học.
+        </p>
+        <div data-balop-list style="display:grid;gap:10px"></div>
+      </div>
 
       <div data-redemptions hidden style="margin-bottom:20px">
         <h3 style="font-size:15px;font-weight:700;margin:0 0 10px">Quà đã đổi</h3>

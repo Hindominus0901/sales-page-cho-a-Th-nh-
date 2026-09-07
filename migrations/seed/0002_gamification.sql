@@ -1,6 +1,6 @@
 -- Cơ chế mặc định. Sửa được trong /admin → Cơ chế.
 INSERT OR IGNORE INTO settings (key, value_json, updated_at) VALUES
-  ('coin.per_submission',   '50',    unixepoch()),
+  ('coin.per_submission',   '70',    unixepoch()),
   ('coin.per_content',      '20',    unixepoch()),
   ('coin.per_call',         '100',   unixepoch()),
   ('coin.streak_bonus_pct', '10',    unixepoch()),

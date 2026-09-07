@@ -22,6 +22,7 @@ import Submissions from './pages/Submissions';
 import Leaderboard from './pages/Leaderboard';
 import Rewards from './pages/Rewards';
 import Mechanics from './pages/Mechanics';
+import NoiDung21Ngay from './pages/NoiDung21Ngay';
 import { Icon } from './icons';
 
 interface Me { user: { id: string; name: string; email: string; role: string }; csrfToken: string | null }
@@ -67,6 +68,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     { href: '/lich',       label: 'Lịch',       icon: 'workshop' },
   ]},
   { section: 'Học viên', items: [
+    { href: '/noi-dung',   label: 'Nội dung 21 ngày', icon: 'mechanics', roles: QUAN_TRI },
     { href: '/hoc-vien',   label: 'Học viên',   icon: 'students' },
     { href: '/duyet-bai',  label: 'Duyệt bài',  icon: 'approval', badge: 'pending_submissions', roles: QUAN_TRI },
     { href: '/xep-hang',   label: 'Bảng xếp hạng', icon: 'rank' },
@@ -177,6 +179,7 @@ function Route({ path, query }: { path: string; query: URLSearchParams }) {
   if (path === '/don-hang') return <Orders query={query} />;
   if (path.startsWith('/don-hang/')) return <OrderDetail code={path.slice(10)} />;
   if (path === '/thanh-toan') return <Payments />;
+  if (path === '/noi-dung') return <NoiDung21Ngay />;
   if (path === '/hoc-vien') return <Students />;
   if (path === '/workshop') return <Workshops />;
   if (path === '/ctv') return <Affiliates />;

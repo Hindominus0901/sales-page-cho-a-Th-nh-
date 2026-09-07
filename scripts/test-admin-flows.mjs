@@ -54,6 +54,7 @@ function makeClient() {
     get(p) { return this.req('GET', p); },
     post(p, b) { return this.req('POST', p, b ?? {}); },
     patch(p, b) { return this.req('PATCH', p, b ?? {}); },
+    put(p, b) { return this.req('PUT', p, b ?? {}); },
   };
 }
 
@@ -529,23 +530,54 @@ console.log('Duyệt bài, coin và chuỗi ngày');
 
   const st = () => db.prepare('SELECT xp, coin, streak_current, streak_best FROM students WHERE id = ?').get(stId);
 
+  /* Đọc cơ chế từ settings thay vì gõ cứng con số.
+     Gõ cứng thì mỗi lần anh Thành chỉnh coin trong màn hình Cơ chế là bộ test
+     báo đỏ, mà cái đỏ đó không nói gì về sản phẩm — nó chỉ nói con số đã đổi. */
+  const coCheCoin = Number(JSON.parse(
+    db.prepare("SELECT value_json FROM settings WHERE key='coin.per_submission'").get().value_json));
+  const bonusPct = Number(JSON.parse(
+    db.prepare("SELECT value_json FROM settings WHERE key='coin.streak_bonus_pct'").get().value_json));
+  const coinNgay2 = coCheCoin + Math.round(coCheCoin * (1 + bonusPct / 100));
+
+  /* Nội dung 21 ngày: trả đủ 21 dòng kể cả ngày chưa điền, và học viên đọc
+     được đề bài trong lớp. Trước đây nội dung khoá học không tồn tại trong hệ
+     thống — học viên vào ngày 1 thấy ô trống hỏi "Link bài đăng". */
+  const nd0 = await admin.get('/api/admin/noi-dung-21-ngay');
+  ok('nội dung trả đủ 21 dòng', nd0.body.ngay.length, 21);
+  ok('ban đầu chưa điền ngày nào', nd0.body.daDien, 0);
+
+  const luuNd = await admin.put('/api/admin/noi-dung-21-ngay/1', {
+    title: 'Tìm ngách của anh chị',
+    brief: 'Viết một bài giới thiệu bản thân cho khách hàng lý tưởng.',
+    tips: 'Viết như đang nhắn cho một người bạn.',
+  });
+  ok('lưu được nội dung ngày 1', luuNd.status, 200);
+  ok('thiếu tiêu đề thì bị từ chối',
+    (await admin.put('/api/admin/noi-dung-21-ngay/2', { brief: 'x' })).status, 400);
+  ok('ngày ngoài 1–21 bị từ chối',
+    (await admin.put('/api/admin/noi-dung-21-ngay/99', { title: 'x' })).status, 400);
+
+  const nd1 = await admin.get('/api/admin/noi-dung-21-ngay');
+  ok('đã đếm đúng số ngày đã điền', nd1.body.daDien, 1);
+  ok('lưu lại đúng tiêu đề', nd1.body.ngay[0].title, 'Tìm ngách của anh chị');
+
   ok('trước khi duyệt: chưa có coin', st().coin, 0);
 
   const r1 = await admin.post('/api/admin/submissions/sub-1/review', { action: 'approve' });
   ok('duyệt bài đầu thành công', r1.body.ok, true);
-  ok('cộng đúng coin cơ bản', st().coin, 50);
+  ok('cộng đúng coin cơ bản', st().coin, coCheCoin);
   ok('cộng đúng XP', st().xp, 100);
   ok('chuỗi bắt đầu từ 1', st().streak_current, 1);
 
   // Bấm duyệt lần hai: không được cộng thêm lần nào nữa.
   const r2 = await admin.post('/api/admin/submissions/sub-1/review', { action: 'approve' });
   ok('duyệt lại vẫn trả 200', r2.status, 200);
-  ok('KHÔNG cộng coin lần hai', st().coin, 50);
+  ok('KHÔNG cộng coin lần hai', st().coin, coCheCoin);
   ok('KHÔNG cộng XP lần hai', st().xp, 100);
 
   await admin.post('/api/admin/submissions/sub-2/review', { action: 'approve' });
   ok('chuỗi tăng khi nộp ngày liền kề', st().streak_current, 2);
-  ok('coin có thưởng chuỗi ở ngày thứ hai', st().coin, 50 + 55);
+  ok('coin có thưởng chuỗi ở ngày thứ hai', st().coin, coinNgay2);
 
   ok('sổ cái ghi đủ số lần cộng',
     db.prepare("SELECT COUNT(*) n FROM coin_ledger WHERE student_id=? AND reason='submission'").get(stId).n, 2);
@@ -561,7 +593,7 @@ console.log('Duyệt bài, coin và chuỗi ngày');
   const r4 = await admin.post('/api/admin/submissions/sub-3/review',
     { action: 'needs_work', feedback: 'Hook chưa rõ, viết lại câu mở đầu giúp em.' });
   ok('có nhận xét thì cho qua', r4.status, 200);
-  ok('yêu cầu sửa KHÔNG cộng coin', st().coin, 105);
+  ok('yêu cầu sửa KHÔNG cộng coin', st().coin, coinNgay2);
 }
 console.log('');
 
