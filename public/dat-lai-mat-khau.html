@@ -596,12 +596,52 @@ function loadSiteConfig(then) {
     .then(function (c) {
       if (c && c.ok) {
         renderSeats(c);
+        renderLienHe(c);
         if (c.demo) showDemoBanner();
         if (then) then(c);
       }
       return c;
     })
     .catch(function () { /* API chưa chạy: trang vẫn hiển thị bình thường */ });
+}
+
+/**
+ * Điền Zalo và email hỗ trợ vào chân trang, lấy từ /admin → Cài đặt.
+ *
+ * Trang được dựng sẵn lúc build từ site.config.json, nên đổi số Zalo phải deploy
+ * lại. Đọc thêm ở đây để anh Thành đổi trong quản trị là trang đổi theo ngay.
+ * Chưa điền trong quản trị thì giữ nguyên giá trị dựng sẵn, không xoá đi.
+ *
+ * Đồng thời hiện các khối [data-can-zalo] — những chỗ bảo khách "nhắn Zalo".
+ * Không có Zalo thì các khối đó ở ẩn, thay vì chỉ đường tới một nơi không tồn tại.
+ */
+function renderLienHe(c) {
+  var lh = (c && c.contact) || {};
+  var soZalo = (lh.zalo || '').trim();
+  var mail = (lh.email || '').trim();
+
+  if (soZalo || mail) {
+    var html = '';
+    if (soZalo) {
+      html += '<a href="https://zalo.me/' + encodeURIComponent(soZalo.replace(/\D/g, ''))
+        + '" style="color:#26643f;text-decoration:none;font-weight:600">Zalo: '
+        + soZalo.replace(/[<>&]/g, '') + '</a>';
+    }
+    if (mail) {
+      html += '<a href="mailto:' + encodeURIComponent(mail)
+        + '" style="color:#26643f;text-decoration:none;font-weight:600">'
+        + mail.replace(/[<>&]/g, '') + '</a>';
+    }
+    $$('[data-lien-he]').forEach(function (el) { el.innerHTML = html; });
+  }
+
+  $$('[data-can-zalo]').forEach(function (el) {
+    if (!soZalo) return;
+    el.hidden = false;
+    $$('a[data-zalo-link]', el).forEach(function (a) {
+      a.href = 'https://zalo.me/' + encodeURIComponent(soZalo.replace(/\D/g, ''));
+    });
+  });
 }
 
 /** Gắn xử lý cho các nút "Sao chép" bên trong một khối. */

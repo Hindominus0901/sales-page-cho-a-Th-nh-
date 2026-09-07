@@ -671,12 +671,15 @@ function buildFooter() {
 
   const zalo = String(cfg.contact?.zalo ?? '').trim();
   const email = String(cfg.contact?.email ?? '').trim();
+  // Bọc trong [data-lien-he] để common.js ghi đè lúc chạy bằng giá trị anh Thành
+  // đặt trong /admin → Cài đặt. site.config.json chỉ còn là giá trị dự phòng khi
+  // chưa ai điền trong quản trị.
   const lienHe = (zalo || email)
-    ? `<div style="display:grid;gap:8px;font-size:14px">
+    ? `<div data-lien-he style="display:grid;gap:8px;font-size:14px">
 ${zalo ? `<a href="https://zalo.me/${esc(zalo.replace(/\D/g, ''))}" style="color:#26643f;text-decoration:none;font-weight:600">Zalo: ${esc(zalo)}</a>` : ''}
 ${email ? `<a href="mailto:${esc(email)}" style="color:#26643f;text-decoration:none;font-weight:600">${esc(email)}</a>` : ''}
 </div>`
-    : placeholder({ label: 'Zalo và email hỗ trợ', hint: 'Điền "contact.zalo" và "contact.email" trong site.config.json', minHeight: '78px' });
+    : `<div data-lien-he style="display:grid;gap:8px;font-size:14px"></div>${placeholder({ label: 'Zalo và email hỗ trợ', hint: 'Điền trong /admin → Cài đặt (đổi được không cần deploy), hoặc "contact.zalo"/"contact.email" trong site.config.json', minHeight: '78px' })}`;
 
   const khoiPhapLy = thieu.length === 0
     ? `<div style="font-size:14px;color:#4a4a52;line-height:1.8">

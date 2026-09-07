@@ -28,6 +28,17 @@ publicRoutes.get('/api/config', async (c) => {
     `SELECT COUNT(*) AS n FROM orders WHERE status IN ('paid','overpaid')`,
   ).first<{ n: number }>();
 
+  // Zalo và email hỗ trợ lấy từ SETTINGS, không phải site.config.json.
+  //
+  // Trước đây hai khoá này sửa được trong /admin, báo "Đã lưu", rồi không nơi
+  // nào đọc — anh Thành đổi số Zalo mà trang bán vẫn im. Trong khi nhiều trang
+  // bảo khách "nhắn Zalo" mà không có Zalo nào để nhắn. Đọc ở đây là biến ô đó
+  // thành thật, và đổi được không cần deploy lại.
+  const [zalo, emailHoTro] = await Promise.all([
+    getSetting(c.env, 'contact.zalo'),
+    getSetting(c.env, 'contact.email'),
+  ]);
+
   const taken = (sold?.n ?? 0) + product.seats_offset;
   const seatsLeft = product.seats_total === null
     ? null
@@ -40,6 +51,7 @@ publicRoutes.get('/api/config', async (c) => {
     seatsTotal: product.seats_total,
     seatsLeft,
     startDate: product.start_date,
+    contact: { zalo: zalo || null, email: emailHoTro || null },
   });
 });
 
