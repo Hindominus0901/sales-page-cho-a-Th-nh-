@@ -1,6 +1,7 @@
 import type { Env } from '../../types';
-import { now } from '../util/datetime';
-import { drainOutbox } from '../email/outbox';
+import { now, ictDate } from '../util/datetime';
+import { drainOutbox, queueMail } from '../email/outbox';
+import { nhacNopBaiMail } from '../email/templates';
 import { audit } from '../db/audit';
 
 /**
@@ -11,6 +12,8 @@ export async function runDailyJobs(env: Env): Promise<void> {
   await safely('hết hạn đơn chờ', () => expireStaleOrders(env));
   await safely('tự duyệt hoa hồng', () => autoApproveCommissions(env));
   await safely('dọn phiên hết hạn', () => pruneSessions(env));
+  await safely('nhắc học viên chưa nộp bài', () => nhacHocVien(env));
+  await safely('đóng khoá đã hết 21 ngày', () => dongKhoaHetHan(env));
   // Lưới đỡ cho hộp thư đi. Việc gửi chính đã chạy ngay sau webhook; lượt này
   // nhặt những cái lúc đó lỗi, để một mail hỏng lúc 2h sáng không nằm im mãi.
   await safely('gửi lại email còn tồn', () => drainOutbox(env));
@@ -81,4 +84,87 @@ async function autoApproveCommissions(env: Env): Promise<void> {
 
 async function pruneSessions(env: Env): Promise<void> {
   await env.DB.prepare(`DELETE FROM sessions WHERE expires_at < unixepoch() - 86400`).run();
+}
+
+/** Bao nhiêu ngày im lặng thì thôi nhắc. Người đã bỏ thì đừng làm phiền thêm. */
+const NGUNG_NHAC_SAU = 5;
+
+/**
+ * Nhắc học viên chưa nộp bài.
+ *
+ * Trước việc này, cron hằng đêm không có MỘT việc nào cho lớp học — cả bốn việc
+ * đều thuộc về bán hàng. Học viên quên là quên luôn, không ai gọi, và anh Thành
+ * cũng không biết ai đang tụt lại cho tới cuối khoá.
+ *
+ * Hai loại thư, khác nhau về giọng:
+ *   - chuỗi sắp đứt (nghỉ đúng một ngày): tiếc cho họ, giục nhẹ
+ *   - đã im vài ngày: trấn an là nộp bù vẫn đủ coin
+ *
+ * Ba chốt để nó không thành phiền:
+ *   - chỉ nhắc người đang học (`status = 'active'`) và đã tới ngày khai giảng
+ *   - ngừng sau NGUNG_NHAC_SAU ngày im lặng
+ *   - refId kèm ngày, nên UNIQUE(template, ref_id) bảo đảm tối đa một lá/ngày
+ */
+async function nhacHocVien(env: Env): Promise<void> {
+  const homNay = ictDate();
+  const homQua = ictDate(now() - 86400);
+
+  const rows = await env.DB.prepare(
+    `SELECT st.id, st.full_name, st.email, st.streak_current, st.last_submit_date,
+            e.started_at
+     FROM enrollments e JOIN students st ON st.id = e.student_id
+     WHERE e.status = 'active'
+       AND st.email IS NOT NULL AND st.email != ''
+       AND e.started_at <= unixepoch()
+       -- Chưa nộp hôm nay (nộp rồi thì không có gì để nhắc)
+       AND (st.last_submit_date IS NULL OR st.last_submit_date < ?)
+       -- Và khoá chưa quá 21 ngày
+       AND e.started_at > unixepoch() - 21 * 86400`,
+  ).bind(homNay).all<{
+    id: string; full_name: string; email: string;
+    streak_current: number; last_submit_date: string | null; started_at: number;
+  }>();
+
+  for (const r of rows.results ?? []) {
+    // Chưa nộp bài nào: đếm từ ngày khai giảng.
+    const mocCuoi = r.last_submit_date
+      ? Date.parse(`${r.last_submit_date}T00:00:00Z`) / 1000
+      : r.started_at;
+    const soNgayIm = Math.floor((Date.parse(`${homNay}T00:00:00Z`) / 1000 - mocCuoi) / 86400);
+
+    if (soNgayIm < 1 || soNgayIm > NGUNG_NHAC_SAU) continue;
+
+    // Nghỉ đúng một ngày và đang có chuỗi: nộp hôm nay là chuỗi còn.
+    const chuoiSapDut = r.last_submit_date === homQua && r.streak_current > 1;
+
+    await queueMail(env, nhacNopBaiMail(env, {
+      studentId: r.id, ngay: homNay, name: r.full_name, email: r.email,
+      soNgayIm, chuoiSapDut, chuoi: r.streak_current,
+    }));
+  }
+}
+
+/**
+ * Đóng khoá khi đã qua 21 ngày.
+ *
+ * `enrollments.status` có giá trị 'completed' trong lược đồ từ đầu, nhưng KHÔNG
+ * cron nào và KHÔNG màn hình nào từng đặt nó. Hệ quả: mọi học viên vĩnh viễn
+ * "Đang học", và người mua từ hai tháng trước vẫn nộp bù ngày 3 để lấy coin.
+ *
+ * Để dư 3 ngày sau ngày 21 cho người nộp bù sát nút.
+ */
+async function dongKhoaHetHan(env: Env): Promise<void> {
+  const res = await env.DB.prepare(
+    `UPDATE enrollments SET status = 'completed', completed_at = ?, updated_at = ?
+     WHERE status = 'active' AND started_at < unixepoch() - 24 * 86400`,
+  ).bind(now(), now()).run();
+
+  const n = res.meta?.changes ?? 0;
+  if (n > 0) {
+    await audit(env, {
+      actorType: 'system', actorId: null, actorLabel: 'cron',
+      action: 'enrollment.auto_complete', entityType: 'enrollment', entityId: null,
+      after: { soLuong: n },
+    });
+  }
 }

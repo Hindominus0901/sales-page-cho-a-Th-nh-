@@ -167,6 +167,7 @@
 
     renderGrid();
     renderForm();
+    renderLichSu();
     renderRewards();
     renderRedemptions();
   }
@@ -256,9 +257,43 @@
       return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;'
         + 'background:#fff;border-radius:14px;padding:11px 14px">'
         + '<span>' + esc(r.reward_name) + '</span>'
-        + '<span style="color:#55555c">' + esc(REDEEM_LABEL[r.status] || r.status) + '</span>'
+        + '<span style="color:#55555c;text-align:right">' + esc(REDEEM_LABEL[r.status] || r.status)
+        /* Lý do từ chối: admin gõ nó vào một ô mà họ tưởng là gửi cho học viên.
+           Trước đây nó chỉ nằm trong /admin, nên học viên chỉ thấy "Bị từ chối"
+           rồi phải nhắn Zalo hỏi vì sao. */
+        + (r.admin_note
+          ? '<br><span style="font-size:13px;color:#77777d">' + esc(r.admin_note) + '</span>'
+          : '')
+        + '</span>'
         + '</div>';
     }).join('');
+  }
+
+  var DUYET_LABEL = { approve: 'Đã duyệt', needs_work: 'Yêu cầu sửa', reject: 'Yêu cầu sửa' };
+
+  function renderLichSu() {
+    var khung = $('[data-lichsu]');
+    if (!khung) return;
+    var all = state.lichSuNhanXet || [];
+    var cua = all.filter(function (x) { return Number(x.day) === selectedDay; });
+    khung.hidden = cua.length === 0;
+    if (!cua.length) return;
+    $('[data-lichsu-list]').innerHTML = cua.map(function (x) {
+      return '<div style="background:#f6f6f4;border-radius:12px;padding:11px 14px">'
+        + '<div style="font-size:12px;color:#77777d;margin-bottom:4px">'
+        + esc(DUYET_LABEL[x.action] || x.action) + ' · ' + esc(ngayGio(x.created_at)) + '</div>'
+        + '<div style="font-size:14px;line-height:1.7;white-space:pre-wrap">' + esc(x.feedback) + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function ngayGio(unixSec) {
+    try {
+      return new Intl.DateTimeFormat('vi-VN', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+        timeZone: 'Asia/Ho_Chi_Minh',
+      }).format(new Date(unixSec * 1000));
+    } catch (e) { return ''; }
   }
 
   // ----------------------------------------------------------------- sự kiện
@@ -269,6 +304,7 @@
     selectedDay = Number(btn.getAttribute('data-day'));
     renderGrid();
     renderForm();
+    renderLichSu();
   });
 
   $('[data-form]').addEventListener('change', function (e) {
@@ -276,6 +312,7 @@
     selectedDay = Number(e.target.value);
     renderGrid();
     renderForm();
+    renderLichSu();
   });
 
   $('[data-form]').addEventListener('submit', function (e) {

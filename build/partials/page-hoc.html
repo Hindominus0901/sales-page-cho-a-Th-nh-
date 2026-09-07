@@ -96,6 +96,18 @@
           <div data-feedback-text style="font-size:14px;line-height:1.7;color:#3a3a42"></div>
         </div>
 
+        <!-- Nhận xét CŨ của chính ngày này.
+             Mỗi lần nộp lại, ô "Nhận xét của team" ở trên bị xoá để team không
+             tưởng nhầm là đã xem bài mới. Nhưng học viên thì vẫn cần đối chiếu
+             xem mình đã sửa đúng thứ được yêu cầu chưa — nên lịch sử giữ ở đây,
+             không bao giờ xoá. -->
+        <details data-lichsu hidden style="margin-bottom:18px">
+          <summary style="font-size:13px;font-weight:700;cursor:pointer;color:#55555c">
+            Nhận xét trước đó của ngày này
+          </summary>
+          <div data-lichsu-list style="display:grid;gap:10px;margin-top:10px"></div>
+        </details>
+
         <form data-form style="display:grid;gap:14px">
           <label style="display:grid;gap:6px">
             <span style="font-size:13px;font-weight:600">Ngày</span>

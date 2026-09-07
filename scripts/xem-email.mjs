@@ -64,6 +64,36 @@ const mau = [
     resetId: 'r-2', token: MA_DAT_LAI, name: 'Trần Hoàng Nam',
     email: 'nam@vidu.com', code: 'HOANGNAM',
   })],
+  ['07-ctv-email-da-co-ho-so', 'CTV — email đã có hồ sơ', T.affiliateDuplicateMail(env, {
+    id: 'aff-1', name: 'Trần Hoàng Nam', email: 'nam@vidu.com', status: 'active',
+  })],
+  ['08-bai-da-duyet', 'Bài đã được duyệt', T.submissionReviewedMail(env, {
+    submissionId: 's-1', lanDuyet: 1, day: 5, duyet: true,
+    feedback: 'Phần mở đầu tới rồi, giữ nhịp này.\nLần sau thử thêm một câu hỏi ở cuối bài.',
+    name: 'Nguyễn Thị Lan', email: 'lan@vidu.com', coin: 90, xp: 100, chuoi: 5,
+  })],
+  ['09-bai-can-sua', 'Bài cần sửa thêm', T.submissionReviewedMail(env, {
+    submissionId: 's-2', lanDuyet: 1, day: 6, duyet: false,
+    feedback: 'Phần mở đầu dài quá, cắt còn 2 câu.\nẢnh bìa chưa có chữ — thêm tiêu đề vào giúp em.',
+    name: 'Nguyễn Thị Lan', email: 'lan@vidu.com',
+  })],
+  ['10-qua-da-duyet', 'Quà — đã duyệt gửi', T.rewardDecidedMail(env, {
+    redemptionId: 'rd-1', rewardName: 'Bộ 100 Hook bản mở rộng', duyet: true,
+    adminNote: null, hoanCoin: null, name: 'Nguyễn Thị Lan', email: 'lan@vidu.com',
+  })],
+  ['11-qua-bi-tu-choi', 'Quà — bị từ chối', T.rewardDecidedMail(env, {
+    redemptionId: 'rd-2', rewardName: 'Coaching 1:1 với Thành 60 phút', duyet: false,
+    adminNote: 'Suất tháng này đã hết. Anh chị giữ coin, tháng sau mở lại em báo ngay.',
+    hoanCoin: 2500, name: 'Nguyễn Thị Lan', email: 'lan@vidu.com',
+  })],
+  ['12-nhac-chuoi-sap-dut', 'Nhắc — chuỗi sắp đứt', T.nhacNopBaiMail(env, {
+    studentId: 'st-1', ngay: '2026-09-15', name: 'Nguyễn Thị Lan', email: 'lan@vidu.com',
+    soNgayIm: 1, chuoiSapDut: true, chuoi: 7,
+  })],
+  ['13-nhac-da-im-vai-ngay', 'Nhắc — đã im vài ngày', T.nhacNopBaiMail(env, {
+    studentId: 'st-1', ngay: '2026-09-18', name: 'Nguyễn Thị Lan', email: 'lan@vidu.com',
+    soNgayIm: 3, chuoiSapDut: false, chuoi: 0,
+  })],
 ];
 
 rmSync(RA, { recursive: true, force: true });

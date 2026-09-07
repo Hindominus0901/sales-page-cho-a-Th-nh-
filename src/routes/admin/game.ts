@@ -7,6 +7,53 @@ import { rankOf, parseTiers } from '../../lib/game/rank';
 import { isStreakAlive } from '../../lib/game/streak';
 import { uuid } from '../../lib/util/id';
 import { now, ictDate, ictDateTime } from '../../lib/util/datetime';
+import { queueMail, drainOutbox } from '../../lib/email/outbox';
+import { submissionReviewedMail, rewardDecidedMail } from '../../lib/email/templates';
+
+/**
+ * Ghi một lượt duyệt vào lịch sử và trả về đây là lượt thứ mấy.
+ *
+ * Vì sao cần bảng riêng: `submissions.feedback` bị xoá về NULL mỗi lần học viên
+ * nộp lại (để team không tưởng nhầm là đã xem bài mới). Hợp lý, nhưng hệ quả
+ * không ai bù — học viên mất chỗ đối chiếu xem mình sửa đúng chưa, và NGƯỜI
+ * DUYỆT LẦN SAU cũng không thấy mình đã yêu cầu gì lần trước. Nếu người duyệt
+ * lần hai là nhân sự khác thì họ duyệt mù hoàn toàn.
+ *
+ * Số lượt cũng là thứ làm khoá chống trùng email: nộp lại rồi được duyệt vòng
+ * hai thì phải gửi được lá thư thứ hai.
+ */
+async function ghiLuotDuyet(
+  env: HonoEnv['Bindings'],
+  submissionId: string,
+  action: 'approve' | 'needs_work' | 'reject',
+  feedback: string | null,
+  admin: { id: string; email: string; name?: string },
+): Promise<number> {
+  const dem = await env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM submission_reviews WHERE submission_id = ?',
+  ).bind(submissionId).first<{ n: number }>();
+  const lan = (dem?.n ?? 0) + 1;
+
+  await env.DB.prepare(
+    `INSERT INTO submission_reviews
+       (id, submission_id, action, feedback, reviewer_id, reviewer_name, created_at)
+     VALUES (?,?,?,?,?,?,?)`,
+  ).bind(uuid(), submissionId, action, feedback, admin.id,
+    admin.name ?? admin.email, now()).run();
+
+  return lan;
+}
+
+/** Thông tin cần để gửi thư báo kết quả duyệt bài. */
+async function hocVienCuaBai(env: HonoEnv['Bindings'], submissionId: string) {
+  return env.DB.prepare(
+    `SELECT s.day, st.id AS student_id, st.full_name, st.email
+     FROM submissions s JOIN students st ON st.id = s.student_id
+     WHERE s.id = ?`,
+  ).bind(submissionId).first<{
+    day: number; student_id: string; full_name: string; email: string | null;
+  }>();
+}
 
 export const adminGameRoutes = new Hono<HonoEnv>();
 adminGameRoutes.use('/api/admin/*', requireAdmin);
@@ -81,8 +128,23 @@ adminGameRoutes.post('/api/admin/submissions/:id/review', requireRole('owner', '
   const feedback = String(body.feedback ?? '').trim().slice(0, 4000) || null;
 
   if (body.action === 'approve') {
+    const hv = await hocVienCuaBai(c.env, id);
     const r = await approveSubmission(c.env, id, { id: admin.id, label: admin.email }, feedback);
     if (!r) return c.json({ ok: false, error: 'Không tìm thấy bài nộp.' }, 404);
+
+    if (r.awarded) {
+      const lan = await ghiLuotDuyet(c.env, id, 'approve', feedback, admin);
+      if (hv?.email) {
+        await queueMail(c.env, submissionReviewedMail(c.env, {
+          submissionId: id, lanDuyet: lan, day: hv.day, duyet: true,
+          feedback, name: hv.full_name, email: hv.email,
+          coin: r.coin, xp: r.xp, chuoi: r.streak,
+        }));
+        c.executionCtx.waitUntil(
+          drainOutbox(c.env).catch((e) => console.error('[email] lượt gửi lỗi', e)));
+      }
+    }
+
     return c.json({
       ok: true, ...r,
       message: r.awarded
@@ -105,12 +167,34 @@ adminGameRoutes.post('/api/admin/submissions/:id/review', requireRole('owner', '
     if ((res.meta.changes ?? 0) === 0) {
       return c.json({ ok: false, error: 'Bài này đã được xử lý rồi.' }, 400);
     }
+    const lan = await ghiLuotDuyet(c.env, id, body.action, feedback, admin);
+    const hv = await hocVienCuaBai(c.env, id);
+    let daGui = false;
+    if (hv?.email) {
+      await queueMail(c.env, submissionReviewedMail(c.env, {
+        submissionId: id, lanDuyet: lan, day: hv.day, duyet: false,
+        feedback, name: hv.full_name, email: hv.email,
+      }));
+      c.executionCtx.waitUntil(
+        drainOutbox(c.env).catch((e) => console.error('[email] lượt gửi lỗi', e)));
+      daGui = true;
+    }
+
     await audit(c.env, {
       actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
       action: 'submission.' + body.action, entityType: 'submission', entityId: id,
       after: { feedback },
     });
-    return c.json({ ok: true, message: 'Đã gửi nhận xét cho học viên.' });
+
+    // Nói đúng chuyện đã xảy ra. Trước đây luôn báo "Đã gửi nhận xét cho học
+    // viên" trong khi không gửi gì cả — học viên không có email thì phải nói ra,
+    // để anh Thành biết mà nhắn Zalo.
+    return c.json({
+      ok: true,
+      message: daGui
+        ? 'Đã gửi nhận xét cho học viên qua email.'
+        : 'Đã lưu nhận xét. Học viên này chưa có email — anh nhắn Zalo giúp em.',
+    });
   }
 
   return c.json({ ok: false, error: 'Thao tác không hợp lệ.' }, 400);
@@ -277,6 +361,32 @@ adminGameRoutes.post('/api/admin/redemptions/:id/:action', requireRole('owner', 
     await c.env.DB.prepare(
       `UPDATE rewards SET stock = stock + 1 WHERE id = ? AND stock IS NOT NULL`,
     ).bind(r.reward_id).run();
+  }
+
+  /**
+   * Báo cho học viên.
+   *
+   * `admin_note` được gõ vào một ô mà người dùng tưởng là gửi cho học viên —
+   * thực ra nó chỉ nằm trong /admin. Học viên chỉ thấy "Bị từ chối", và kết quả
+   * duy nhất là một cuộc gọi Zalo hỏi vì sao. Bỏ qua 'approve' vì bước sau
+   * ('fulfill') mới là lúc quà thật sự tới tay.
+   */
+  if (target === 'rejected' || target === 'fulfilled') {
+    const hv = await c.env.DB.prepare(
+      'SELECT full_name, email FROM students WHERE id = ?',
+    ).bind(r.student_id).first<{ full_name: string; email: string | null }>();
+
+    if (hv?.email) {
+      await queueMail(c.env, rewardDecidedMail(c.env, {
+        redemptionId: id, rewardName: r.reward_name,
+        duyet: target === 'fulfilled',
+        adminNote: b.note ?? null,
+        hoanCoin: target === 'rejected' ? r.cost_coin : null,
+        name: hv.full_name, email: hv.email,
+      }));
+      c.executionCtx.waitUntil(
+        drainOutbox(c.env).catch((e) => console.error('[email] lượt gửi lỗi', e)));
+    }
   }
 
   await audit(c.env, {

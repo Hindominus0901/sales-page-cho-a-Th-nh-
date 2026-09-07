@@ -63,10 +63,27 @@ async function xemTrang(c: Context<HonoEnv>, session: StudentSession) {
     readMechanics(c.env),
   ]);
 
+  // admin_note: lý do từ chối. Trước đây cột này không nằm trong câu SELECT nên
+  // học viên chỉ thấy "Bị từ chối" mà không bao giờ biết vì sao — trong khi
+  // admin đã gõ lý do vào một ô mà họ tưởng là gửi cho học viên.
   const redemptions = await c.env.DB.prepare(
-    `SELECT reward_name, cost_coin, status, created_at FROM reward_redemptions
+    `SELECT reward_name, cost_coin, status, admin_note, created_at FROM reward_redemptions
      WHERE student_id = ? ORDER BY created_at DESC LIMIT 20`,
   ).bind(session.studentId).all();
+
+  /**
+   * Lịch sử nhận xét của cả 21 ngày.
+   *
+   * `submissions.feedback` bị xoá mỗi lần nộp lại, nên học viên sửa xong là mất
+   * chỗ đối chiếu xem mình đã sửa đúng chưa. Lịch sử nằm ở bảng riêng và không
+   * bao giờ bị xoá.
+   */
+  const lichSuNhanXet = await c.env.DB.prepare(
+    `SELECT s.day, r.action, r.feedback, r.created_at
+     FROM submission_reviews r JOIN submissions s ON s.id = r.submission_id
+     WHERE s.enrollment_id = ? AND r.feedback IS NOT NULL
+     ORDER BY r.created_at ASC`,
+  ).bind(session.enrollmentId).all();
 
   return c.json({
     ok: true,
@@ -89,6 +106,7 @@ async function xemTrang(c: Context<HonoEnv>, session: StudentSession) {
     days,
     rewards,
     redemptions: redemptions.results ?? [],
+    lichSuNhanXet: lichSuNhanXet.results ?? [],
     mechanics: {
       coinPerSubmission: mechanics.coinPerSubmission,
       xpPerSubmission: mechanics.xpPerSubmission,

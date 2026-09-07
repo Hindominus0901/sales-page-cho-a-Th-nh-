@@ -7,7 +7,8 @@ export interface Mail {
   text: string;
   html: string;
   template: 'order_paid' | 'workshop_registered' | 'password_reset' | 'student_access'
-    | 'affiliate_application' | 'affiliate_approved' | 'affiliate_duplicate';
+    | 'affiliate_application' | 'affiliate_approved' | 'affiliate_duplicate'
+    | 'submission_reviewed' | 'reward_decided' | 'nhac_nop_bai';
   refType: string;
   refId: string;
 }
@@ -331,6 +332,195 @@ export function affiliateDuplicateMail(
     // nhận được thư, mà UNIQUE(template, ref_id) sẽ nuốt lá thứ hai nếu refId
     // chỉ là id hồ sơ.
     refId: `${input.id}:${Math.floor(Date.now() / 3600000)}`,
+  };
+}
+
+/**
+ * Báo kết quả duyệt bài.
+ *
+ * Đây là lá thư vá cái lỗ lớn nhất của vòng phản hồi. Trước nó, anh Thành ngồi
+ * tối viết nhận xét bốn trăm chữ cho bài ngày 5, bấm "Yêu cầu sửa", màn hình
+ * báo "Đã gửi nhận xét cho học viên" — và không gửi gì cả. Học viên chỉ biết
+ * nếu tự mở lại link. Một hai tiếng mỗi sáng đổ vào chỗ không ai được báo là có.
+ *
+ * refId kèm số lần duyệt: UNIQUE(template, ref_id) chống gửi trùng, nhưng bài
+ * nộp lại rồi được duyệt vòng hai thì PHẢI gửi được lá thứ hai.
+ */
+export function submissionReviewedMail(
+  env: Env,
+  input: {
+    submissionId: string; lanDuyet: number; day: number;
+    duyet: boolean; feedback: string | null;
+    name: string; email: string | null;
+    coin?: number; xp?: number; chuoi?: number;
+  },
+): Mail {
+  const ten = input.name.split(' ').slice(-1)[0] || input.name;
+  const base = env.PUBLIC_BASE_URL.replace(/\/$/, '');
+  const link = `${base}/dang-nhap`;
+
+  const tieuDe = input.duyet
+    ? `Bài ngày ${input.day} đã được duyệt`
+    : `Bài ngày ${input.day} cần sửa thêm một chút`;
+
+  const mo = input.duyet
+    ? [
+      `Bài ngày ${input.day} của anh chị đã được duyệt.`,
+      ...(input.coin ? [`Cộng ${input.coin} coin và ${input.xp} XP.`] : []),
+      ...(input.chuoi && input.chuoi > 1 ? [`Chuỗi ngày hiện tại: ${input.chuoi} ngày liên tiếp.`] : []),
+    ]
+    : [
+      `Bài ngày ${input.day} của anh chị cần sửa thêm một chút trước khi duyệt.`,
+      'Sửa xong nộp lại ngay trong lớp là được, không mất chuỗi ngày.',
+    ];
+
+  const text = [
+    `Chào ${ten},`,
+    '',
+    ...mo,
+    ...(input.feedback ? ['', 'Nhận xét của team:', '', input.feedback] : []),
+    '',
+    `Xem lại trong lớp: ${link}`,
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  return {
+    toEmail: input.email ?? '',
+    toName: input.name,
+    subject: `${tieuDe} — Góc Creator`,
+    text,
+    html: shell(tieuDe, [
+      p(`Chào <b>${esc(ten)}</b>,`),
+      ...mo.map((d) => p(esc(d))),
+      ...(input.feedback
+        ? [
+          p('<b>Nhận xét của team:</b>'),
+          `<div style="background:#f6f6f4;border-left:3px solid #a8d98d;padding:14px 16px;`
+          + `border-radius:8px;font-size:15px;line-height:1.7;white-space:pre-wrap">`
+          + `${esc(input.feedback)}</div>`,
+        ]
+        : []),
+      p(`<a href="${link}" style="color:#26643f;font-weight:600">Mở lớp học của anh chị</a>`),
+    ]),
+    template: 'submission_reviewed',
+    refType: 'submission',
+    refId: `${input.submissionId}:${input.lanDuyet}`,
+  };
+}
+
+/**
+ * Báo kết quả xử lý yêu cầu đổi quà.
+ *
+ * Lý do từ chối được admin gõ vào một ô mà họ tưởng là gửi cho học viên — thực
+ * ra nó chỉ nằm trong /admin. Học viên chỉ thấy "Bị từ chối", và kết quả duy
+ * nhất là một cuộc gọi Zalo hỏi vì sao.
+ */
+export function rewardDecidedMail(
+  env: Env,
+  input: {
+    redemptionId: string; rewardName: string; duyet: boolean;
+    adminNote: string | null; hoanCoin: number | null;
+    name: string; email: string | null;
+  },
+): Mail {
+  const ten = input.name.split(' ').slice(-1)[0] || input.name;
+  const tieuDe = input.duyet
+    ? `Yêu cầu đổi "${input.rewardName}" đã được duyệt`
+    : `Yêu cầu đổi "${input.rewardName}" chưa được duyệt`;
+
+  const mo = input.duyet
+    ? ['Bên Thành sẽ liên hệ anh chị để trao phần quà này.']
+    : [
+      ...(input.hoanCoin ? [`Em đã hoàn lại ${input.hoanCoin} coin vào ví của anh chị.`] : []),
+      'Anh chị đổi phần quà khác hoặc để dành coin đều được.',
+    ];
+
+  const text = [
+    `Chào ${ten},`,
+    '',
+    tieuDe + '.',
+    ...mo.map((d) => d),
+    ...(input.adminNote ? ['', 'Ghi chú từ team:', '', input.adminNote] : []),
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  return {
+    toEmail: input.email ?? '',
+    toName: input.name,
+    subject: `${tieuDe} — Góc Creator`,
+    text,
+    html: shell(tieuDe, [
+      p(`Chào <b>${esc(ten)}</b>,`),
+      ...mo.map((d) => p(esc(d))),
+      ...(input.adminNote
+        ? [p(`<b>Ghi chú từ team:</b><br>${esc(input.adminNote)}`)]
+        : []),
+    ]),
+    template: 'reward_decided',
+    refType: 'reward_redemption',
+    refId: input.redemptionId,
+  };
+}
+
+/**
+ * Nhắc học viên chưa nộp bài.
+ *
+ * Cron gọi mỗi sáng. refId kèm ngày để mỗi người nhận tối đa một lá mỗi ngày,
+ * và để lá của hôm sau không bị UNIQUE nuốt mất.
+ */
+export function nhacNopBaiMail(
+  env: Env,
+  input: {
+    studentId: string; ngay: string; name: string; email: string | null;
+    soNgayIm: number; chuoiSapDut: boolean; chuoi: number;
+  },
+): Mail {
+  const ten = input.name.split(' ').slice(-1)[0] || input.name;
+  const base = env.PUBLIC_BASE_URL.replace(/\/$/, '');
+  const link = `${base}/dang-nhap`;
+
+  const tieuDe = input.chuoiSapDut
+    ? `Chuỗi ${input.chuoi} ngày của anh chị sắp đứt`
+    : 'Hôm qua anh chị chưa nộp bài';
+
+  const mo = input.chuoiSapDut
+    ? [
+      `Anh chị đang có chuỗi ${input.chuoi} ngày liên tiếp — đẹp lắm.`,
+      'Hôm qua chưa thấy bài, nộp hôm nay là chuỗi vẫn giữ được.',
+    ]
+    : [
+      `Đã ${input.soNgayIm} ngày em chưa thấy bài của anh chị.`,
+      'Nộp bù ngày cũ vẫn được tính đủ coin, không mất gì cả.',
+    ];
+
+  const text = [
+    `Chào ${ten},`,
+    '',
+    ...mo,
+    '',
+    `Nộp bài tại: ${link}`,
+    '',
+    'Bận quá thì cứ báo trong nhóm Zalo, không sao cả.',
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  return {
+    toEmail: input.email ?? '',
+    toName: input.name,
+    subject: `${tieuDe} — Góc Creator`,
+    text,
+    html: shell(tieuDe, [
+      p(`Chào <b>${esc(ten)}</b>,`),
+      ...mo.map((d) => p(esc(d))),
+      p(`<a href="${link}" style="color:#26643f;font-weight:600">Nộp bài ngay</a>`),
+      p('Bận quá thì cứ báo trong nhóm Zalo, không sao cả.'),
+    ]),
+    template: 'nhac_nop_bai',
+    refType: 'student',
+    refId: `${input.studentId}:${input.ngay}`,
   };
 }
 
