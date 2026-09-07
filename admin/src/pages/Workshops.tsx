@@ -4,7 +4,8 @@ import { Badge, ScoreBadge, Loading, ErrorBox, Empty, useLoad, useToast } from '
 
 interface Workshop {
   id: string; slug: string; title: string; starts_at: number; status: string;
-  zoom_url: string | null; zoom_meeting_id: string | null; zalo_group_url: string | null;
+  zoom_url: string | null; zoom_meeting_id: string | null; zoom_passcode: string | null;
+  zalo_group_url: string | null; capacity: number | null;
   registrations: number; attended: number;
 }
 interface Reg {
@@ -27,6 +28,15 @@ export default function Workshops() {
   const [form, setForm] = useState({ slug: '', title: '', startsAt: '', zoomUrl: '', zoomMeetingId: '', zaloGroupUrl: '' });
   const { data, error, loading, reload } = useLoad<{ workshops: Workshop[] }>(
     () => api.get('/api/admin/workshops'));
+
+  async function xoa(w: Workshop) {
+    if (!confirm(`Xoá buổi "${w.title}"? Không hoàn tác được.`)) return;
+    try {
+      await api.del(`/api/admin/workshops/${w.id}`);
+      toast.show('Đã xoá buổi workshop.');
+      reload();
+    } catch (err) { toast.fail((err as Error).message); }
+  }
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -125,10 +135,19 @@ export default function Workshops() {
                 <button className="btn sm" onClick={() => setOpen(open === w.id ? null : w.id)}>
                   {open === w.id ? 'Đóng danh sách' : 'Xem người đăng ký'}
                 </button>
-                {w.status === 'upcoming' && (
+                {w.status === 'upcoming' ? (
                   <button className="btn sm" onClick={() => update(w.id, { status: 'done' })}>
                     Đánh dấu đã xong
                   </button>
+                ) : (
+                  /* Mở lại buổi đã đánh dấu xong. Bấm nhầm là chuyện thường, và
+                     trước đây không có đường quay lại ngoài việc sửa thẳng D1. */
+                  <button className="btn sm" onClick={() => update(w.id, { status: 'upcoming' })}>
+                    Mở lại buổi này
+                  </button>
+                )}
+                {w.registrations === 0 && (
+                  <button className="btn sm" onClick={() => xoa(w)}>Xoá</button>
                 )}
               </div>
             </div>
@@ -138,8 +157,23 @@ export default function Workshops() {
                          onSave={(v) => update(w.id, { zoomUrl: v })} />
               <LinkField label="ID phòng" value={w.zoom_meeting_id}
                          onSave={(v) => update(w.id, { zoomMeetingId: v })} />
+              <LinkField label="Mật khẩu phòng" value={w.zoom_passcode}
+                         onSave={(v) => update(w.id, { zoomPasscode: v })} />
               <LinkField label="Nhóm Zalo" value={w.zalo_group_url}
                          onSave={(v) => update(w.id, { zaloGroupUrl: v })} />
+              <LinkField label="Tiêu đề buổi" value={w.title}
+                         onSave={(v) => update(w.id, { title: v })} />
+              {/* Giờ bắt đầu: trước đây đặt xong là khoá cứng. Dời lịch một buổi
+                  là việc rất hay xảy ra, mà không sửa được thì phải tạo buổi mới
+                  và người đã đăng ký bị bỏ lại ở buổi cũ. */}
+              <LinkField label="Bắt đầu (giờ VN)" value={unixToIctLocal(w.starts_at)}
+                         onSave={(v) => {
+                           const t = Date.parse(v + ':00+07:00');
+                           if (!Number.isFinite(t)) { toast.fail('Giờ chưa đúng định dạng.'); return; }
+                           update(w.id, { startsAt: Math.floor(t / 1000) });
+                         }} />
+              <LinkField label="Sức chứa" value={w.capacity === null ? '' : String(w.capacity)}
+                         onSave={(v) => update(w.id, { capacity: v.trim() ? Number(v) : null })} />
             </div>
 
             {open === w.id && <Registrations id={w.id} />}

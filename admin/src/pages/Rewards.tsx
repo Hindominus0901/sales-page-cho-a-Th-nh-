@@ -60,6 +60,47 @@ export default function Rewards() {
     catch (e) { toast.fail((e as Error).message); }
   }
 
+  /* Sửa tại chỗ. Trước đây kho quà chỉ thêm được và bật/tắt được — đổi giá hay
+     sửa tên một món phải vào thẳng D1. */
+  const [sua, setSua] = useState<string | null>(null);
+  const [nhap, setNhap] = useState<Record<string, string>>({});
+
+  function moSua(r: Reward) {
+    setSua(r.id);
+    setNhap({
+      name: r.name, description: r.description ?? '',
+      costCoin: String(r.cost_coin), minRank: String(r.min_rank),
+      stock: r.stock === null ? '' : String(r.stock),
+    });
+  }
+
+  async function luuSua(r: Reward) {
+    try {
+      await api.patch(`/api/admin/rewards/${r.id}`, {
+        name: nhap.name?.trim(),
+        description: nhap.description ?? '',
+        costCoin: Number(nhap.costCoin) || 0,
+        minRank: Number(nhap.minRank) || 0,
+        // Ô trống = không giới hạn. COALESCE ở máy chủ giữ giá trị cũ khi gửi
+        // null, nên phải gửi -1 rồi quy về NULL — nhưng đơn giản hơn là chỉ gửi
+        // khi người dùng có gõ số.
+        ...(nhap.stock?.trim() ? { stock: Number(nhap.stock) } : {}),
+      });
+      toast.show('Đã lưu.');
+      setSua(null);
+      reload();
+    } catch (e) { toast.fail((e as Error).message); }
+  }
+
+  async function xoa(r: Reward) {
+    if (!confirm(`Xoá hẳn "${r.name}"? Không hoàn tác được.`)) return;
+    try {
+      await api.del(`/api/admin/rewards/${r.id}`);
+      toast.show('Đã xoá.');
+      reload();
+    } catch (e) { toast.fail((e as Error).message); }
+  }
+
   if (loading) return <Loading what="quà tặng" />;
   if (error) return <ErrorBox message={error} />;
   if (!data) return null;
@@ -158,15 +199,65 @@ export default function Rewards() {
                 <td className="right num">{r.stock === null ? 'không giới hạn' : r.stock}</td>
                 <td><Badge kind={r.is_active ? 'ok' : 'mute'}>{r.is_active ? 'Đang mở' : 'Đã tắt'}</Badge></td>
                 <td className="right">
-                  <button className="btn sm" onClick={() => toggle(r)}>
-                    {r.is_active ? 'Tắt' : 'Mở lại'}
-                  </button>
+                  <div className="row" style={{ gap: 5, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    <button className="btn sm" onClick={() => moSua(r)}>Sửa</button>
+                    <button className="btn sm" onClick={() => toggle(r)}>
+                      {r.is_active ? 'Tắt' : 'Mở lại'}
+                    </button>
+                    <button className="btn sm" onClick={() => xoa(r)}>Xoá</button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {sua && (() => {
+        const r = data.rewards.find((x) => x.id === sua);
+        if (!r) return null;
+        return (
+          <div className="card card-pad" style={{ marginBottom: 18 }}>
+            <h2 style={{ marginBottom: 12 }}>Sửa &ldquo;{r.name}&rdquo;</h2>
+            <div className="grid grid-3">
+              <div className="field">
+                <label>Tên quà</label>
+                <input className="input" value={nhap.name ?? ''}
+                       onChange={(e) => setNhap({ ...nhap, name: e.target.value })} />
+              </div>
+              <div className="field">
+                <label>Giá coin</label>
+                <input className="input" type="number" min={0} value={nhap.costCoin ?? ''}
+                       onChange={(e) => setNhap({ ...nhap, costCoin: e.target.value })} />
+              </div>
+              <div className="field">
+                <label>Bậc tối thiểu</label>
+                <select className="input" value={nhap.minRank ?? '0'}
+                        onChange={(e) => setNhap({ ...nhap, minRank: e.target.value })}>
+                  {data.tiers.map((t, i) => (
+                    <option key={i} value={i}>{t.icon} {t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <label>Số suất còn lại</label>
+                <input className="input" type="number" min={0} value={nhap.stock ?? ''}
+                       placeholder="để trống = không giới hạn"
+                       onChange={(e) => setNhap({ ...nhap, stock: e.target.value })} />
+              </div>
+              <div className="field" style={{ gridColumn: 'span 2' }}>
+                <label>Mô tả</label>
+                <input className="input" value={nhap.description ?? ''}
+                       onChange={(e) => setNhap({ ...nhap, description: e.target.value })} />
+              </div>
+            </div>
+            <div className="row" style={{ marginTop: 12 }}>
+              <button className="btn primary" onClick={() => luuSua(r)}>Lưu</button>
+              <button className="btn" onClick={() => setSua(null)}>Huỷ</button>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="card card-pad">
         <h2 style={{ marginBottom: 12 }}>Thêm quà mới</h2>

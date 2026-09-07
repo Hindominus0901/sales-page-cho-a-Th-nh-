@@ -60,6 +60,20 @@ export default function NoiDung21Ngay() {
     } finally { setBusy(null); }
   }
 
+  async function xoa(d: Ngay) {
+    if (!confirm(`Xoá nội dung ngày ${d.day}? Học viên sẽ thấy lại dòng "đề bài sẽ có trước buổi học".`)) return;
+    setBusy(d.day);
+    try {
+      await api.del(`/api/admin/noi-dung-21-ngay/${d.day}`);
+      toast.show(`Đã xoá nội dung ngày ${d.day}.`);
+      setNhap((n) => { const x = { ...n }; delete x[d.day]; return x; });
+      setMo(null);
+      reload();
+    } catch (e) {
+      toast.fail(e instanceof Error ? e.message : 'Không xoá được.');
+    } finally { setBusy(null); }
+  }
+
   if (loading) return <Loading what="nội dung 21 ngày" />;
   if (error) return <ErrorBox message={error} />;
   if (!data) return null;
@@ -154,6 +168,10 @@ export default function NoiDung21Ngay() {
                             onClick={() => luu(d)}>
                       {busy === d.day ? 'Đang lưu…' : `Lưu ngày ${d.day}`}
                     </button>
+                    {daCo && (
+                      <button className="btn" disabled={busy === d.day}
+                              onClick={() => xoa(d)}>Xoá nội dung ngày này</button>
+                    )}
                   </div>
                 </div>
               )}

@@ -1,5 +1,6 @@
 import type { Env } from '../../types';
 import { uuid, accessToken } from '../util/id';
+import { getSettingNumber } from '../db/settings';
 import { now, daysFromNow } from '../util/datetime';
 import { commissionOf } from '../util/money';
 import { auditStmt } from '../db/audit';
@@ -109,6 +110,12 @@ export async function fulfillOrder(
 ): Promise<{ studentId: string; commissionId: string | null; commissionHeld: boolean }> {
   const ts = now();
 
+  // Số ngày giữ hoa hồng: settings trước, biến môi trường sau, cuối cùng là 7.
+  // Trước đây chỉ đọc biến môi trường, nên ô "Số ngày giữ hoa hồng" trong màn
+  // hình Cài đặt là một ô chết — sửa xong báo "Đã lưu" mà không đổi gì.
+  const soNgayGiuHoaHong = await getSettingNumber(
+    env, 'commission.hold_days', Number(env.COMMISSION_HOLD_DAYS || 7), 0, 365);
+
   // 1. Học viên — khớp theo số điện thoại chuẩn hoá, một người một bản ghi.
   const existingStudent = await env.DB
     .prepare('SELECT id FROM students WHERE phone_norm = ? LIMIT 1')
@@ -204,7 +211,7 @@ export async function fulfillOrder(
         commissionOf(base, rate),
         commissionHeld ? 'held' : 'pending',
         verdict.reason,
-        daysFromNow(Number(env.COMMISSION_HOLD_DAYS || 7)),
+        daysFromNow(soNgayGiuHoaHong),
         ts, ts,
       ));
     }

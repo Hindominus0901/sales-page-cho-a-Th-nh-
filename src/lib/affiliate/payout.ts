@@ -1,4 +1,5 @@
 import type { Env } from '../../types';
+import { getSettingNumber } from '../db/settings';
 import { uuid } from '../util/id';
 import { now, ictDate } from '../util/datetime';
 import { auditStmt } from '../db/audit';
@@ -28,7 +29,7 @@ export async function requestPayout(
     `SELECT id, name, payout_threshold, bank_name, bank_account_no, bank_account_name
      FROM affiliates WHERE id = ?`,
   ).bind(affiliateId).first<{
-    id: string; name: string; payout_threshold: number;
+    id: string; name: string; payout_threshold: number | null;
     bank_name: string | null; bank_account_no: string | null; bank_account_name: string | null;
   }>();
   if (!aff) return { ok: false, error: 'Không tìm thấy tài khoản.' };
@@ -48,12 +49,24 @@ export async function requestPayout(
     return { ok: false, error: 'Hiện chưa có hoa hồng nào đã duyệt để rút.' };
   }
 
+  /**
+   * Ngưỡng rút tối thiểu.
+   *
+   * Cột `affiliates.payout_threshold` là ngưỡng RIÊNG của từng CTV; khoá
+   * `affiliate.payout_threshold` trong settings là mặc định chung mà anh Thành
+   * chỉnh trong /admin. Cột riêng đè lên mặc định chung khi có, để một CTV đặc
+   * biệt vẫn đặt riêng được — còn ô trong màn hình Cài đặt thì từ nay có tác
+   * dụng thật, thay vì báo "Đã lưu" rồi không đổi gì.
+   */
+  const nguong = aff.payout_threshold
+    ?? await getSettingNumber(env, 'affiliate.payout_threshold', 500000, 0, 100000000);
+
   const amount = items.reduce((s, i) => s + i.amount, 0);
-  if (amount < aff.payout_threshold) {
+  if (amount < nguong) {
     return {
       ok: false,
       error: `Số dư đã duyệt (${amount.toLocaleString('vi-VN')}đ) chưa đạt mức tối thiểu `
-        + `${aff.payout_threshold.toLocaleString('vi-VN')}đ.`,
+        + `${nguong.toLocaleString('vi-VN')}đ.`,
     };
   }
 

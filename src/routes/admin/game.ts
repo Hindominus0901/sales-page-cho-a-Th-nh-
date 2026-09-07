@@ -337,6 +337,43 @@ adminGameRoutes.post('/api/admin/rewards', requireRole('owner', 'admin'), async 
   return c.json({ ok: true, id });
 });
 
+/**
+ * Xoá hẳn một phần quà.
+ *
+ * Chỉ xoá được món CHƯA AI ĐỔI. Món đã có người đổi mà xoá đi thì lịch sử đổi
+ * quà của họ trỏ vào khoảng không, và số coin đã trừ không còn giải thích được.
+ * Trường hợp đó thì ẩn (is_active = 0) — món biến khỏi cổng học viên nhưng lịch
+ * sử vẫn đọc được.
+ */
+adminGameRoutes.delete('/api/admin/rewards/:id', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const id = c.req.param('id');
+
+  const r = await c.env.DB.prepare('SELECT name FROM rewards WHERE id = ?')
+    .bind(id).first<{ name: string }>();
+  if (!r) return c.json({ ok: false, error: 'Không tìm thấy phần quà này.' }, 404);
+
+  const daDoi = await c.env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM reward_redemptions WHERE reward_id = ?',
+  ).bind(id).first<{ n: number }>();
+
+  if ((daDoi?.n ?? 0) > 0) {
+    return c.json({
+      ok: false,
+      error: `Đã có ${daDoi?.n} lượt đổi phần quà này nên không xoá được — `
+        + 'xoá đi thì lịch sử của học viên trỏ vào khoảng không. Anh tắt nó đi '
+        + 'thay vì xoá: món sẽ biến khỏi cổng học viên, lịch sử vẫn còn.',
+    }, 409);
+  }
+
+  await c.env.DB.prepare('DELETE FROM rewards WHERE id = ?').bind(id).run();
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'reward.delete', entityType: 'reward', entityId: id, before: { name: r.name },
+  });
+  return c.json({ ok: true });
+});
+
 adminGameRoutes.patch('/api/admin/rewards/:id', requireRole('owner', 'admin'), async (c) => {
   const admin = adminUserOf(c);
   const id = c.req.param('id');

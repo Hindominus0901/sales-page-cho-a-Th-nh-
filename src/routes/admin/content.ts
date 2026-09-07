@@ -300,6 +300,65 @@ adminContentRoutes.put('/api/admin/noi-dung-21-ngay/:day', requireRole('owner', 
   return c.json({ ok: true });
 });
 
+
+/** Xoá nội dung một ngày. Học viên sẽ thấy lại dòng "đề bài sẽ có trước buổi học". */
+adminContentRoutes.delete('/api/admin/noi-dung-21-ngay/:day', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const day = Number(c.req.param('day'));
+  const sp = await c.env.DB.prepare(
+    `SELECT id, cohort_hien_tai FROM products WHERE slug = 'thu-thach-21-ngay'`,
+  ).first<{ id: string; cohort_hien_tai: string | null }>();
+  if (!sp) return c.json({ ok: false, error: 'Chưa có sản phẩm.' }, 503);
+
+  const cohort = c.req.query('cohort') ?? sp.cohort_hien_tai ?? null;
+  await c.env.DB.prepare(
+    `DELETE FROM challenge_days
+     WHERE product_id = ? AND COALESCE(cohort,'') = COALESCE(?,'') AND day = ?`,
+  ).bind(sp.id, cohort, day).run();
+
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'challenge_day.delete', entityType: 'challenge_day',
+    entityId: `${cohort ?? ''}:${day}`,
+  });
+  return c.json({ ok: true });
+});
+
+/**
+ * Xoá một buổi workshop.
+ *
+ * Chỉ xoá được buổi CHƯA AI ĐĂNG KÝ — xoá buổi đã có người đăng ký là làm mất
+ * dấu vết của những người đó. Buổi đã xong thì đánh dấu 'done', đừng xoá.
+ */
+adminContentRoutes.delete('/api/admin/workshops/:id', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const id = c.req.param('id');
+
+  const w = await c.env.DB.prepare('SELECT title FROM workshop_sessions WHERE id = ?')
+    .bind(id).first<{ title: string }>();
+  if (!w) return c.json({ ok: false, error: 'Không tìm thấy buổi workshop.' }, 404);
+
+  const dk = await c.env.DB.prepare(
+    'SELECT COUNT(*) AS n FROM workshop_registrations WHERE session_id = ?',
+  ).bind(id).first<{ n: number }>();
+
+  if ((dk?.n ?? 0) > 0) {
+    return c.json({
+      ok: false,
+      error: `Buổi này đã có ${dk?.n} người đăng ký nên không xoá được — xoá đi là `
+        + 'mất dấu vết của họ. Anh đánh dấu "đã xong" thay vì xoá.',
+    }, 409);
+  }
+
+  await c.env.DB.prepare('DELETE FROM workshop_sessions WHERE id = ?').bind(id).run();
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'workshop.delete', entityType: 'workshop_session', entityId: id,
+    before: { title: w.title },
+  });
+  return c.json({ ok: true });
+});
+
 // ---------------------------------------------------------------- cài đặt
 
 /**
@@ -321,14 +380,27 @@ adminContentRoutes.get('/api/admin/settings', async (c) => {
   const rows = await c.env.DB.prepare(`SELECT key, value_json, updated_at FROM settings`).all<
     { key: string; value_json: string; updated_at: number }>();
   const product = await c.env.DB.prepare(
-    `SELECT price, compare_at_price, seats_total, seats_offset, start_date, is_active
+    `SELECT name, price, compare_at_price, seats_total, seats_offset, start_date, is_active,
+            cohort_hien_tai, cohort_khai_giang, cohort_bat_dau_tu
      FROM products WHERE slug = 'thu-thach-21-ngay'`,
   ).first();
+
+  // Đã bán bao nhiêu chỗ TÍNH TỪ MỐC mở khoá hiện tại — con số quyết định
+  // "còn mấy chỗ", nên hiện thẳng ra để anh Thành đối chiếu được.
+  const p = product as { cohort_bat_dau_tu?: number | null } | null;
+  const daBanKhoaNay = p?.cohort_bat_dau_tu
+    ? (await c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM orders WHERE status IN ('paid','overpaid') AND paid_at >= ?`,
+    ).bind(p.cohort_bat_dau_tu).first<{ n: number }>())?.n ?? 0
+    : (await c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM orders WHERE status IN ('paid','overpaid')`,
+    ).first<{ n: number }>())?.n ?? 0;
   return c.json({
     ok: true,
     settings: rows.results ?? [],
     editableKeys: [...EDITABLE_SETTINGS],
     product,
+    daBanKhoaNay,
     bank: {
       bankName: c.env.SEPAY_BANK_NAME,
       accountNo: c.env.SEPAY_ACCOUNT_NO,
@@ -365,17 +437,36 @@ adminContentRoutes.patch('/api/admin/product', requireRole('owner', 'admin'), as
   const admin = adminUserOf(c);
   const b = await c.req.json<Record<string, string | number | null>>().catch(() => ({}) as Record<string, string | number | null>);
   const before = await c.env.DB.prepare(
-    `SELECT price, seats_total, seats_offset, start_date FROM products WHERE slug = 'thu-thach-21-ngay'`,
+    `SELECT price, compare_at_price, name, seats_total, seats_offset, start_date,
+            cohort_hien_tai, cohort_khai_giang, cohort_bat_dau_tu
+     FROM products WHERE slug = 'thu-thach-21-ngay'`,
   ).first();
+
+  /**
+   * `moKhoaMoi` — mốc đếm chỗ được đặt lại về BÂY GIỜ.
+   *
+   * Đây là thao tác quan trọng nhất khi bán khoá 2, và trước đây không có cách
+   * nào làm ngoài việc sửa thẳng D1. Không đặt lại mốc thì bộ đếm chỗ vẫn trừ
+   * toàn bộ đơn từ đầu lịch sử: ba mươi đơn của khoá 1 ăn hết ba mươi chỗ của
+   * khoá 2, và trang bán báo "hết chỗ" ngay ngày mở bán.
+   */
+  const moKhoaMoi = b.moKhoaMoi === 1 || String(b.moKhoaMoi) === 'true';
 
   await c.env.DB.prepare(
     `UPDATE products SET price = COALESCE(?, price),
        compare_at_price = COALESCE(?, compare_at_price),
+       name = COALESCE(?, name),
        seats_total = COALESCE(?, seats_total), seats_offset = COALESCE(?, seats_offset),
-       start_date = COALESCE(?, start_date), is_active = COALESCE(?, is_active), updated_at = ?
+       start_date = COALESCE(?, start_date), is_active = COALESCE(?, is_active),
+       cohort_hien_tai = COALESCE(?, cohort_hien_tai),
+       cohort_khai_giang = COALESCE(?, cohort_khai_giang),
+       cohort_bat_dau_tu = CASE WHEN ? = 1 THEN ? ELSE cohort_bat_dau_tu END,
+       updated_at = ?
      WHERE slug = 'thu-thach-21-ngay'`,
-  ).bind(b.price ?? null, b.compareAtPrice ?? null, b.seatsTotal ?? null,
-    b.seatsOffset ?? null, b.startDate ?? null, b.isActive ?? null, now()).run();
+  ).bind(b.price ?? null, b.compareAtPrice ?? null, b.name ?? null, b.seatsTotal ?? null,
+    b.seatsOffset ?? null, b.startDate ?? null, b.isActive ?? null,
+    b.cohortHienTai ?? null, b.cohortKhaiGiang ?? null,
+    moKhoaMoi ? 1 : 0, now(), now()).run();
 
   await audit(c.env, {
     actorType: 'admin', actorId: admin.id, actorLabel: admin.email,

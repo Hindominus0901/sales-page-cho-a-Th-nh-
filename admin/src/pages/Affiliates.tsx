@@ -43,6 +43,36 @@ export default function Affiliates() {
     catch (e) { toast.fail((e as Error).message); }
   }
 
+  /* Tỉ lệ hoa hồng riêng cho từng CTV.
+     Backend nhận `commissionRate` từ lâu; giao diện chỉ hiển thị, nên muốn cho
+     một CTV 30% là phải vào thẳng D1. */
+  async function doiTiLe(a: Aff) {
+    const raw = prompt(
+      `Tỉ lệ hoa hồng của ${a.name} là bao nhiêu phần trăm?\n`
+      + `Hiện tại: ${a.commission_rate / 100}%`, String(a.commission_rate / 100));
+    if (raw === null) return;
+    const pct = Number(String(raw).replace(',', '.'));
+    if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+      toast.fail('Tỉ lệ phải nằm trong khoảng 0–100.');
+      return;
+    }
+    try {
+      await api.patch(`/api/admin/affiliates/${a.id}`, { commissionRate: Math.round(pct * 100) });
+      toast.show(`Đã đổi tỉ lệ của ${a.name} thành ${pct}%.`);
+      reload();
+    } catch (e) { toast.fail((e as Error).message); }
+  }
+
+  async function doiGhiChu(a: Aff) {
+    const raw = prompt(`Ghi chú về ${a.name}:`, a.notes ?? '');
+    if (raw === null) return;
+    try {
+      await api.patch(`/api/admin/affiliates/${a.id}`, { notes: raw.trim() });
+      toast.show('Đã lưu ghi chú.');
+      reload();
+    } catch (e) { toast.fail((e as Error).message); }
+  }
+
   async function guiLaiLink(id: string) {
     try {
       const r = await api.post<{ message: string }>(`/api/admin/affiliates/${id}/gui-lai-link`, {});
@@ -151,8 +181,13 @@ export default function Affiliates() {
                     <td className="right" style={{ fontWeight: a.owed_amount > 0 ? 700 : 400 }}>
                       {vnd(a.owed_amount)}
                     </td>
-                    <td><Badge kind={kind}>{text}</Badge>
-                        <div className="note">{a.commission_rate / 100}%</div></td>
+                    <td>
+                      <Badge kind={kind}>{text}</Badge>
+                      <button className="btn sm" style={{ marginTop: 4, display: 'block' }}
+                              onClick={() => doiTiLe(a)}>
+                        {a.commission_rate / 100}% — đổi
+                      </button>
+                    </td>
                     <td className="right">
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                         {a.status === 'active'
@@ -166,6 +201,7 @@ export default function Affiliates() {
                         {a.status === 'pending' && (
                           <button className="btn sm" onClick={() => setStatus(a.id, 'rejected')}>Từ chối</button>
                         )}
+                        <button className="btn sm" onClick={() => doiGhiChu(a)}>Ghi chú</button>
                       </div>
                     </td>
                   </tr>

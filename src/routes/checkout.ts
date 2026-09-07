@@ -10,11 +10,16 @@ import { transferInfo } from '../lib/payments/sepay';
 import { uuid } from '../lib/util/id';
 import { now, hoursFromNow } from '../lib/util/datetime';
 import { readBody } from './public';
+import { getSettingNumber } from '../lib/db/settings';
 import type { OrderRow } from '../lib/payments/fulfill';
 
 export const checkoutRoutes = new Hono<HonoEnv>();
 
-const ORDER_TTL_HOURS = 48;
+/**
+ * Hạn mặc định của đơn chờ. Ô "Đơn hết hạn sau bao nhiêu giờ" trong màn hình
+ * Cài đặt ghi đè con số này — trước đây nó là hằng số nên ô kia là ô chết.
+ */
+const ORDER_TTL_MAC_DINH = 48;
 
 /** Tạo đơn. Giữ nguyên hợp đồng /api/register của hệ cũ để JS trang không phải sửa. */
 checkoutRoutes.post('/api/register', async (c) => {
@@ -25,6 +30,8 @@ checkoutRoutes.post('/api/register', async (c) => {
   if (!limited.ok) {
     return c.json({ ok: false, error: 'Anh chị thao tác hơi nhanh, thử lại sau ít phút giúp em.' }, 429);
   }
+
+  const hanDon = await getSettingNumber(c.env, 'order.expires_hours', ORDER_TTL_MAC_DINH, 1, 720);
 
   const parsed = registerFormSchema.safeParse(await readBody(c.req.raw));
   if (!parsed.success) {
@@ -92,7 +99,7 @@ checkoutRoutes.post('/api/register', async (c) => {
       lead.affiliate_id ?? visitor.affiliateId, visitor.visitorId,
       visitor.utm.utm_source, visitor.utm.utm_medium,
       visitor.utm.utm_campaign, visitor.utm.utm_content,
-      visitor.ipHash, visitor.userAgent, hoursFromNow(ORDER_TTL_HOURS), ts, ts,
+      visitor.ipHash, visitor.userAgent, hoursFromNow(hanDon), ts, ts,
     ).run();
 
     order = {
@@ -101,7 +108,7 @@ checkoutRoutes.post('/api/register', async (c) => {
       email: form.email, email_norm: form.email.toLowerCase(),
       amount_total: product.price, amount_paid: 0, discount: 0, status: 'pending',
       affiliate_id: lead.affiliate_id ?? visitor.affiliateId, paid_at: null,
-      expires_at: hoursFromNow(ORDER_TTL_HOURS), created_at: ts,
+      expires_at: hoursFromNow(hanDon), created_at: ts,
     };
 
     await track(c.env, 'checkout_started', visitor, {

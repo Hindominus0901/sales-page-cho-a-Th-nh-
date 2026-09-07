@@ -25,6 +25,56 @@ export default function Mechanics() {
   const toast = useToast();
   const { data, error, loading, reload } = useLoad<Data>(() => api.get('/api/admin/mechanics'));
   const [edit, setEdit] = useState<Record<string, string>>({});
+  /* Bậc sửa được. null = chưa động vào, dùng bản từ máy chủ. */
+  const [bac, setBac] = useState<Data['tiers'] | null>(null);
+  const [luuBac, setLuuBac] = useState(false);
+
+  const ds = bac ?? data?.tiers ?? [];
+
+  function suaBac(i: number, truong: 'icon' | 'name' | 'minXp', gia: string) {
+    setBac(ds.map((t, j) => j === i
+      ? { ...t, [truong]: truong === 'minXp' ? Number(gia) || 0 : gia }
+      : t));
+  }
+
+  function themBac() {
+    const caoNhat = ds.reduce((m, t) => Math.max(m, Number(t.minXp)), 0);
+    setBac([...ds, { icon: '⭐', name: 'Bậc mới', minXp: caoNhat + 500 }]);
+  }
+
+  function xoaBac(i: number) {
+    setBac(ds.filter((_, j) => j !== i));
+  }
+
+  async function luuCacBac() {
+    const sach = ds
+      .map((t) => ({ icon: String(t.icon).trim() || '⭐',
+                     name: String(t.name).trim(), minXp: Number(t.minXp) || 0 }))
+      .filter((t) => t.name)
+      // Sắp theo XP: hàm xếp bậc duyệt từ thấp lên cao, nên thứ tự trong danh
+      // sách phải đúng, không phụ thuộc vào thứ tự người gõ.
+      .sort((a, b) => a.minXp - b.minXp);
+
+    if (!sach.length) { toast.fail('Cần ít nhất một bậc.'); return; }
+    if (sach[0]!.minXp !== 0) {
+      toast.fail('Bậc thấp nhất phải bắt đầu từ 0 XP — ai chưa có XP nào cũng cần một bậc.');
+      return;
+    }
+    if (new Set(sach.map((t) => t.minXp)).size !== sach.length) {
+      toast.fail('Hai bậc không được cùng một mốc XP.');
+      return;
+    }
+
+    setLuuBac(true);
+    try {
+      await api.put('/api/admin/mechanics', { tiers: sach });
+      toast.show('Đã lưu các bậc.');
+      setBac(null);
+      reload();
+    } catch (e) {
+      toast.fail(e instanceof Error ? e.message : 'Không lưu được.');
+    } finally { setLuuBac(false); }
+  }
 
   if (loading) return <Loading what="cơ chế" />;
   if (error) return <ErrorBox message={error} />;
@@ -108,23 +158,65 @@ export default function Mechanics() {
         <p className="note" style={{ marginBottom: 14 }}>
           Bậc tính theo XP tích luỹ. Mốc cao nhất nên đặt bằng đúng số XP của 21 bài, để
           &ldquo;về đích đúng hạn&rdquo; và bậc cao nhất là cùng một chuyện.
+          Thêm hay bớt bậc đều được — mốc sẽ tự sắp lại theo XP khi lưu.
         </p>
+
         <table>
-          <thead><tr><th>Bậc</th><th className="right">Từ XP</th><th className="right">Tương đương</th></tr></thead>
+          <thead>
+            <tr>
+              <th style={{ width: 70 }}>Biểu tượng</th>
+              <th>Tên bậc</th>
+              <th className="right" style={{ width: 130 }}>Từ XP</th>
+              <th className="right" style={{ width: 110 }}>Tương đương</th>
+              <th style={{ width: 60 }}></th>
+            </tr>
+          </thead>
           <tbody>
-            {data.tiers.map((t) => (
-              <tr key={t.name}>
-                <td><span style={{ fontSize: 17, marginRight: 8 }}>{t.icon}</span><b>{t.name}</b></td>
-                <td className="right num">{t.minXp.toLocaleString('vi-VN')}</td>
+            {ds.map((t, i) => (
+              <tr key={i}>
+                <td>
+                  <input className="input" value={t.icon} maxLength={4}
+                         style={{ width: 56, textAlign: 'center', fontSize: 17 }}
+                         onChange={(e) => suaBac(i, 'icon', e.target.value)} />
+                </td>
+                <td>
+                  <input className="input" value={t.name}
+                         onChange={(e) => suaBac(i, 'name', e.target.value)} />
+                </td>
+                <td>
+                  <input className="input num" type="number" min={0} value={t.minXp}
+                         style={{ textAlign: 'right' }}
+                         onChange={(e) => suaBac(i, 'minXp', e.target.value)} />
+                </td>
                 <td className="right num muted">
                   {Number(val('xpPerSubmission')) > 0
-                    ? `${Math.ceil(t.minXp / Number(val('xpPerSubmission')))} bài`
+                    ? `${Math.ceil(Number(t.minXp) / Number(val('xpPerSubmission')))} bài`
                     : '—'}
+                </td>
+                <td className="right">
+                  {/* Bậc đầu tiên là mốc 0 — ai cũng phải thuộc về một bậc nào
+                      đó ngay từ XP = 0, nên không cho xoá nó. */}
+                  {ds.length > 1 && i > 0 && (
+                    <button className="btn sm" type="button" onClick={() => xoaBac(i)}>Xoá</button>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        <div className="row" style={{ marginTop: 12 }}>
+          <button className="btn sm" type="button" onClick={themBac}>Thêm bậc</button>
+          {bac && (
+            <>
+              <button className="btn primary" type="button" disabled={luuBac}
+                      onClick={luuCacBac}>
+                {luuBac ? 'Đang lưu…' : 'Lưu các bậc'}
+              </button>
+              <button className="btn" type="button" onClick={() => setBac(null)}>Huỷ thay đổi</button>
+            </>
+          )}
+        </div>
       </div>
     </>
   );
