@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { apGhiDe } from './lib/cms/overrides';
+import { adminExportRoutes } from './routes/admin/export';
 import type { Context } from 'hono';
 import type { Env, HonoEnv } from './types';
 import { attribution } from './lib/affiliate/attribution';
@@ -42,6 +43,7 @@ app.route('/', adminLeadRoutes);
 app.route('/', adminOrderRoutes);
 app.route('/', adminAffiliateRoutes);
 app.route('/', adminContentRoutes);
+app.route('/', adminExportRoutes);
 app.route('/', adminGameRoutes);
 app.route('/', adminStaffRoutes);
 app.route('/', affiliateRoutes);

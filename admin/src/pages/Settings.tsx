@@ -186,6 +186,34 @@ export default function Settings() {
           </p>
         </div>
 
+        {/* Xuất dữ liệu.
+            Đối soát cuối tháng cần bảng đơn hàng đặt cạnh sao kê ngân hàng, mà
+            trước đây chỉ Lead xuất được — Đơn hàng, thứ dính tới tiền, thì
+            không. Và một bản sao lưu tải về máy là ranh giới giữa "dữ liệu của
+            tôi" và "dữ liệu bị khoá trong hệ thống của người khác". */}
+        <div className="card card-pad">
+          <h2 style={{ marginBottom: 4 }}>Xuất dữ liệu</h2>
+          <p className="note" style={{ margin: '0 0 14px' }}>
+            File CSV mở thẳng bằng Excel, đã có sẵn dấu tiếng Việt.
+          </p>
+          <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+            <a className="btn" href="/api/admin/xuat/don-hang.csv">Đơn hàng (.csv)</a>
+            <a className="btn" href="/api/admin/xuat/hoc-vien.csv">Học viên (.csv)</a>
+            <a className="btn" href="/api/admin/xuat/hoa-hong.csv">Hoa hồng (.csv)</a>
+            <a className="btn" href="/api/admin/leads/export.csv">Lead (.csv)</a>
+          </div>
+          <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--vien)' }}>
+            <div style={{ fontWeight: 700, marginBottom: 4 }}>Sao lưu toàn bộ</div>
+            <p className="note" style={{ margin: '0 0 10px' }}>
+              Một file JSON chứa mọi thứ trong hệ. <b>Không</b> chứa mật khẩu,
+              phiên đăng nhập hay mã vào lớp — đó là chìa khoá, không phải dữ
+              liệu. Nhưng có số điện thoại khách và thông tin ngân hàng của cộng
+              tác viên, nên giữ file cẩn thận.
+            </p>
+            <a className="btn" href="/api/admin/xuat/sao-luu.json">Tải bản sao lưu (.json)</a>
+          </div>
+        </div>
+
         <div className="card card-pad">
           <h2 style={{ marginBottom: 14 }}>Đường dẫn và tham số vận hành</h2>
           <div className="grid grid-2">
