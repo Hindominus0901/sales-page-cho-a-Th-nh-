@@ -4,6 +4,7 @@ import { requireAdmin, requireRole, adminUserOf } from '../../lib/auth/guards';
 import { audit } from '../../lib/db/audit';
 import { uuid, accessToken } from '../../lib/util/id';
 import { now, ictDate, ictDateTime, ICT_OFFSET_SEC } from '../../lib/util/datetime';
+import { docGhiDe, KHOI_SUA_DUOC } from '../../lib/cms/overrides';
 
 export const adminContentRoutes = new Hono<HonoEnv>();
 adminContentRoutes.use('/api/admin/*', requireAdmin);
@@ -355,6 +356,84 @@ adminContentRoutes.delete('/api/admin/workshops/:id', requireRole('owner', 'admi
     actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
     action: 'workshop.delete', entityType: 'workshop_session', entityId: id,
     before: { title: w.title },
+  });
+  return c.json({ ok: true });
+});
+
+
+// ------------------------------------------------- nội dung trang bán
+
+/**
+ * Nội dung trang bán sửa được không cần deploy.
+ *
+ * Bảng `page_content` có từ migration 0006 với đúng nguyên tắc — "mã giữ mặc
+ * định và cấu trúc, database chỉ giữ phần ghi đè" — nhưng chưa route nào dùng.
+ * Trang vẫn render hoàn hảo khi bảng rỗng; ghi đè chỉ là lớp phủ lên trên.
+ *
+ * Danh sách khối là ĐÓNG (`KHOI_SUA_DUOC`): mở tự do thì đây thành một đường
+ * chèn HTML tuỳ ý vào trang bán hàng.
+ */
+adminContentRoutes.get('/api/admin/noi-dung-trang', requireRole('owner', 'admin'), async (c) => {
+  const ghiDe = await docGhiDe(c.env, 'sales_21d');
+  return c.json({
+    ok: true,
+    khoiSuaDuoc: [...KHOI_SUA_DUOC],
+    ghiDe: Object.fromEntries(ghiDe),
+  });
+});
+
+adminContentRoutes.put('/api/admin/noi-dung-trang/:khoi', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const khoi = c.req.param('khoi');
+  if (!(KHOI_SUA_DUOC as readonly string[]).includes(khoi)) {
+    return c.json({ ok: false, error: 'Khối này không sửa được.' }, 400);
+  }
+
+  const b = await c.req.json<{ value?: unknown }>().catch(() => ({} as { value?: unknown }));
+
+  // FAQ phải là danh sách câu hỏi; các khối còn lại là chữ.
+  let value: unknown;
+  if (khoi === 'faq') {
+    if (!Array.isArray(b.value)) {
+      return c.json({ ok: false, error: 'FAQ phải là một danh sách câu hỏi.' }, 400);
+    }
+    value = b.value
+      .map((x) => ({
+        q: String((x as Record<string, unknown>)?.q ?? '').trim().slice(0, 300),
+        a: String((x as Record<string, unknown>)?.a ?? '').trim().slice(0, 3000),
+      }))
+      .filter((x) => x.q && x.a);
+  } else {
+    value = String(b.value ?? '').trim().slice(0, 200);
+  }
+
+  const ts = now();
+  await c.env.DB.prepare(
+    `INSERT INTO page_content (id, page_key, block_key, value_type, value_json, updated_by, created_at, updated_at)
+     VALUES (?, 'sales_21d', ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(page_key, block_key) DO UPDATE SET
+       value_json = excluded.value_json, updated_by = excluded.updated_by,
+       updated_at = excluded.updated_at`,
+  ).bind(uuid(), khoi, khoi === 'faq' ? 'json' : 'text',
+    JSON.stringify(value), admin.id, ts, ts).run();
+
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'page_content.update', entityType: 'page_content', entityId: khoi,
+  });
+  return c.json({ ok: true });
+});
+
+/** Bỏ ghi đè, trả khối về đúng bản dựng từ site.config.json. */
+adminContentRoutes.delete('/api/admin/noi-dung-trang/:khoi', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const khoi = c.req.param('khoi');
+  await c.env.DB.prepare(
+    `DELETE FROM page_content WHERE page_key = 'sales_21d' AND block_key = ?`,
+  ).bind(khoi).run();
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'page_content.reset', entityType: 'page_content', entityId: khoi,
   });
   return c.json({ ok: true });
 });

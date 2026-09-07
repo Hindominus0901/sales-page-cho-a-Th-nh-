@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { apGhiDe } from './lib/cms/overrides';
 import type { Context } from 'hono';
 import type { Env, HonoEnv } from './types';
 import { attribution } from './lib/affiliate/attribution';
@@ -112,6 +113,21 @@ app.get('/admin',   spaShell('admin'));
 app.get('/admin/*', spaShell('admin'));
 app.get('/aff',     spaShell('aff'));
 app.get('/aff/*',   spaShell('aff'));
+
+/**
+ * Trang bán: áp ghi đè nội dung từ /admin trước khi trả về.
+ *
+ * Chỉ trang chủ, và chỉ khi có ghi đè trong database — không có thì `apGhiDe`
+ * trả nguyên phản hồi, không tốn gì thêm ngoài một câu SELECT.
+ *
+ * Ghi đè ở phía máy chủ chứ không bằng JavaScript trong trình duyệt: nội dung
+ * vẫn nằm trong HTML gốc nên Google đọc được, và người dùng không thấy chữ nhảy
+ * sau khi trang đã hiện.
+ */
+app.get('/', async (c) => {
+  const res = await c.env.ASSETS.fetch(c.req.raw);
+  return apGhiDe(c.env, 'sales_21d', res);
+});
 
 // Mọi đường dẫn còn lại rơi về file tĩnh do `npm run build:pages` sinh ra.
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw));

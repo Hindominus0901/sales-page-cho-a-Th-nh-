@@ -412,18 +412,36 @@ if (cfg.testimonialIndustry) {
 }
 
 // Khối 4 ô số liệu ở cuối trang
+/**
+ * LUÔN giữ khối và gắn dấu, kể cả khi chưa điền giá trị nào.
+ *
+ * Trước đây build xoá hẳn khối khi thiếu số liệu. Nhưng giờ anh Thành điền được
+ * bốn ô này trong /admin, mà build thì không biết trong database có gì — xoá ở
+ * đây là khoá luôn đường đó. Nên để Worker quyết định lúc chạy: có giá trị (từ
+ * cấu hình hoặc từ database) thì hiện, không có thì gỡ cả khối đi.
+ *
+ * Worker chạy trước mọi request (run_worker_first), nên không có cửa sổ nào
+ * người dùng thấy bốn ô rỗng.
+ */
 const stats = (cfg.stats || []).map((s) => String(s.value ?? '').trim());
-if (stats.length === 4 && stats.every(Boolean)) {
-  let i = 0;
-  body = body.replace(/<div style="font-size:28px;font-weight:800">\[\[X\]\]<\/div>/g,
-    () => `<div style="font-size:28px;font-weight:800">${esc(stats[i++])}</div>`);
-} else {
-  const before = body.length;
-  body = body.replace(
-    /<div style="display:grid;grid-template-columns:repeat\(4,1fr\);gap:16px;max-width:900px;margin:0 auto 32px">[\s\S]*?bài Thành đã sửa<\/div><\/div>\s*<\/div>\s*/,
-    '',
-  );
-  if (body.length < before) warnings.push('stats chưa điền đủ 4 giá trị — đã ẩn khối 4 ô số liệu ở cuối trang.');
+let iStat = 0;
+body = body.replace(/<div style="font-size:28px;font-weight:800">\[\[X\]\]<\/div>/g,
+  () => {
+    const n = iStat++;
+    return `<div style="font-size:28px;font-weight:800" data-nd="stats.${n}">${esc(stats[n] ?? '')}</div>`;
+  });
+
+// Cờ `data-nd-co-san` nói cho Worker biết bốn ô đã có chữ sẵn từ lúc dựng, nên
+// nó không phải quét lại HTML để biết có nên gỡ khối hay không.
+const statsDayDu = stats.length === 4 && stats.every(Boolean);
+body = body.replace(
+  /(<div style="display:grid;grid-template-columns:repeat\(4,1fr\);gap:16px;max-width:900px;margin:0 auto 32px")/,
+  `$1 data-nd-block="stats"${statsDayDu ? ' data-nd-co-san="1"' : ''}`,
+);
+
+if (!statsDayDu) {
+  warnings.push('stats chưa điền đủ 4 giá trị — khối 4 ô số liệu sẽ tự ẩn cho tới khi '
+    + 'điền trong /admin → Nội dung trang, hoặc trong site.config.json.');
 }
 
 // Dòng "Còn [[X]]/30 chỗ · Khai giảng [[ngày]]" -> render động từ API
@@ -617,9 +635,14 @@ insertBeforeSection('90% những ai làm nội dung sẽ thua',
       + '</details>').join('\n');
 
     const before = body.length;
+    /* Gắn data-nd-list vào khung chứa: Worker thay ruột khối này lúc chạy bằng
+       bản ghi đè trong page_content, nên anh Thành thêm/bớt câu hỏi trong
+       /admin là trang đổi ngay, không cần deploy. Thay ở phía máy chủ chứ
+       không phải bằng JS trong trình duyệt — nội dung vẫn nằm trong HTML gốc,
+       nên Google vẫn đọc được. */
     body = body.replace(
-      /(<div id="faq"[\s\S]*?<h2[^>]*>Các câu hỏi thường gặp<\/h2>\s*<div[^>]*>)[\s\S]*?(<\/div>\s*<\/div>)/,
-      `$1\n${html}\n$2`,
+      /(<div id="faq"[\s\S]*?<h2[^>]*>Các câu hỏi thường gặp<\/h2>\s*<div)([^>]*>)[\s\S]*?(<\/div>\s*<\/div>)/,
+      `$1 data-nd-list="faq"$2\n${html}\n$3`,
     );
     if (body.length === before) warnings.push('Không thay được khối FAQ — kiểm tra lại build.mjs.');
     else console.log(`  · FAQ: ${items.length} câu hỏi`);

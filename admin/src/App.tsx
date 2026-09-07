@@ -23,6 +23,7 @@ import Leaderboard from './pages/Leaderboard';
 import Rewards from './pages/Rewards';
 import Mechanics from './pages/Mechanics';
 import NoiDung21Ngay from './pages/NoiDung21Ngay';
+import NoiDungTrang from './pages/NoiDungTrang';
 import { Icon } from './icons';
 
 interface Me { user: { id: string; name: string; email: string; role: string }; csrfToken: string | null }
@@ -81,6 +82,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
   ]},
   { section: 'Hệ thống', items: [
     { href: '/co-che',     label: 'Cơ chế',     icon: 'mechanics', roles: QUAN_TRI },
+    { href: '/noi-dung-trang', label: 'Nội dung trang bán', icon: 'settings', roles: QUAN_TRI },
     { href: '/cai-dat',    label: 'Cài đặt',    icon: 'settings', roles: QUAN_TRI },
     { href: '/nhan-su',    label: 'Nhân sự',    icon: 'staff', roles: ['owner'] },
     { href: '/hop-thu',    label: 'Hộp thư đi', icon: 'audit', roles: QUAN_TRI },
@@ -180,6 +182,7 @@ function Route({ path, query }: { path: string; query: URLSearchParams }) {
   if (path.startsWith('/don-hang/')) return <OrderDetail code={path.slice(10)} />;
   if (path === '/thanh-toan') return <Payments />;
   if (path === '/noi-dung') return <NoiDung21Ngay />;
+  if (path === '/noi-dung-trang') return <NoiDungTrang />;
   if (path === '/hoc-vien') return <Students />;
   if (path === '/workshop') return <Workshops />;
   if (path === '/ctv') return <Affiliates />;
