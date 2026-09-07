@@ -376,6 +376,10 @@ test('Đã thanh toán: lấy được link vào lớp bằng số điện tho�
  */
 test('CTV chưa từng đặt mật khẩu vẫn xin được link đặt mật khẩu', async () => {
   const id = 'aff-chua-mk';
+  // reset() không dọn bảng affiliates (seedAffiliates dựng nó một lần cho cả
+  // lượt chạy), nên phải tự dọn — không thì lần chạy thứ hai đụng UNIQUE.
+  db.prepare('DELETE FROM password_resets WHERE subject_id = ?').run(id);
+  db.prepare('DELETE FROM affiliates WHERE id = ?').run(id);
   db.prepare(
     `INSERT INTO affiliates (id, code, name, email, email_norm, password_hash,
        status, commission_rate, approved_at, created_at, updated_at)

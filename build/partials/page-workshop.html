@@ -76,6 +76,28 @@
         <h2 style="font-size:23px;font-weight:800;margin:0 0 6px;line-height:1.25">{{FORM_HEADING}}</h2>
         <p style="font-size:14px;line-height:1.6;color:#4a4a52;margin:0 0 20px">{{FORM_SUB}}</p>
 
+        <!-- Chưa có buổi nào mở đăng ký.
+             Hiện thay cho form NGAY LÚC TẢI TRANG, không đợi tới lúc bấm gửi:
+             để khách điền hết tám ô rồi mới từ chối là lấy công của người ta. -->
+        <div id="fc2-ws-chuacobuoi" hidden
+             style="background:rgba(240,165,0,.1);border:1px solid rgba(138,90,0,.28);border-radius:16px;padding:20px;font-size:15px;line-height:1.7;color:#333">
+          <div style="font-weight:800;font-size:17px;margin-bottom:8px">Buổi tiếp theo đang được sắp lịch</div>
+          <p style="margin:0 0 14px">
+            Buổi gần nhất đã diễn ra xong. Anh chị để lại email, Thành báo ngay khi có lịch mới.
+          </p>
+          <form id="fc2-ws-cho" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <label for="fc2-ws-cho-email" class="fc2-visually-hidden">Email của anh chị</label>
+            <input id="fc2-ws-cho-email" name="email" type="email" required autocomplete="email"
+                   placeholder="email@cua-anh-chi.com"
+                   style="flex:1 1 200px;min-width:180px;padding:11px 14px;border:1px solid rgba(0,0,0,.2);border-radius:12px;font-size:15px" />
+            <button type="submit" class="fc2-btn"
+                    style="padding:11px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer">
+              Báo tôi khi có lịch
+            </button>
+          </form>
+          <p id="fc2-ws-cho-msg" hidden role="status" style="margin:12px 0 0;font-size:14px"></p>
+        </div>
+
         <form id="fc2-ws-form" novalidate autocomplete="on" style="display:grid;gap:14px">
           <div>
             <label for="fc2-ws-name" class="fc2-label">Họ và tên <span style="color:#d33">*</span></label>

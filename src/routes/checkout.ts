@@ -5,7 +5,6 @@ import { toPhoneNorm } from '../lib/validation/phone';
 import { upsertLead } from '../lib/db/leads';
 import { track, bumpDailyStats } from '../lib/db/events';
 import { rateLimit } from '../lib/security/ratelimit';
-import { verifyTurnstile } from '../lib/security/turnstile';
 import { generateOrderCode } from '../lib/payments/order-code';
 import { transferInfo } from '../lib/payments/sepay';
 import { uuid } from '../lib/util/id';
@@ -35,9 +34,6 @@ checkoutRoutes.post('/api/register', async (c) => {
   }
   const form = parsed.data;
 
-  if (!await verifyTurnstile(c.env, form['cf-turnstile-response'], c.req.header('cf-connecting-ip') ?? null)) {
-    return c.json({ ok: false, error: 'Xác thực chống bot không thành công, anh chị tải lại trang giúp em.' }, 400);
-  }
 
   const product = await c.env.DB.prepare(
     `SELECT id, price FROM products WHERE slug = 'thu-thach-21-ngay' AND is_active = 1`,

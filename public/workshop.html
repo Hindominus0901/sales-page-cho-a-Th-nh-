@@ -594,6 +594,28 @@
         <h2 style="font-size:23px;font-weight:800;margin:0 0 6px;line-height:1.25">Đăng ký tham gia</h2>
         <p style="font-size:14px;line-height:1.6;color:#4a4a52;margin:0 0 20px">Điền thông tin, link Zoom hiện ra ngay sau khi gửi.</p>
 
+        <!-- Chưa có buổi nào mở đăng ký.
+             Hiện thay cho form NGAY LÚC TẢI TRANG, không đợi tới lúc bấm gửi:
+             để khách điền hết tám ô rồi mới từ chối là lấy công của người ta. -->
+        <div id="fc2-ws-chuacobuoi" hidden
+             style="background:rgba(240,165,0,.1);border:1px solid rgba(138,90,0,.28);border-radius:16px;padding:20px;font-size:15px;line-height:1.7;color:#333">
+          <div style="font-weight:800;font-size:17px;margin-bottom:8px">Buổi tiếp theo đang được sắp lịch</div>
+          <p style="margin:0 0 14px">
+            Buổi gần nhất đã diễn ra xong. Anh chị để lại email, Thành báo ngay khi có lịch mới.
+          </p>
+          <form id="fc2-ws-cho" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <label for="fc2-ws-cho-email" class="fc2-visually-hidden">Email của anh chị</label>
+            <input id="fc2-ws-cho-email" name="email" type="email" required autocomplete="email"
+                   placeholder="email@cua-anh-chi.com"
+                   style="flex:1 1 200px;min-width:180px;padding:11px 14px;border:1px solid rgba(0,0,0,.2);border-radius:12px;font-size:15px" />
+            <button type="submit" class="fc2-btn"
+                    style="padding:11px 20px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer">
+              Báo tôi khi có lịch
+            </button>
+          </form>
+          <p id="fc2-ws-cho-msg" hidden role="status" style="margin:12px 0 0;font-size:14px"></p>
+        </div>
+
         <form id="fc2-ws-form" novalidate autocomplete="on" style="display:grid;gap:14px">
           <div>
             <label for="fc2-ws-name" class="fc2-label">Họ và tên <span style="color:#d33">*</span></label>
@@ -1183,6 +1205,49 @@ function wireMarqueePause() {
 
   var form = $('#fc2-ws-form');
   if (!form) return;
+
+  /* Hỏi trước khi hiện form: có buổi nào đang mở đăng ký không?
+     Không có thì thay form bằng ô để lại email. Để khách điền hết tám ô rồi mới
+     báo "chưa có buổi nào" là lấy công của người ta. */
+  (function kiemTraBuoi() {
+    var khung = $('#fc2-ws-chuacobuoi');
+    if (!khung) return;
+    var slug = new URLSearchParams(location.search).get('session');
+    fetch('/api/workshop/buoi-hien-tai' + (slug ? '?session=' + encodeURIComponent(slug) : ''),
+      { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (b) {
+        if (!b.ok || b.coBuoi) return;   // Có buổi, hoặc hỏi không được → giữ form.
+        form.hidden = true;
+        khung.hidden = false;
+      })
+      .catch(function () { /* Hỏi không được thì cứ để form — thà thừa còn hơn chặn nhầm. */ });
+
+    var choForm = $('#fc2-ws-cho');
+    if (!choForm) return;
+    choForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var msg = $('#fc2-ws-cho-msg');
+      var btn = choForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      fetch('/api/workshop/cho-lich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: $('#fc2-ws-cho-email').value.trim() }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (b) {
+          msg.textContent = b.ok ? b.message : (b.error || 'Chưa gửi được, anh chị thử lại giúp em.');
+          msg.hidden = false;
+          if (b.ok) choForm.hidden = true;
+        })
+        .catch(function () {
+          msg.textContent = 'Mạng đang trục trặc. Anh chị thử lại giúp em.';
+          msg.hidden = false;
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+  })();
 
   var fallback = $('#fc2-ws-fallback');
   var thanks = $('#fc2-ws-thanks');

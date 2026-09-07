@@ -5,7 +5,6 @@ import { toPhoneNorm } from '../lib/validation/phone';
 import { upsertLead } from '../lib/db/leads';
 import { track, bumpDailyStats } from '../lib/db/events';
 import { rateLimit } from '../lib/security/ratelimit';
-import { verifyTurnstile } from '../lib/security/turnstile';
 import { uuid } from '../lib/util/id';
 import { queueMail } from '../lib/email/outbox';
 import { workshopMail } from '../lib/email/templates';
@@ -41,7 +40,30 @@ publicRoutes.get('/api/config', async (c) => {
     seatsTotal: product.seats_total,
     seatsLeft,
     startDate: product.start_date,
-    turnstileSiteKey: c.env.TURNSTILE_SITE_KEY ?? null,
+  });
+});
+
+/**
+ * Buổi workshop đang mở đăng ký, để trang HỎI TRƯỚC khi hiện form.
+ *
+ * Trước đây `/workshop` hiện form đầy đủ trong mọi trường hợp, khách điền hết
+ * tám ô rồi mới nhận 503 "chưa có buổi nào". Đó không phải trang trống, đó là
+ * trang bẫy: nó lấy công của người ta rồi mới từ chối. Mà chuyện chưa có buổi
+ * nào lại rất dễ xảy ra — bảng workshop_sessions rỗng lúc mới dựng, và buổi đã
+ * bắt đầu quá hai tiếng cũng rơi khỏi điều kiện.
+ *
+ * Chỉ trả những gì trang cần để quyết định hiện gì; không trả link Zoom —
+ * link đó chỉ đưa cho người đã đăng ký.
+ */
+publicRoutes.get('/api/workshop/buoi-hien-tai', async (c) => {
+  const session = await pickWorkshopSession(c.env, c.req.query('session'));
+  c.header('Cache-Control', 'no-store');
+  return c.json({
+    ok: true,
+    coBuoi: Boolean(session),
+    buoi: session
+      ? { slug: session.slug, title: session.title, startsAt: session.starts_at }
+      : null,
   });
 });
 
@@ -67,9 +89,6 @@ publicRoutes.post('/api/workshop/register', async (c) => {
   }
   const form = parsed.data;
 
-  if (!await verifyTurnstile(c.env, form['cf-turnstile-response'], c.req.header('cf-connecting-ip') ?? null)) {
-    return c.json({ ok: false, error: 'Xác thực chống bot không thành công, anh chị tải lại trang giúp em.' }, 400);
-  }
 
   const session = await pickWorkshopSession(c.env, form.session);
   if (!session) {
@@ -158,9 +177,6 @@ publicRoutes.post('/api/leads', async (c) => {
   }
   const form = parsed.data;
 
-  if (!await verifyTurnstile(c.env, form['cf-turnstile-response'], c.req.header('cf-connecting-ip') ?? null)) {
-    return c.json({ ok: false, error: 'Xác thực chống bot không thành công, anh chị tải lại trang giúp em.' }, 400);
-  }
 
   const { lead } = await upsertLead(c.env, {
     fullName: form.name,
@@ -188,6 +204,48 @@ publicRoutes.post('/api/leads', async (c) => {
     downloadUrl,
     zaloGroupUrl,
   });
+});
+
+/**
+ * Danh sách chờ khi chưa có buổi workshop nào.
+ *
+ * Không có buổi nào mở đăng ký là chuyện sẽ xảy ra thường xuyên — giữa hai buổi,
+ * hoặc lúc mới dựng. Trước đây khách rơi vào ngõ cụt và đi mất. Xin mỗi email là
+ * đủ để báo lại, và biến một trang chết thành một trang vẫn thu được người quan
+ * tâm. Cố ý KHÔNG đòi tên và số điện thoại: người ở đây chưa nhận lại được gì cả.
+ */
+publicRoutes.post('/api/workshop/cho-lich', async (c) => {
+  const visitor = c.get('visitor');
+  const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
+
+  const limited = await rateLimit(c.env, `wscho:${ip}`, 5, 600);
+  if (!limited.ok) {
+    return c.json({ ok: false, error: 'Anh chị thao tác hơi nhanh, thử lại sau ít phút giúp em.' }, 429);
+  }
+
+  const body = await readBody(c.req.raw) as Record<string, unknown>;
+  const email = String(body.email ?? '').trim().toLowerCase().slice(0, 160);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    return c.json({ ok: false, error: 'Email chưa đúng. Anh chị nhập lại giúp em.' }, 400);
+  }
+
+  const { lead } = await upsertLead(c.env, {
+    // Chưa xin tên và số điện thoại, nên lấy phần trước @ làm tên tạm — đủ để
+    // anh Thành nhìn ra ai là ai trong danh sách lead.
+    fullName: email.split('@')[0] || email,
+    phone: '',
+    email,
+    source: 'workshop',
+    sourcePage: '/workshop',
+    // Cờ này phân biệt người CHỜ LỊCH với người đã đăng ký một buổi cụ thể.
+    answers: { cho_lich: true },
+    scoring: { freeText: [] },
+    visitor,
+  });
+
+  await track(c.env, 'lead_created', visitor, { pageKey: 'workshop', leadId: lead.id });
+
+  return c.json({ ok: true, message: 'Cảm ơn anh chị. Có lịch buổi mới là Thành báo ngay.' });
 });
 
 /** Ghi nhận sự kiện từ trình duyệt (beacon). Luôn trả 204, không chặn trang. */

@@ -164,10 +164,16 @@ if (!SKIP_SECRETS) {
         'còn đường /tra-cuu để tìm lại đơn.');
     }
 
-    if (!names.has('TURNSTILE_SECRET_KEY')) {
-      warn('TURNSTILE_SECRET_KEY chưa đặt',
-        'Form công khai chỉ còn honeypot và rate limit chặn bot. Chấp nhận được ' +
-        'lúc đầu, nhưng nên bật khi bắt đầu chạy quảng cáo.');
+    // Turnstile đã được gỡ hẳn khỏi mã. Trước đây có hàm kiểm tra nhưng KHÔNG
+    // trang nào đặt ô chống bot, nên đặt khoá bí mật vào là mọi form công khai
+    // trả 400 — một quả bom hẹn giờ, vì việc đặt khoá nghe rất hợp lý. Cần chặn
+    // bot thì bật Bot Fight Mode trong Cloudflare: nó chạy ở tầng biên, không
+    // cần sửa mã và không có cái bẫy đó.
+    if (names.has('TURNSTILE_SECRET_KEY')) {
+      warn('TURNSTILE_SECRET_KEY còn sót lại — nên xoá',
+        'Hệ không còn dùng Turnstile. Biến này giờ vô hại nhưng gây hiểu lầm; ' +
+        'xoá trong Cloudflare → Settings → Variables and Secrets. Muốn chặn bot ' +
+        'thì bật Bot Fight Mode trong mục Security.');
     }
   }
 }

@@ -19,6 +19,10 @@ const KIEU: Record<string, 'ok' | 'info' | 'bad' | 'mute'> = {
 const MAU_THU: Record<string, string> = {
   order_paid: 'Xác nhận thanh toán',
   workshop_registered: 'Xác nhận đăng ký workshop',
+  student_access: 'Link vào lớp',
+  password_reset: 'Đặt lại mật khẩu',
+  affiliate_application: 'Đã nhận hồ sơ cộng tác viên',
+  affiliate_approved: 'Duyệt cộng tác viên',
 };
 
 export default function HopThuDi() {
@@ -34,6 +38,20 @@ export default function HopThuDi() {
     try {
       await api.post(`/api/admin/hop-thu/${m.id}/gui-lai`);
       toast.show('Đã xếp lại hàng đợi. Lượt gửi kế tiếp sẽ nhặt nó.');
+      reload();
+    } catch (err) {
+      toast.fail(err instanceof Error ? err.message : 'Không xếp lại được.');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function xepLaiTatCa(status: 'skipped' | 'failed') {
+    setBusy('tat-ca');
+    try {
+      const r = await api.post<{ message: string }>(
+        '/api/admin/hop-thu/xep-lai-tat-ca', { status });
+      toast.show(r.message);
       reload();
     } catch (err) {
       toast.fail(err instanceof Error ? err.message : 'Không xếp lại được.');
@@ -64,9 +82,30 @@ export default function HopThuDi() {
           </div>
           <p className="muted" style={{ margin: 0, fontSize: 13.5 }}>
             Đây không phải lỗi. Đặt <span className="mono">RESEND_API_KEY</span> trong
-            Cloudflare → Settings → Variables and Secrets, rồi bấm "Xếp lại" từng
-            cái để gửi bù.
+            Cloudflare → Settings → Variables and Secrets, rồi bấm nút dưới đây để gửi bù.
           </p>
+          {/* Thư đặt lại mật khẩu cố ý KHÔNG nằm trong lô này: link trong đó có
+              hạn, gửi lại thư cũ chỉ dẫn khách tới trang "đã quá hạn". Đường đúng
+              là cấp phiếu mới từ màn hình Cộng tác viên hoặc Nhân sự. */}
+          <button className="btn sm primary" style={{ marginTop: 10 }}
+                  disabled={busy === 'tat-ca'}
+                  onClick={() => xepLaiTatCa('skipped')}>
+            {busy === 'tat-ca' ? 'Đang xếp…' : `Xếp lại tất cả ${bo.skipped} thư`}
+          </button>
+        </div>
+      )}
+
+      {(bo.failed ?? 0) > 0 && (
+        <div className="card card-pad" style={{ marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>{bo.failed} email gửi lỗi</div>
+          <p className="muted" style={{ margin: '0 0 10px', fontSize: 13.5 }}>
+            Sửa xong nguyên nhân thì xếp lại cả lô. Thư đặt lại mật khẩu không nằm
+            trong lô này vì link của nó đã hết hạn.
+          </p>
+          <button className="btn sm" disabled={busy === 'tat-ca'}
+                  onClick={() => xepLaiTatCa('failed')}>
+            {busy === 'tat-ca' ? 'Đang xếp…' : `Xếp lại tất cả ${bo.failed} thư lỗi`}
+          </button>
         </div>
       )}
 

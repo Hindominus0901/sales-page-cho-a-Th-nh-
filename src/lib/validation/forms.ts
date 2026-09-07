@@ -67,7 +67,6 @@ export const workshopFormSchema = z.object({
   }),
   website: honeypot,
   session: z.string().optional(),
-  'cf-turnstile-response': z.string().optional(),
 });
 
 /** Form lead magnet Bản Đồ 21 Ngày — cố ý nhẹ, chỉ tên + Zalo. */
@@ -77,7 +76,6 @@ export const leadMagnetFormSchema = z.object({
   email: optionalEmail,
   magnet: clean(60).optional().default('ban-do-21-ngay'),
   website: honeypot,
-  'cf-turnstile-response': z.string().optional(),
 });
 
 /** Form đăng ký mua khoá — giữ đúng các trường của hệ cũ, thêm phần chấm điểm. */
@@ -97,7 +95,6 @@ export const registerFormSchema = z.object({
   channel: z.enum(['has_over_10k', 'has_1k_10k', 'has_under_1k', 'none_yet']).optional(),
   goal: z.enum(['sell_products', 'get_clients', 'build_personal_brand', 'just_curious']).optional(),
   website: honeypot,
-  'cf-turnstile-response': z.string().optional(),
 });
 
 export type WorkshopForm = z.infer<typeof workshopFormSchema>;

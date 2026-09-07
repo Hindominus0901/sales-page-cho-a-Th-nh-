@@ -409,6 +409,45 @@ adminContentRoutes.get('/api/admin/hop-thu', async (c) => {
  * attempts đặt lại 0 vì đây là một quyết định mới của con người: bốn lần thử
  * trước đã hết lượt, người xem đã nhìn lý do lỗi và vẫn muốn thử lại.
  */
+/**
+ * Xếp lại HÀNG LOẠT thư chưa gửi được.
+ *
+ * Vì sao cần: khi chưa cắm RESEND_API_KEY, mọi thư đều bị đánh dấu `skipped`,
+ * và `drainOutbox` chỉ nhặt `pending`. Cắm khoá vào tuần sau thì toàn bộ thư của
+ * khách đã mua trong tuần này vẫn nằm im mãi mãi — mà đó chính là những lá thư
+ * quan trọng nhất: link vào lớp và xác nhận học phí. Bấm lại từng cái cho vài
+ * chục đơn là việc không ai làm nổi.
+ *
+ * KHÔNG xếp lại thư `password_reset`: link trong đó có hạn, thư cũ gửi đi chỉ
+ * dẫn khách tới trang "đường link đã quá hạn". Đường đúng là cấp phiếu mới.
+ */
+adminContentRoutes.post('/api/admin/hop-thu/xep-lai-tat-ca', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const b = await c.req.json<{ status?: string }>().catch(() => ({} as { status?: string }));
+  const status = b.status === 'failed' ? 'failed' : 'skipped';
+
+  const res = await c.env.DB.prepare(
+    `UPDATE email_outbox SET status = 'pending', attempts = 0, last_error = NULL
+     WHERE status = ? AND template != 'password_reset'`,
+  ).bind(status).run();
+
+  const n = res.meta?.changes ?? 0;
+
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'email.requeue_all', entityType: 'email_outbox', entityId: null,
+    after: { status, soLuong: n },
+  });
+
+  return c.json({
+    ok: true,
+    soLuong: n,
+    message: n === 0
+      ? 'Không có thư nào ở trạng thái đó để xếp lại.'
+      : `Đã xếp lại ${n} thư. Hệ thống gửi dần mỗi giờ, không gửi ồ ạt một lúc.`,
+  });
+});
+
 adminContentRoutes.post('/api/admin/hop-thu/:id/gui-lai', requireRole('owner', 'admin'), async (c) => {
   const id = c.req.param('id');
   const admin = adminUserOf(c);

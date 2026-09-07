@@ -5,6 +5,49 @@
   var form = $('#fc2-ws-form');
   if (!form) return;
 
+  /* Hỏi trước khi hiện form: có buổi nào đang mở đăng ký không?
+     Không có thì thay form bằng ô để lại email. Để khách điền hết tám ô rồi mới
+     báo "chưa có buổi nào" là lấy công của người ta. */
+  (function kiemTraBuoi() {
+    var khung = $('#fc2-ws-chuacobuoi');
+    if (!khung) return;
+    var slug = new URLSearchParams(location.search).get('session');
+    fetch('/api/workshop/buoi-hien-tai' + (slug ? '?session=' + encodeURIComponent(slug) : ''),
+      { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (b) {
+        if (!b.ok || b.coBuoi) return;   // Có buổi, hoặc hỏi không được → giữ form.
+        form.hidden = true;
+        khung.hidden = false;
+      })
+      .catch(function () { /* Hỏi không được thì cứ để form — thà thừa còn hơn chặn nhầm. */ });
+
+    var choForm = $('#fc2-ws-cho');
+    if (!choForm) return;
+    choForm.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var msg = $('#fc2-ws-cho-msg');
+      var btn = choForm.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      fetch('/api/workshop/cho-lich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: $('#fc2-ws-cho-email').value.trim() }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (b) {
+          msg.textContent = b.ok ? b.message : (b.error || 'Chưa gửi được, anh chị thử lại giúp em.');
+          msg.hidden = false;
+          if (b.ok) choForm.hidden = true;
+        })
+        .catch(function () {
+          msg.textContent = 'Mạng đang trục trặc. Anh chị thử lại giúp em.';
+          msg.hidden = false;
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+  })();
+
   var fallback = $('#fc2-ws-fallback');
   var thanks = $('#fc2-ws-thanks');
   var submitBtn = $('#fc2-ws-submit');
