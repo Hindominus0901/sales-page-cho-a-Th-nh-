@@ -113,12 +113,24 @@ adminContentRoutes.post('/api/admin/workshops/:id/attendance', async (c) => {
 
 // ---------------------------------------------------------------- học viên
 
-adminContentRoutes.get('/api/admin/students', async (c) => {
+/**
+ * Danh sách học viên.
+ *
+ * KHÔNG trả `access_token`. Đó là chìa khoá vào lớp — chính thứ mà thư
+ * `student_access` dặn học viên đừng chia sẻ cho ai. Trước đây câu này trả nó
+ * cho cả 300 người trong một lượt, và route chỉ gác `requireAdmin`, nên bất kỳ
+ * tài khoản `staff` nào mở màn hình Học viên là có link đăng nhập của cả lớp
+ * nằm sẵn trong tab Network. Cần link cho MỘT người thì đã có `cap-lai-link`
+ * bên dưới — nó cấp mã mới và giết mã cũ, đúng cách.
+ *
+ * Cũng gắn `requireRole`: danh sách này có số điện thoại và số tiền đã trả.
+ */
+adminContentRoutes.get('/api/admin/students', requireRole('owner', 'admin'), async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT s.id, s.full_name, s.phone, s.email, s.created_at,
-            s.coin, s.xp, s.streak_current,
+            s.coin, s.xp, s.streak_current, s.last_submit_date,
             e.id AS enrollment_id, e.cohort, e.status AS enrollment_status,
-            e.progress_day, e.posts_done, e.access_token, e.last_seen_at,
+            e.progress_day, e.posts_done, e.last_seen_at,
             o.order_code, o.amount_total
      FROM students s
      LEFT JOIN enrollments e ON e.student_id = s.id
@@ -126,6 +138,36 @@ adminContentRoutes.get('/api/admin/students', async (c) => {
      ORDER BY s.created_at DESC LIMIT 300`,
   ).all();
   return c.json({ ok: true, students: rows.results ?? [] });
+});
+
+/**
+ * Lấy link vào lớp của MỘT học viên.
+ *
+ * Tách khỏi danh sách có chủ ý. Danh sách trả 300 mã một lượt là biến một màn
+ * hình xem-cho-biết thành một lượt tải chìa khoá cả lớp. Ở đây mỗi lần chỉ một
+ * người, có gác vai trò, và có ghi nhật ký — nên khi cần truy "ai đã lấy link
+ * của học viên nào" thì trả lời được.
+ *
+ * Khác `cap-lai-link` bên dưới: cái này chỉ ĐỌC, không giết mã cũ.
+ */
+adminContentRoutes.get('/api/admin/enrollments/:id/link', requireRole('owner', 'admin'), async (c) => {
+  const admin = adminUserOf(c);
+  const id = c.req.param('id');
+
+  const row = await c.env.DB.prepare(
+    `SELECT e.access_token, s.full_name
+     FROM enrollments e JOIN students s ON s.id = e.student_id
+     WHERE e.id = ?`,
+  ).bind(id).first<{ access_token: string; full_name: string }>();
+  if (!row) return c.json({ ok: false, error: 'Không tìm thấy học viên này.' }, 404);
+
+  await audit(c.env, {
+    actorType: 'admin', actorId: admin.id, actorLabel: admin.email,
+    action: 'enrollment.read_token', entityType: 'enrollment', entityId: id,
+    after: { hoc_vien: row.full_name },
+  });
+
+  return c.json({ ok: true, token: row.access_token });
 });
 
 /**

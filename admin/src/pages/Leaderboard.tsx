@@ -1,8 +1,8 @@
-import { api, displayPhone } from '../api';
+import { api } from '../api';
 import { Kpi, Heat, RankBadge, Streak, Prog, Loading, ErrorBox, Empty, useLoad } from '../ui';
 
 interface Row {
-  id: string; position: number; full_name: string; phone: string;
+  id: string; position: number; full_name: string;
   xp: number; coin: number; streak_current: number; streak_best: number;
   cohort: string | null; progress_day: number | null; posts_done: number | null;
   streakAlive: boolean;
@@ -90,7 +90,7 @@ export default function Leaderboard() {
                   <td className="num muted">{r.position}</td>
                   <td>
                     <b>{r.full_name}</b>
-                    <div className="muted mono">{displayPhone(r.phone)}{r.cohort ? ` · ${r.cohort}` : ''}</div>
+                    {r.cohort && <div className="muted mono">{r.cohort}</div>}
                   </td>
                   <td>
                     <RankBadge tier={r.rank.tier} />

@@ -15,18 +15,29 @@ export const publicRoutes = new Hono<HonoEnv>();
 /** Cấu hình trang cần khi render: giá, số chỗ còn lại, ngày khai giảng. */
 publicRoutes.get('/api/config', async (c) => {
   const product = await c.env.DB.prepare(
-    `SELECT slug, name, price, compare_at_price, seats_total, seats_offset, start_date
+    `SELECT slug, name, price, compare_at_price, seats_total, seats_offset, start_date,
+            cohort_hien_tai, cohort_khai_giang, cohort_bat_dau_tu
      FROM products WHERE slug = 'thu-thach-21-ngay'`,
   ).first<{
     slug: string; name: string; price: number; compare_at_price: number | null;
     seats_total: number | null; seats_offset: number; start_date: string | null;
+    cohort_hien_tai: string | null; cohort_khai_giang: string | null;
+    cohort_bat_dau_tu: number | null;
   }>();
 
   if (!product) return c.json({ ok: false, error: 'chưa có sản phẩm' }, 503);
 
-  const sold = await c.env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM orders WHERE status IN ('paid','overpaid')`,
-  ).first<{ n: number }>();
+  // Đếm đơn TỪ MỐC MỞ KHOÁ HIỆN TẠI. Cùng lý do như ở dashboard: đếm cả lịch sử
+  // thì mở bán khoá 2 là trang bán báo "hết chỗ" ngay hôm đầu, vì 30 đơn khoá 1
+  // đã ăn hết 30 chỗ khoá 2. Chưa đặt mốc thì đếm tất — đúng cho khoá đầu tiên.
+  const sold = product.cohort_bat_dau_tu
+    ? await c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM orders
+       WHERE status IN ('paid','overpaid') AND paid_at >= ?`,
+    ).bind(product.cohort_bat_dau_tu).first<{ n: number }>()
+    : await c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM orders WHERE status IN ('paid','overpaid')`,
+    ).first<{ n: number }>();
 
   // Zalo và email hỗ trợ lấy từ SETTINGS, không phải site.config.json.
   //
@@ -50,7 +61,8 @@ publicRoutes.get('/api/config', async (c) => {
     listPrice: product.compare_at_price,
     seatsTotal: product.seats_total,
     seatsLeft,
-    startDate: product.start_date,
+    startDate: product.cohort_khai_giang ?? product.start_date,
+    cohort: product.cohort_hien_tai,
     contact: { zalo: zalo || null, email: emailHoTro || null },
   });
 });

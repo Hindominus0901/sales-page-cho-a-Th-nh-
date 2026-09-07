@@ -1112,11 +1112,21 @@ function wireMarqueePause() {
   $('[data-rewards]').addEventListener('click', function (e) {
     var btn = e.target.closest('[data-redeem]');
     if (!btn) return;
-    if (!confirm('Anh chị xác nhận đổi phần quà này?')) return;
+    /* Hỏi ghi chú trước khi đổi.
+       Backend vẫn luôn nhận trường `note`, nhưng chỗ này trước đây gửi cứng
+       chuỗi rỗng — nên cột "Ghi chú của học viên" trong /admin vĩnh viễn là dấu
+       gạch, và anh Thành gửi quà mà không biết địa chỉ hay cỡ áo. */
+    var ghiChu = prompt(
+      'Anh chị cần dặn gì thêm không? (địa chỉ nhận quà, khung giờ gọi được, '
+      + 'cỡ áo…) — để trống cũng được.', '');
+    if (ghiChu === null) return;   // Bấm Huỷ ở hộp thoại = không đổi.
 
     btn.disabled = true;
     btn.textContent = 'Đang đổi…';
-    post(api + '/doi-qua', { rewardId: btn.getAttribute('data-redeem'), note: '' })
+    post(api + '/doi-qua', {
+      rewardId: btn.getAttribute('data-redeem'),
+      note: String(ghiChu).slice(0, 500),
+    })
       .then(function (res) {
         if (!res.ok) {
           alert(res.error || 'Chưa đổi được, anh chị thử lại giúp em.');
@@ -1142,7 +1152,11 @@ function wireMarqueePause() {
      về ngày khác ngay sau khi vừa nộp thì học viên tưởng bài mình bay mất. */
   function refresh() {
     var keep = selectedDay;
-    return fetch(api, { cache: 'no-store' })
+    /* duongTrang, KHÔNG phải api. Với học viên vào bằng link thì hai cái bằng
+       nhau, nhưng với người đăng nhập bằng mật khẩu thì api = '/api/hv' — một
+       địa chỉ không tồn tại. Nó trả HTML, r.json() ném, .catch() bên dưới nuốt
+       im lặng, và màn hình đứng nguyên sau khi nộp bài. */
+    return fetch(duongTrang, { cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d.ok) return;

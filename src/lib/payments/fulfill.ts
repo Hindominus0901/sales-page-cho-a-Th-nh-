@@ -132,13 +132,39 @@ export async function fulfillOrder(
       order.email, order.email_norm, ts, ts));
   }
 
-  // 2. Ghi danh — UNIQUE(order_id) làm lần chạy lại thành no-op.
+  /**
+   * 2. Ghi danh — UNIQUE(order_id) làm lần chạy lại thành no-op.
+   *
+   * Hai thứ được lấy từ sản phẩm thay vì suy ra tại chỗ:
+   *
+   * `cohort` — trước đây cột này không có trong câu INSERT, nên nó luôn NULL và
+   * mọi học viên vĩnh viễn hiện "Chưa xếp khoá". Khoá 2 không tách được khỏi
+   * khoá 1 ở bất kỳ màn hình nào.
+   *
+   * `started_at` — trước đây là `ts`, tức GIÂY CHUYỂN KHOẢN. Khách mua sớm 12
+   * ngày thì tới hôm khai giảng hệ đã coi họ đang ở ngày 13, ô ngày chọn sẵn
+   * sai, và bài ngày 1 bị gắn cờ "nộp muộn" — bị loại khỏi học bổng vì tội mua
+   * sớm. Trang bán thì hứa "cả nhóm bắt đầu cùng một ngày". Giờ lấy ngày khai
+   * giảng của khoá; chưa đặt ngày thì mới rơi về thời điểm thanh toán.
+   */
+  const khoa = await env.DB.prepare(
+    `SELECT cohort_hien_tai, cohort_khai_giang, start_date FROM products WHERE id = ?`,
+  ).bind(order.product_id).first<{
+    cohort_hien_tai: string | null; cohort_khai_giang: string | null; start_date: string | null;
+  }>();
+
+  const ngayKhaiGiang = khoa?.cohort_khai_giang ?? khoa?.start_date ?? null;
+  const batDau = ngayKhaiGiang
+    ? Math.floor(Date.parse(`${ngayKhaiGiang}T00:00:00+07:00`) / 1000)
+    : ts;
+
   statements.push(env.DB.prepare(
-    `INSERT INTO enrollments (id, student_id, product_id, order_id, status, started_at,
+    `INSERT INTO enrollments (id, student_id, product_id, order_id, cohort, status, started_at,
                               access_token, token_created_at, created_at, updated_at)
-     VALUES (?,?,?,?, 'active', ?,?,?,?,?)
+     VALUES (?,?,?,?,?, 'active', ?,?,?,?,?)
      ON CONFLICT(order_id) DO NOTHING`,
-  ).bind(uuid(), studentId, order.product_id, order.id, ts, accessToken(), ts, ts, ts));
+  ).bind(uuid(), studentId, order.product_id, order.id, khoa?.cohort_hien_tai ?? null,
+    batDau, accessToken(), ts, ts, ts));
 
   statements.push(env.DB.prepare(
     `UPDATE orders SET student_id = ?, updated_at = ? WHERE id = ?`,

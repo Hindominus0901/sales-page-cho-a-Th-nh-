@@ -70,20 +70,45 @@ adminDashboardRoutes.get('/api/admin/stats', async (c) => {
     ),
   ]);
 
-  // Số chỗ còn lại — con số anh Thành nhìn đầu tiên mỗi sáng.
+  /**
+   * Số chỗ còn lại — con số anh Thành nhìn đầu tiên mỗi sáng.
+   *
+   * Đếm đơn TỪ MỐC MỞ KHOÁ HIỆN TẠI, không phải từ đầu lịch sử. Trước đây nó
+   * trừ COUNT(*) toàn bộ đơn đã trả tiền, nên ngày mở bán khoá 2 là 30 đơn của
+   * khoá 1 đã ăn hết 30 chỗ của khoá 2 và trang bán báo "hết chỗ" ngay hôm đầu.
+   * Chưa đặt mốc thì giữ nguyên nếp cũ — đếm tất, đúng cho khoá đầu tiên.
+   */
   const product = await c.env.DB.prepare(
-    `SELECT seats_total, seats_offset, start_date FROM products WHERE slug = 'thu-thach-21-ngay'`,
-  ).first<{ seats_total: number | null; seats_offset: number; start_date: string | null }>();
+    `SELECT seats_total, seats_offset, start_date, cohort_hien_tai, cohort_bat_dau_tu
+     FROM products WHERE slug = 'thu-thach-21-ngay'`,
+  ).first<{
+    seats_total: number | null; seats_offset: number; start_date: string | null;
+    cohort_hien_tai: string | null; cohort_bat_dau_tu: number | null;
+  }>();
 
   const t = firstOf<Record<string, number>>(batch, 4) ?? {};
+
+  const daBanKhoaNay = product?.cohort_bat_dau_tu
+    ? (await c.env.DB.prepare(
+      `SELECT COUNT(*) AS n FROM orders
+       WHERE status IN ('paid','overpaid') AND paid_at >= ?`,
+    ).bind(product.cohort_bat_dau_tu).first<{ n: number }>())?.n ?? 0
+    : (t.paid_orders ?? 0);
+
   const seatsLeft = product?.seats_total == null
     ? null
-    : Math.max(0, product.seats_total - (t.paid_orders ?? 0) - product.seats_offset);
+    : Math.max(0, product.seats_total - daBanKhoaNay - product.seats_offset);
 
   return c.json({
     ok: true,
     days,
-    totals: { ...t, seatsLeft, seatsTotal: product?.seats_total ?? null, startDate: product?.start_date ?? null },
+    totals: {
+      ...t, seatsLeft,
+      seatsTotal: product?.seats_total ?? null,
+      startDate: product?.start_date ?? null,
+      cohort: product?.cohort_hien_tai ?? null,
+      daBanKhoaNay,
+    },
     todo: firstOf<Record<string, number>>(batch, 3) ?? {},
     funnel: rowsOf(batch, 0),
     bands: rowsOf(batch, 1),

@@ -12,7 +12,7 @@ import { now, ictDateTime } from '../../lib/util/datetime';
 import { toPhoneNorm } from '../../lib/validation/phone';
 import { capPhieu } from '../../lib/auth/password-reset';
 import { uuid } from '../../lib/util/id';
-import { passwordResetMail, affiliateApplicationMail, affiliateApprovedMail } from '../../lib/email/templates';
+import { passwordResetMail, affiliateApplicationMail, affiliateApprovedMail, affiliateDuplicateMail } from '../../lib/email/templates';
 import { queueMail, drainOutbox } from '../../lib/email/outbox';
 import { rateLimit } from '../../lib/security/ratelimit';
 
@@ -169,15 +169,35 @@ affiliateRoutes.post('/api/aff/dang-ky', async (c) => {
       Number(c.env.AFFILIATE_DEFAULT_RATE_BP || 2000),
       kenh ? `Kênh khi đăng ký: ${kenh}` : null, ts, ts).run();
   } catch (err) {
-    // UNIQUE(email_norm). Nói thẳng là đã có hồ sơ — đây không phải thông tin
-    // bí mật (người nộp chính là người biết email của mình), và im lặng thì họ
-    // nộp lại năm lần rồi nhắn Zalo hỏi vì sao không thấy gì.
+    /**
+     * UNIQUE(email_norm) — email đã có hồ sơ.
+     *
+     * Trả CÙNG MỘT CÂU như khi nộp thành công, và báo sự thật qua chính hộp thư
+     * đó. Lập luận cũ ở đây là "người nộp chính là người biết email của mình" —
+     * sai: người nộp không nhất thiết là chủ email. Trả 409 biến form này thành
+     * công cụ dò. Lấy email của năm KOL trong ngành, thử lần lượt, ai bị từ chối
+     * là người đó đang chạy affiliate cho Góc Creator.
+     *
+     * Chính sách này đã được viết rõ ngay trong file, ở route quên mật khẩu bên
+     * trên — chỗ đó làm đúng, chỗ này thì không. Giờ thống nhất.
+     */
     if (String(err).includes('email_norm')) {
+      const cu = await c.env.DB.prepare(
+        `SELECT id, name, status FROM affiliates WHERE email_norm = ?`,
+      ).bind(email).first<{ id: string; name: string; status: string }>();
+
+      if (cu) {
+        await queueMail(c.env, affiliateDuplicateMail(c.env, {
+          id: cu.id, name: cu.name, email, status: cu.status,
+        }));
+        c.executionCtx.waitUntil(
+          drainOutbox(c.env).catch((e) => console.error('[email] lượt gửi lỗi', e)));
+      }
+
       return c.json({
-        ok: false,
-        error: 'Email này đã có hồ sơ cộng tác viên. Nếu đã được duyệt, anh chị '
-          + 'đăng nhập ở /aff; nếu quên mật khẩu thì dùng chức năng quên mật khẩu.',
-      }, 409);
+        ok: true,
+        message: 'Em đã nhận hồ sơ. Bên Thành sẽ xem và phản hồi qua email.',
+      });
     }
     throw err;
   }

@@ -131,10 +131,33 @@ async function doiQua(c: Context<HonoEnv>, session: StudentSession) {
   });
 }
 
-/** Chặn thao tác quá nhanh. Đếm theo IP vì lúc này chưa chắc biết là ai. */
-async function quaNhanh(c: Context<HonoEnv>, khoa: string, soLan: number): Promise<boolean> {
+/**
+ * Chặn lụt theo IP — hàng rào ngoài, ngưỡng rộng.
+ *
+ * Chạy TRƯỚC khi biết là ai, nên nó chỉ chặn kẻ bắn hàng loạt bằng mã bịa.
+ * Ngưỡng để rộng có chủ ý: nhiều học viên dùng chung một IP là chuyện thường ở
+ * Việt Nam (4G qua CGNAT, WiFi văn phòng, hai vợ chồng cùng nhà), và hàng rào
+ * này không được phép là thứ chặn họ.
+ */
+async function lutTuMotIp(c: Context<HonoEnv>, khoa: string): Promise<boolean> {
   const ip = c.req.header('cf-connecting-ip') ?? 'unknown';
-  const limited = await rateLimit(c.env, `${khoa}:${ip}`, soLan, 600);
+  const limited = await rateLimit(c.env, `${khoa}:ip:${ip}`, 120, 600);
+  return !limited.ok;
+}
+
+/**
+ * Chặn thao tác quá nhanh của MỘT học viên — hàng rào thật.
+ *
+ * Trước đây chỗ này đếm theo IP với ngưỡng thật (10 lượt đổi quà/10 phút cho cả
+ * IP), nên hai người cùng mạng ăn chung hạn mức: ai bấm trước thì người sau nhận
+ * "Anh chị thao tác hơi nhanh" dù mới bấm lần đầu. Tệ nhất đúng vào ngày cuối
+ * đợt khi cả lớp nộp cùng lúc. Danh tính luôn xác định được ngay trước đó, nên
+ * đếm theo người là đúng.
+ */
+async function quaNhanh(
+  c: Context<HonoEnv>, khoa: string, soLan: number, studentId: string,
+): Promise<boolean> {
+  const limited = await rateLimit(c.env, `${khoa}:hv:${studentId}`, soLan, 600);
   return !limited.ok;
 }
 
@@ -149,16 +172,18 @@ studentRoutes.get('/api/hoc/:token', async (c) => {
 });
 
 studentRoutes.post('/api/hoc/:token/nop-bai', async (c) => {
-  if (await quaNhanh(c, 'nop', 30)) return c.json(CHAM, 429);
+  if (await lutTuMotIp(c, 'nop')) return c.json(CHAM, 429);
   const session = await tuMa(c);
   if (!session) return c.json(CHUA_NHAN_RA, 404);
+  if (await quaNhanh(c, 'nop', 30, session.studentId)) return c.json(CHAM, 429);
   return nopBai(c, session);
 });
 
 studentRoutes.post('/api/hoc/:token/doi-qua', async (c) => {
-  if (await quaNhanh(c, 'qua', 10)) return c.json(CHAM, 429);
+  if (await lutTuMotIp(c, 'qua')) return c.json(CHAM, 429);
   const session = await tuMa(c);
   if (!session) return c.json(CHUA_NHAN_RA, 404);
+  if (await quaNhanh(c, 'qua', 10, session.studentId)) return c.json(CHAM, 429);
   return doiQua(c, session);
 });
 
@@ -171,15 +196,17 @@ studentRoutes.get('/api/hv/trang', async (c) => {
 });
 
 studentRoutes.post('/api/hv/nop-bai', async (c) => {
-  if (await quaNhanh(c, 'nop', 30)) return c.json(CHAM, 429);
+  if (await lutTuMotIp(c, 'nop')) return c.json(CHAM, 429);
   const session = await tuPhien(c);
   if (!session) return c.json(CHUA_DANG_NHAP, 401);
+  if (await quaNhanh(c, 'nop', 30, session.studentId)) return c.json(CHAM, 429);
   return nopBai(c, session);
 });
 
 studentRoutes.post('/api/hv/doi-qua', async (c) => {
-  if (await quaNhanh(c, 'qua', 10)) return c.json(CHAM, 429);
+  if (await lutTuMotIp(c, 'qua')) return c.json(CHAM, 429);
   const session = await tuPhien(c);
   if (!session) return c.json(CHUA_DANG_NHAP, 401);
+  if (await quaNhanh(c, 'qua', 10, session.studentId)) return c.json(CHAM, 429);
   return doiQua(c, session);
 });

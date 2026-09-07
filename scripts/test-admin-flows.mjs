@@ -281,7 +281,16 @@ console.log('Cộng tác viên tự đăng ký');
     db.prepare("SELECT COUNT(*) n FROM email_outbox WHERE template='affiliate_application' AND to_email=?")
       .get(email).n, 1);
 
-  ok('nộp lại cùng email bị chặn', (await nop()).status, 409);
+  /* Nộp lại cùng email KHÔNG được báo là trùng.
+     Trả 409 biến form đăng ký thành công cụ dò: lấy email của năm KOL trong
+     ngành, thử lần lượt, ai bị từ chối là người đó đang chạy affiliate cho Góc
+     Creator. Sự thật được nói qua chính hộp thư của chủ email. */
+  ok('nộp lại cùng email KHÔNG lộ ra là đã có hồ sơ', (await nop()).status, 200);
+  ok('nhưng chủ email được báo riêng',
+    db.prepare("SELECT COUNT(*) n FROM email_outbox WHERE template='affiliate_duplicate' AND to_email=?")
+      .get(email).n, 1);
+  ok('và KHÔNG tạo hồ sơ thứ hai',
+    db.prepare('SELECT COUNT(*) n FROM affiliates WHERE email_norm = ?').get(email).n, 1);
   ok('bẫy bot: bot điền ô ẩn thì im lặng bỏ qua',
     (await makeClient().req('POST', '/api/aff/dang-ky', {
       name: 'Bot', email: `bot-${rnd}@vidu.com`, phone: '0900000000',
@@ -619,6 +628,38 @@ console.log('Nhân sự');
       (await makeClient().req('POST', '/api/admin/login', { email, password: them.body.password })).status, 401);
 
     ok('nhân viên xem danh sách nhân sự → 403', (await nv.get('/api/admin/staff')).status, 403);
+
+    /* Nhân viên KHÔNG được chạm vào tiền, vào chìa khoá lớp, hay vào danh bạ.
+       Bảng mô tả vai trò trong màn hình Nhân sự hứa đúng điều này; trước đây mã
+       không giữ lời hứa đó — staff đọc được số tài khoản ngân hàng của mọi CTV,
+       tải được toàn bộ danh sách lead, và lấy được access_token của cả lớp. */
+    ok('nhân viên đọc danh sách CTV → 403',
+      (await nv.get('/api/admin/affiliates')).status, 403);
+    ok('nhân viên đọc các đợt chi trả → 403',
+      (await nv.get('/api/admin/payouts')).status, 403);
+    ok('nhân viên đọc hoa hồng → 403',
+      (await nv.get('/api/admin/commissions')).status, 403);
+    ok('nhân viên tải danh sách lead ra file → 403',
+      (await nv.get('/api/admin/leads/export.csv')).status, 403);
+    ok('nhân viên đọc danh sách học viên → 403',
+      (await nv.get('/api/admin/students')).status, 403);
+    ok('nhân viên đọc bảng xếp hạng → 403',
+      (await nv.get('/api/admin/leaderboard')).status, 403);
+
+    /* Và chủ hệ thống đọc được, nhưng KHÔNG kèm chìa khoá vào lớp: danh sách
+       trả 300 mã một lượt là biến màn hình xem-cho-biết thành một lượt tải chìa
+       khoá cả lớp. Cần link một người thì xin riêng, có ghi nhật ký. */
+    /* Xuất CSV phải RA CSV, không phải "Không tìm thấy lead."
+       Route này nằm sau '/api/admin/leads/:id' nên Hono nuốt nó thành :id với
+       id = "export.csv" — tính năng chưa bao giờ chạy được cho bất kỳ ai. */
+    const csv = await admin.get('/api/admin/leads/export.csv');
+    ok('xuất CSV không còn trả 404', csv.status, 200);
+    ok('và ra đúng nội dung CSV', String(csv.body.raw ?? '').includes('Họ tên'), true);
+
+    const dsHv = await admin.get('/api/admin/students');
+    ok('chủ hệ thống đọc được danh sách học viên', dsHv.status, 200);
+    ok('nhưng danh sách KHÔNG kèm mã vào lớp',
+      JSON.stringify(dsHv.body).includes('access_token'), false);
     ok('nhân viên tự nâng mình lên owner → 403',
       (await nv.patch(`/api/admin/staff/${nvId}`, { role: 'owner' })).status, 403);
 

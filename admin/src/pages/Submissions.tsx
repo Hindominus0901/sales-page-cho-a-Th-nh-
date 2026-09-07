@@ -10,6 +10,7 @@ interface Sub {
   student_id: string; full_name: string; phone: string;
   xp: number; coin: number; streak_current: number;
   cohort: string | null; rank: { name: string; icon: string }; streakAlive: boolean;
+  trung_link_voi: string | null;
 }
 
 const FILTERS = [
@@ -89,6 +90,7 @@ export default function Submissions() {
                   <b style={{ fontSize: 15 }}>{s.full_name}</b>
                   <Badge kind="info">Ngày {s.day}/21</Badge>
                   {s.is_late ? <Badge kind="warm">Nộp muộn</Badge> : null}
+                  {s.trung_link_voi ? <Badge kind="bad">Trùng link</Badge> : null}
                   <RankBadge tier={s.rank} />
                   <Streak n={s.streak_current} alive={s.streakAlive} />
                 </div>
@@ -97,6 +99,14 @@ export default function Submissions() {
                   {s.cohort ? ` · ${s.cohort}` : ''} · nộp {s.createdAtText}
                   {s.channel ? ` · ${CHANNEL[s.channel] ?? s.channel}` : ''}
                 </div>
+                {/* Không chặn cứng: hai người cùng làm một bài nhóm, hoặc chính
+                    người này nộp lại link cũ ở ngày khác, là chuyện có thật.
+                    Chỉ đưa sự việc ra trước mắt người duyệt. */}
+                {s.trung_link_voi && (
+                  <div className="note" style={{ marginTop: 4, color: 'var(--xau)' }}>
+                    Link này cũng được nộp bởi: <b>{s.trung_link_voi}</b> — mở ra xem giúp em.
+                  </div>
+                )}
               </div>
               <div className="row">
                 {/* Nói rõ đây là tổng tích luỹ của học viên, không phải phần

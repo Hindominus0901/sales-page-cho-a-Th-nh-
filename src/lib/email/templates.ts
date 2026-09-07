@@ -7,7 +7,7 @@ export interface Mail {
   text: string;
   html: string;
   template: 'order_paid' | 'workshop_registered' | 'password_reset' | 'student_access'
-    | 'affiliate_application' | 'affiliate_approved';
+    | 'affiliate_application' | 'affiliate_approved' | 'affiliate_duplicate';
   refType: string;
   refId: string;
 }
@@ -259,6 +259,78 @@ export function studentAccessMail(
     template: 'student_access',
     refType: 'order',
     refId: input.orderId,
+  };
+}
+
+/**
+ * Thư gửi khi có người nộp hồ sơ CTV bằng email ĐÃ CÓ hồ sơ.
+ *
+ * Form đăng ký trả về cùng một câu như khi nộp thành công, để nó không dùng
+ * được làm công cụ dò xem ai đang làm CTV cho Góc Creator. Sự thật được nói ở
+ * đây — trong chính hộp thư của chủ email, nơi chỉ họ đọc được.
+ *
+ * Nếu chính chủ nộp lại vì tưởng lần trước hỏng, họ nhận thư này và biết đường
+ * đi tiếp. Nếu người khác nộp thử, chủ email biết có người đang dùng địa chỉ
+ * của mình.
+ */
+export function affiliateDuplicateMail(
+  env: Env,
+  input: { id: string; name: string; email: string; status: string },
+): Mail {
+  const ten = input.name.split(' ').slice(-1)[0] || input.name;
+  const base = env.PUBLIC_BASE_URL.replace(/\/$/, '');
+
+  const daDuyet = input.status === 'active';
+  const buocTiep = daDuyet
+    ? [
+      `Hồ sơ của anh chị đã được duyệt rồi. Anh chị đăng nhập ở ${base}/aff.`,
+      'Chưa đặt mật khẩu hoặc quên mật khẩu thì bấm "Quên mật khẩu" ngay ở trang đó,',
+      'em gửi lại đường link đặt mật khẩu mới.',
+    ]
+    : [
+      'Hồ sơ trước của anh chị đang chờ bên Thành xem. Chưa cần nộp lại.',
+      'Có kết quả là em gửi email ngay.',
+    ];
+
+  const text = [
+    `Chào ${ten},`,
+    '',
+    'Vừa có người dùng địa chỉ email này để nộp hồ sơ cộng tác viên Góc Creator.',
+    '',
+    ...buocTiep,
+    '',
+    'Nếu không phải anh chị vừa nộp thì cứ bỏ qua thư này — chưa có gì thay đổi',
+    'trong tài khoản, và không ai vào được bằng cách đó.',
+    '',
+    '— Góc Creator',
+  ].join('\n');
+
+  return {
+    toEmail: input.email,
+    toName: input.name,
+    subject: 'Email này đã có hồ sơ cộng tác viên — Góc Creator',
+    text,
+    html: shell('Email này đã có hồ sơ', [
+      p(`Chào <b>${esc(ten)}</b>,`),
+      p('Vừa có người dùng địa chỉ email này để nộp hồ sơ cộng tác viên Góc Creator.'),
+      ...(daDuyet
+        ? [
+          p(`Hồ sơ của anh chị <b>đã được duyệt</b> rồi — anh chị đăng nhập ở `
+            + `<a href="${base}/aff">${base}/aff</a>.`),
+          p('Chưa đặt mật khẩu hoặc quên mật khẩu thì bấm "Quên mật khẩu" ngay ở trang đó, '
+            + 'em gửi lại đường link đặt mật khẩu mới.'),
+        ]
+        : [p('Hồ sơ trước của anh chị <b>đang chờ</b> bên Thành xem. Chưa cần nộp lại — '
+            + 'có kết quả là em gửi email ngay.')]),
+      p('Nếu không phải anh chị vừa nộp thì cứ bỏ qua thư này. Chưa có gì thay đổi trong '
+        + 'tài khoản, và không ai vào được bằng cách đó.'),
+    ]),
+    template: 'affiliate_duplicate',
+    refType: 'affiliate',
+    // Kèm mốc giờ: người ta nộp nhầm hai lần cách nhau vài ngày thì đều phải
+    // nhận được thư, mà UNIQUE(template, ref_id) sẽ nuốt lá thứ hai nếu refId
+    // chỉ là id hồ sơ.
+    refId: `${input.id}:${Math.floor(Date.now() / 3600000)}`,
   };
 }
 

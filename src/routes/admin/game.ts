@@ -26,7 +26,19 @@ adminGameRoutes.get('/api/admin/submissions', async (c) => {
             s.is_late, s.coin_awarded, s.xp_awarded, s.created_at, s.reviewed_at,
             st.id AS student_id, st.full_name, st.phone, st.xp, st.coin,
             st.streak_current, st.last_submit_date,
-            e.cohort, u.name AS reviewer_name
+            e.cohort, u.name AS reviewer_name,
+            -- Ai khác đã nộp CHÍNH link này.
+            --
+            -- Bài đăng đã công khai trên Facebook/TikTok, ai cũng lấy được link
+            -- từ nhóm Zalo. Không có ràng buộc nào chặn một người dán link của
+            -- bạn cùng lớp, 21 lần, mỗi ngày một link khác — rồi lên đầu bảng
+            -- xếp hạng. Phòng tuyến duy nhất là mắt người duyệt, nên đưa thẳng
+            -- cảnh báo tới trước mắt họ. KHÔNG chặn cứng: hai người cùng làm
+            -- một bài nhóm, hoặc chính người đó nộp lại ở ngày khác, là chuyện
+            -- có thật.
+            (SELECT GROUP_CONCAT(st2.full_name, ' · ')
+               FROM submissions s2 JOIN students st2 ON st2.id = s2.student_id
+              WHERE s2.post_url = s.post_url AND s2.id != s.id)   trung_link_voi
      FROM submissions s
      JOIN students st ON st.id = s.student_id
      LEFT JOIN enrollments e ON e.id = s.enrollment_id
@@ -106,9 +118,17 @@ adminGameRoutes.post('/api/admin/submissions/:id/review', requireRole('owner', '
 
 // ---------------------------------------------------------------- xếp hạng
 
-adminGameRoutes.get('/api/admin/leaderboard', async (c) => {
+/**
+ * Bảng xếp hạng.
+ *
+ * KHÔNG trả số điện thoại. Xếp hạng không cần nó, mà trước đây câu này in số
+ * của cả 100 người ra một màn hình mà mọi vai trò đều mở được — biến bảng xếp
+ * hạng thành danh bạ cả lớp. Cần liên hệ ai thì vào màn hình Học viên, nơi đã
+ * gác vai trò.
+ */
+adminGameRoutes.get('/api/admin/leaderboard', requireRole('owner', 'admin'), async (c) => {
   const rows = await c.env.DB.prepare(
-    `SELECT st.id, st.full_name, st.phone, st.xp, st.coin,
+    `SELECT st.id, st.full_name, st.xp, st.coin,
             st.streak_current, st.streak_best, st.last_submit_date,
             e.cohort, e.progress_day, e.posts_done
      FROM students st LEFT JOIN enrollments e ON e.student_id = st.id
@@ -150,7 +170,7 @@ adminGameRoutes.get('/api/admin/heatmap', async (c) => {
 
 // ---------------------------------------------------------------- quà tặng
 
-adminGameRoutes.get('/api/admin/rewards', async (c) => {
+adminGameRoutes.get('/api/admin/rewards', requireRole('owner', 'admin'), async (c) => {
   const [rewards, redemptions] = await c.env.DB.batch([
     c.env.DB.prepare(`SELECT * FROM rewards ORDER BY sort_order, created_at`),
     c.env.DB.prepare(
@@ -324,7 +344,7 @@ adminGameRoutes.post('/api/admin/students/:id/coin', requireRole('owner', 'admin
   return c.json({ ok: true });
 });
 
-adminGameRoutes.get('/api/admin/students/:id/coin', async (c) => {
+adminGameRoutes.get('/api/admin/students/:id/coin', requireRole('owner', 'admin'), async (c) => {
   const rows = await c.env.DB.prepare(
     `SELECT l.delta, l.reason, l.note, l.created_at, u.name AS actor_name
      FROM coin_ledger l LEFT JOIN admin_users u ON u.id = l.actor_id

@@ -7,8 +7,19 @@ interface Student {
   coin: number; xp: number; streak_current: number;
   enrollment_id: string | null; cohort: string | null; enrollment_status: string | null;
   progress_day: number | null; posts_done: number | null;
-  access_token: string | null; last_seen_at: number | null;
+  last_submit_date: string | null; last_seen_at: number | null;
   order_code: string | null; amount_total: number | null;
+}
+
+/**
+ * Chuỗi còn sống nếu bài cuối nộp hôm nay hoặc hôm qua (giờ VN).
+ * Cùng luật với isStreakAlive ở máy chủ (src/lib/game/streak.ts).
+ */
+function chuoiConSong(lastSubmitDate: string | null): boolean {
+  if (!lastSubmitDate) return false;
+  const homNay = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10);
+  const homQua = new Date(Date.now() + 7 * 3600 * 1000 - 86400000).toISOString().slice(0, 10);
+  return lastSubmitDate === homNay || lastSubmitDate === homQua;
 }
 
 export default function Students() {
@@ -19,15 +30,27 @@ export default function Students() {
 
   const linkOf = (token: string) => `${location.origin}/hoc/${token}`;
 
+  /* Mã vào lớp KHÔNG còn nằm trong danh sách — xin riêng từng người khi cần.
+     Danh sách trả 300 mã một lượt là biến màn hình này thành một lượt tải chìa
+     khoá cả lớp. Lấy lẻ thì có ghi nhật ký, truy được ai đã lấy link của ai. */
   async function copyLink(s: Student) {
-    if (!s.access_token) return;
+    if (!s.enrollment_id) return;
+    setBusy(s.id);
     try {
-      await navigator.clipboard.writeText(linkOf(s.access_token));
-      toast.show(`Đã chép link của ${s.full_name}. Gửi Zalo cho học viên là dùng được ngay.`);
-    } catch {
-      // Trình duyệt chặn clipboard (thường là do không chạy trên https) —
-      // hiện link ra để anh Thành bôi đen chép tay, còn hơn im lặng không có gì.
-      toast.fail('Trình duyệt không cho chép tự động. Link: ' + linkOf(s.access_token));
+      const r = await api.get<{ token: string }>(
+        `/api/admin/enrollments/${s.enrollment_id}/link`);
+      try {
+        await navigator.clipboard.writeText(linkOf(r.token));
+        toast.show(`Đã chép link của ${s.full_name}. Gửi Zalo cho học viên là dùng được ngay.`);
+      } catch {
+        // Trình duyệt chặn clipboard (thường là do không chạy trên https) —
+        // hiện link ra để anh Thành bôi đen chép tay, còn hơn im lặng không có gì.
+        toast.fail('Trình duyệt không cho chép tự động. Link: ' + linkOf(r.token));
+      }
+    } catch (e) {
+      toast.fail(e instanceof Error ? e.message : 'Không lấy được link.');
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -98,9 +121,16 @@ export default function Students() {
                     ) : '—'}
                   </td>
                   <td className="mono">{s.coin?.toLocaleString('vi-VN') ?? 0}</td>
-                  <td><Streak n={s.streak_current ?? 0} alive={(s.streak_current ?? 0) > 0} /></td>
                   <td>
-                    {s.access_token ? (
+                    {/* alive tính bằng NGÀY NỘP CUỐI, không phải bằng con số.
+                        streak_current chỉ đổi khi có bài mới được duyệt, nên
+                        người nộp 8 ngày rồi biến mất 5 ngày vẫn giữ số 8 và
+                        ngọn lửa vẫn cháy — đúng lúc lẽ ra phải báo động.
+                        Màn Duyệt bài đã tính đúng bằng isStreakAlive. */}
+                    <Streak n={s.streak_current ?? 0} alive={chuoiConSong(s.last_submit_date)} />
+                  </td>
+                  <td>
+                    {s.enrollment_id ? (
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         <button className="btn sm" onClick={() => copyLink(s)}>Chép link</button>
                         <button className="btn sm" disabled={busy === s.id}

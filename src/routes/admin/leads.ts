@@ -63,6 +63,47 @@ adminLeadRoutes.get('/api/admin/leads', async (c) => {
   });
 });
 
+/**
+ * Xuất CSV — UTF-8 có BOM để Excel tiếng Việt mở không bị lỗi font.
+ *
+ * PHẢI đăng ký TRƯỚC '/api/admin/leads/:id'. Hono khớp theo thứ tự đăng ký, và
+ * hai đường này cùng số đoạn — nên khi nó nằm sau, mọi lượt gọi export.csv rơi
+ * vào :id với id = "export.csv" và trả về "Không tìm thấy lead." Tính năng này
+ * chưa bao giờ chạy được cho bất kỳ ai, kể cả chủ hệ thống.
+ */
+adminLeadRoutes.get('/api/admin/leads/export.csv', requireRole('owner', 'admin'), async (c) => {
+  const rows = await c.env.DB.prepare(
+    `SELECT l.code, l.full_name, l.phone, l.email, l.source, l.score, l.score_band, l.status,
+            l.created_at, a.code AS affiliate_code,
+            l.utm_source, l.utm_medium, l.utm_campaign, l.answers_json
+     FROM leads l LEFT JOIN affiliates a ON a.id = l.affiliate_id
+     ORDER BY l.created_at DESC`,
+  ).all<Record<string, unknown>>();
+
+  const head = ['Mã', 'Họ tên', 'Điện thoại', 'Email', 'Nguồn', 'Điểm', 'Phân loại',
+    'Trạng thái', 'Thời điểm', 'CTV giới thiệu', 'utm_source', 'utm_medium', 'utm_campaign',
+    'Lĩnh vực', 'Đang mắc kẹt', 'Mục tiêu'];
+
+  const lines = [head.join(',')];
+  for (const r of rows.results ?? []) {
+    const a = safeJson(r.answers_json) as Record<string, unknown>;
+    lines.push([
+      r.code, r.full_name, r.phone, r.email, r.source, r.score,
+      BAND_LABEL[r.score_band as keyof typeof BAND_LABEL] ?? r.score_band,
+      r.status, ictDateTime(r.created_at as number), r.affiliate_code,
+      r.utm_source, r.utm_medium, r.utm_campaign,
+      a.field, a.stuck ?? a.note, a.goal_text,
+    ].map(csvCell).join(','));
+  }
+
+  return new Response('﻿' + lines.join('\r\n'), {
+    headers: {
+      'content-type': 'text/csv; charset=utf-8',
+      'content-disposition': `attachment; filename="leads-${new Date().toISOString().slice(0, 10)}.csv"`,
+    },
+  });
+});
+
 /** Chi tiết lead — kèm breakdown điểm, ghi chú, đơn hàng, đăng ký workshop. */
 adminLeadRoutes.get('/api/admin/leads/:id', async (c) => {
   const id = c.req.param('id');
@@ -204,39 +245,6 @@ adminLeadRoutes.post('/api/admin/leads/rescore', async (c) => {
   return c.json({ ok: true, updated, version: SCORING_VERSION });
 });
 
-/** Xuất CSV — UTF-8 có BOM để Excel tiếng Việt mở không bị lỗi font. */
-adminLeadRoutes.get('/api/admin/leads/export.csv', requireRole('owner', 'admin'), async (c) => {
-  const rows = await c.env.DB.prepare(
-    `SELECT l.code, l.full_name, l.phone, l.email, l.source, l.score, l.score_band, l.status,
-            l.created_at, a.code AS affiliate_code,
-            l.utm_source, l.utm_medium, l.utm_campaign, l.answers_json
-     FROM leads l LEFT JOIN affiliates a ON a.id = l.affiliate_id
-     ORDER BY l.created_at DESC`,
-  ).all<Record<string, unknown>>();
-
-  const head = ['Mã', 'Họ tên', 'Điện thoại', 'Email', 'Nguồn', 'Điểm', 'Phân loại',
-    'Trạng thái', 'Thời điểm', 'CTV giới thiệu', 'utm_source', 'utm_medium', 'utm_campaign',
-    'Lĩnh vực', 'Đang mắc kẹt', 'Mục tiêu'];
-
-  const lines = [head.join(',')];
-  for (const r of rows.results ?? []) {
-    const a = safeJson(r.answers_json) as Record<string, unknown>;
-    lines.push([
-      r.code, r.full_name, r.phone, r.email, r.source, r.score,
-      BAND_LABEL[r.score_band as keyof typeof BAND_LABEL] ?? r.score_band,
-      r.status, ictDateTime(r.created_at as number), r.affiliate_code,
-      r.utm_source, r.utm_medium, r.utm_campaign,
-      a.field, a.stuck ?? a.note, a.goal_text,
-    ].map(csvCell).join(','));
-  }
-
-  return new Response('﻿' + lines.join('\r\n'), {
-    headers: {
-      'content-type': 'text/csv; charset=utf-8',
-      'content-disposition': `attachment; filename="leads-${new Date().toISOString().slice(0, 10)}.csv"`,
-    },
-  });
-});
 
 function csvCell(v: unknown): string {
   const s = v === null || v === undefined ? '' : String(v);
