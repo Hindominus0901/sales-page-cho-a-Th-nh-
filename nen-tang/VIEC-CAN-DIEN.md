@@ -44,6 +44,44 @@ Cũng nên kiểm lại `payment.bankBin`: đang để `970407` (Techcombank).
 - `REWARD_TIERS_JSON` — chưa đặt thì trang cộng tác viên hiện "Phần thưởng sẽ
   được công bố sớm" thay cho phần thưởng thật.
 
+
+## 2b. Email — lỗ thủng lớn nhất nếu quên, và lưới đỡ cho nó
+
+Khách trả tiền xong, hệ thống **tự động**: tạo tài khoản, cấp quyền vào khoá
+`GC21`, sinh link đặt mật khẩu sống 7 ngày, rồi gửi **hai email**:
+
+| Thư | Nội dung |
+|---|---|
+| `invite_app` | lời mời vào lớp, kèm link đặt mật khẩu |
+| `order_paid` | xác nhận đã nhận học phí |
+
+**Chưa đặt `RESEND_API_KEY` thì cả hai thất bại lặng lẽ.** Đã kiểm chứng, bảng
+`emails_sent` ghi đúng như vậy:
+
+```
+invite_app  → failed: chua dat RESEND_API_KEY
+order_paid  → failed: chua dat RESEND_API_KEY
+```
+
+Nghĩa là: **lấy tiền xong, khách không có đường nào vào lớp.**
+
+**Lưới đỡ đã nối:** trang thanh toán có nút **"Vào lớp ngay"** — khách nhập lại
+số điện thoại đã đăng ký là nhận link đặt mật khẩu ngay tại chỗ, không phụ thuộc
+email. Đường dẫn `POST /api/order/:mã/vao-lop`.
+
+> Cố ý hỏi lại số điện thoại chứ không chỉ dựa vào mã đơn: mã đơn là mã **đối
+> soát**, nó nằm trong nội dung chuyển khoản và trong sao kê ngân hàng. Cấp link
+> lớp học cho bất cứ ai biết mã là mở lớp cho người lạ. Sai số điện thoại và đơn
+> chưa thanh toán trả **cùng một câu** — khác nhau là biến chỗ này thành công cụ
+> dò xem số nào đã mua hàng.
+
+Đã chạy thật trọn chuỗi: đăng ký → trả tiền → lấy link ở trang thanh toán → đặt
+mật khẩu → đăng nhập → thấy đúng quyền `GC21`. **Không dùng email một lần nào.**
+
+Dù vậy vẫn **nên đặt `RESEND_API_KEY`**: không có nó thì người đăng ký tài khoản
+mới (không qua mua hàng) không nhận được mã OTP, và khách đóng tab trước khi bấm
+"Vào lớp ngay" sẽ phải nhắn Zalo.
+
 ## 3. Trang bán hàng — ĐÃ BÊ SANG XONG
 
 Trang bán hàng đã hoàn thiện của anh Thành giờ **là** trang bán hàng của nền tảng.
@@ -87,15 +125,25 @@ GET  /api/order/GC8JHS2P  -> paid, remaining 0
 `/chinh-sach-hoan-tien` · `/chinh-sach-bao-mat` · `/dieu-khoan` · `/media/*` —
 tất cả trả 200. Khu vực thành viên `/dashboard` vẫn chạy song song.
 
-### Còn thiếu ở phần này
+### Năm đường dẫn cũ đã nối đủ
 
-- **`/tra-cuu` chưa nối API.** Trang mở được nhưng nút tra cứu gọi
-  `POST /api/tra-cuu` — đường dẫn đó chưa có trong nền tảng. Thêm vào
-  `tuong-thich.js` là xong, cùng kiểu hai hàm đang có.
-- Các trang cũ khác (`/hoc`, `/workshop`, `/ban-do-21-ngay`, `/ctv-dang-ky`,
-  `/dang-nhap`…) **chưa nối** — chúng thuộc hệ cũ, và nền tảng có phần thay thế
-  riêng (khu vực thành viên, cổng cộng tác viên `/dai-ly`). Quyết định giữ cái
-  nào là việc cần bàn, không phải việc kỹ thuật.
+| Trang gọi | Trạng thái |
+|---|---|
+| `POST /api/register` | ✓ |
+| `GET /api/order/:mã` | ✓ |
+| `POST /api/order/:mã/confirm` | ✓ khách tự báo đã chuyển khoản (chỉ ghi nhận, **không** đổi trạng thái đơn — tiền về hay chưa là do webhook ngân hàng nói) |
+| `POST /api/order/:mã/vao-lop` | ✓ lưới đỡ giao hàng — xem mục 2b |
+| `POST /api/tra-cuu` | ✓ tìm lại đơn bằng số điện thoại |
+
+### Các trang cũ chưa nối — cần anh Thành quyết
+
+`/hoc` · `/workshop` · `/ban-do-21-ngay` · `/ctv-dang-ky` · `/dang-nhap` ·
+`/quen-mat-khau` · `/dat-lai-mat-khau`
+
+Chúng **không vỡ**: rơi vào khu vực thành viên (SPA) chứ không phải trang 404.
+Nhưng nền tảng có phần thay thế riêng cho từng cái — khu vực thành viên thay
+`/hoc`, cổng `/dai-ly` thay `/ctv-dang-ky`, đăng nhập của nền tảng thay
+`/dang-nhap`. **Giữ cái nào là việc cần bàn, không phải việc kỹ thuật.**
 
 ## 4. Deploy lên Cloudflare — CHƯA LÀM, và phải là anh chạy
 
