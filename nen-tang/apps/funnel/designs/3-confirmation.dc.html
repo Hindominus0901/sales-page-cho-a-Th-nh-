@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  /* Mau thuong hieu. Ba dong nay do apps/funnel/build.mjs dien tu brand.json;
+     o file thiet ke chung la gia tri mac dinh de mo truc tiep van xem duoc. */
+  :root { --brand: #111111; --brand-dark: #000000; --brand-rgb: 17 17 17; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#fff; }
+  a:focus-visible, button:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(18px);} to { opacity:1; transform:none;} }
+  .om-gold-btn { position:relative; overflow:hidden; isolation:isolate; transition:transform .2s ease, box-shadow .2s ease; }
+  .om-gold-btn::before { content:""; position:absolute; top:0; left:-60%; width:35%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent); transform:skewX(-20deg); transition:left .6s ease; pointer-events:none; z-index:1; }
+  .om-gold-btn:hover::before { left:130%; }
+  .om-gold-btn:hover { transform:translateY(-2px) scale(1.01); box-shadow:0 20px 46px rgba(180,140,50,.5), inset 0 1px 0 rgba(255,255,255,.6); }
+  a[data-cta] { position:relative; overflow:hidden; transition: transform .2s ease, box-shadow .2s ease; isolation:isolate; }
+  a[data-cta]::before { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); transition:left .55s ease; pointer-events:none; z-index:1; }
+  a[data-cta]:hover::before { left:130%; }
+  a[data-cta]:hover { transform: translateY(-2px) scale(1.01); box-shadow:0 20px 46px rgba(var(--brand-rgb) / .45); }
+  a[data-cta]:active { transform: translateY(0) scale(.99); }
+  button[data-pay-btn] { position:relative; overflow:hidden; transition: transform .2s ease, box-shadow .2s ease; isolation:isolate; }
+  button[data-pay-btn]::before { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); transition:left .55s ease; pointer-events:none; z-index:1; }
+  button[data-pay-btn]:hover::before { left:130%; }
+  button[data-pay-btn]:hover { transform: translateY(-2px); box-shadow:0 20px 46px rgba(var(--brand-rgb) / .4); }
+  div[data-card] { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  div[data-card]:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+  .om-fade-1 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) both; }
+  .om-fade-2 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) .12s both; }
+  .om-fade-3 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) .24s both; }
+</style>
+</helmet>
+
+  <!-- Nen gradient nam thang tren the bao ngoai. TRUOC DAY no la mot lop
+       `position:fixed; inset:0` rieng, nen trang DUC, nam duoi noi dung bang
+       z-index. Nhung the bao ngoai co `overflow-x:clip` - ma `overflow:clip`
+       bien phan tu thanh containing block cua con `fixed`, va Chrome tren
+       Windows co luc dao thu tu ve cua to hop do: lop trang duc nhay len tren,
+       xoa trang toan bo chu, chi con lai nhung phan tu tu tao lop composite
+       (nut co box-shadow/transition). Trang /vip da bi dung nhu vay.
+       Bo lop do di la het duong cho loi ay xay ra. -->
+<div style="position:relative; min-height:100vh; font-family:'Plus Jakarta Sans',system-ui,sans-serif; color:#0A0A0A; background:radial-gradient(900px 700px at 15% 0%, rgba(var(--brand-rgb) / .07), transparent 60%), radial-gradient(800px 700px at 100% 100%, rgba(245,184,65,.06), transparent 62%), #fff; background-repeat:no-repeat; -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:clip;">
+
+  <div style="position:relative; z-index:1; display:flex; justify-content:center; padding:28px 20px 0;">
+    <img src="assets/logo.png" alt="[[brand.legalName]]" style="height:48px; width:auto;">
+  </div>
+
+  <div style="position:relative; z-index:1; max-width:760px; margin:0 auto; padding:clamp(36px,6vw,60px) 20px 90px;">
+    <div style="text-align:center;">
+      <div style="display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:999px; background:rgba(var(--brand-rgb) / .08); border:1px solid rgba(var(--brand-rgb) / .3); font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--brand-dark);">✓ ĐĂNG KÝ VÉ STANDARD THÀNH CÔNG</div>
+      <h1 class="om-fade-1" style="margin:22px 0 0; font-weight:800; font-size:clamp(24px,3.4vw,36px); line-height:1.2; letter-spacing:-.02em; white-space:nowrap;">Chào Mừng Đến Với Thử Thách!</h1>
+      <p style="margin:16px auto 0; max-width:520px; color:#5b5963; font-size:16px; line-height:1.6;">Xem video ngắn dưới đây để biết chính xác việc cần làm tiếp theo, rồi vào nhóm Zalo để không bỏ lỡ buổi đầu tiên.</p>
+    </div>
+
+    <div id="confirm-video" data-card style="margin-top:32px; position:relative; aspect-ratio:16/9; border-radius:20px; overflow:hidden; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); box-shadow:0 24px 60px rgba(0,0,0,.1);">
+      <img src="assets/workshop.jpg" alt="" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.75;">
+      <div style="position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,.55), transparent 50%);"></div>
+      <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.18); backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,.7); display:grid; place-items:center; font-size:20px; padding-left:3px; color:#fff;">▶</div>
+      <div style="position:absolute; left:16px; bottom:14px; font-size:13px; font-weight:600; color:#fff;">Video hướng dẫn: 3 việc cần làm trước buổi 1</div>
+    </div>
+
+    <div style="text-align:center; margin-top:28px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+      <a href="[LINK NHÓM ZALO]" target="_blank" rel="noopener" data-cta style="display:inline-flex; align-items:center; gap:10px; background:var(--brand); color:#fff; padding:17px 32px; border-radius:999px; font-weight:800; font-size:16px; text-decoration:none; box-shadow:0 16px 40px rgba(var(--brand-rgb) / .35);">VÀO NHÓM ZALO NGAY <span style="font-size:18px;">→</span></a>
+      <a href="AI Funnel - 6 OTO2.dc.html" class="om-gold-btn" style="display:inline-flex; align-items:center; gap:10px; background:linear-gradient(180deg,#e9c876,#c9a24d); color:#3a2c06; padding:17px 32px; border-radius:999px; border:1px solid rgba(150,110,30,.4); font-weight:800; font-size:16px; letter-spacing:.01em; text-decoration:none; box-shadow:0 16px 40px rgba(180,140,50,.35), inset 0 1px 0 rgba(255,255,255,.5);">XEM VÉ VIP <span style="font-size:18px;">→</span></a>
+    </div>
+
+    <!-- referral -->
+    <div style="margin-top:56px; padding:clamp(26px,3.5vw,34px); background:linear-gradient(180deg, rgba(var(--brand-rgb) / .08), rgba(var(--brand-rgb) / .02)); border:1.5px solid rgba(var(--brand-rgb) / .35); border-radius:22px;">
+      <h2 style="margin:0 0 8px; font-size:clamp(19px,2.4vw,24px); font-weight:800; letter-spacing:-.02em;">Mời 2 Người Bạn — Nâng Cấp Vé Premium</h2>
+      <p style="margin:0 0 18px; color:#3c3947; font-size:14.5px; line-height:1.65;">Chia sẻ link riêng của bạn dưới đây. Khi <b style="color:#0A0A0A;">2 người bạn</b> hoàn tất đăng ký qua link này, bạn được mở khoá <b style="color:#0A0A0A;">toàn bộ Bộ Quà Triển Khai + bản ghi các buổi học (Vé Premium)</b> miễn phí. Nếu ai đó mua vé VIP qua link của bạn, bạn còn nhận hoa hồng affiliate.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input type="text" readonly value="{{ referralLink }}" style="flex:1; min-width:220px; padding:13px 15px; border-radius:11px; background:#fff; border:1px solid rgba(0,0,0,.14); color:#0A0A0A; font-size:13.5px; font-family:'JetBrains Mono',monospace;">
+        <button onClick="{{ copyReferralLink }}" style="padding:13px 20px; border-radius:11px; background:#0A0A0A; color:#fff; border:none; font-weight:700; font-size:13.5px; cursor:pointer; white-space:nowrap;">{{ copyButtonLabel }}</button>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <a href="{{ zaloShareLink }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:8px; padding:11px 18px; border-radius:999px; background:#0068FF; color:#fff; font-weight:700; font-size:13px; text-decoration:none;">Chia sẻ qua Zalo</a>
+        <a href="{{ facebookShareLink }}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:8px; padding:11px 18px; border-radius:999px; background:#1877F2; color:#fff; font-weight:700; font-size:13px; text-decoration:none;">Chia sẻ qua Facebook</a>
+      </div>
+      <div style="display:flex; gap:20px; margin-top:20px; padding-top:16px; border-top:1px dashed rgba(var(--brand-rgb) / .3);">
+        <div><div style="font-weight:800; font-size:22px; color:var(--brand-dark);">{{ referralCount }}<span style="font-size:.6em; color:#726f7a;">/2</span></div><div style="font-size:11.5px; color:#726f7a;">bạn đã đăng ký</div></div>
+      </div>
+    </div>
+
+    <div style="margin-top:56px;">
+      <h2 style="text-align:center; font-weight:800; font-size:clamp(22px,3vw,28px); letter-spacing:-.02em; margin:0 0 28px;">Các Bước Cần Làm Ngay</h2>
+      <div style="display:grid; gap:12px;">
+        <div data-card style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+          <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">1</div>
+          <div><h3 style="margin:0 0 4px; font-size:16px; font-weight:700;">Mở email vừa gửi cho bạn</h3><p style="margin:0; color:#5b5963; font-size:14px; line-height:1.55;">Trong đó có link đặt mật khẩu để vào khu vực học viên. <b style="color:#0A0A0A;">Chưa thấy thì kiểm hộp thư Spam / Quảng cáo</b> — nếu thấy, bấm “Not spam” để những thư sau vào đúng hộp thư đến.</p></div>
+        </div>
+        <div data-card style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+          <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">2</div>
+          <div><h3 style="margin:0 0 4px; font-size:16px; font-weight:700;">Vào nhóm Zalo</h3><p style="margin:0; color:#5b5963; font-size:14px; line-height:1.55;">Bấm <a href="[LINK NHÓM ZALO]" target="_blank" rel="noopener" style="color:var(--brand); font-weight:600;">vào đây để tham gia nhóm</a> — lịch học và link Zoom mỗi ngày sẽ được gửi trong nhóm.</p></div>
+        </div>
+        <div data-card style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+          <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">3</div>
+          <div><h3 style="margin:0 0 4px; font-size:16px; font-weight:700;">Gửi link mời cho 2 người bạn</h3><p style="margin:0; color:#5b5963; font-size:14px; line-height:1.55;">Dùng link ở trên. Đủ 2 người đăng ký, Bộ Quà Triển Khai và bản ghi các buổi học (Vé Premium) mở khoá cho bạn.</p></div>
+        </div>
+        <div data-card style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+          <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">4</div>
+          <div><h3 style="margin:0 0 4px; font-size:16px; font-weight:700;">Đánh dấu lịch 5 ngày tới</h3><p style="margin:0; color:#5b5963; font-size:14px; line-height:1.55;">Mỗi buổi khoảng 1 giờ. Không tham gia live được vẫn có replay trong 24 giờ.</p></div>
+        </div>
+        <div data-card style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+          <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">5</div>
+          <div><h3 style="margin:0 0 4px; font-size:16px; font-weight:700;">Xem qua vé VIP (không bắt buộc)</h3><p style="margin:0; color:#5b5963; font-size:14px; line-height:1.55;">Muốn đi nhanh hơn mà không chờ đủ lượt mời — có gói VIP tuỳ chọn, xem chi tiết bên dưới.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { copied: false };
+
+  renderVals() {
+    // Gia tri du phong khi funnel.js chua bom duoc du lieu that vao (xem
+    // fillNativeReferralBlock). TUYET DOI khong dat mot ma gia o day: ban cu
+    // ghi cung '?ref=XXXXXX', nghia la ai bam Sao chep truoc khi du lieu that
+    // ve se di rai mot link ma may chu khong nhan ra - nguoi bam vao van dang
+    // ky binh thuong, con nguoi chia se thi mat luot va khong bao gio biet.
+    // Khong co ma con hon ma sai.
+    // Lay tu chinh dia chi trang dang mo - khong can them token, va khong the sai ten mien.
+    const referralLink = (typeof location !== 'undefined' ? location.origin : '') + '/';
+    const shareText = 'Tôi đang tham gia [[brand.name]] — chương trình chuyển giao hệ thống kinh doanh 1 người bằng AI, miễn phí. Tham gia cùng tôi nhé:';
+    return {
+      referralLink,
+      referralCount: 0,
+      copyButtonLabel: this.state.copied ? 'Đã sao chép ✓' : 'Sao chép link',
+      zaloShareLink: 'https://zalo.me/share?url=' + encodeURIComponent(referralLink) + '&text=' + encodeURIComponent(shareText),
+      facebookShareLink: 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(referralLink),
+      copyReferralLink: async () => {
+        try {
+          await navigator.clipboard.writeText(referralLink);
+          this.setState({ copied: true });
+          setTimeout(() => this.setState({ copied: false }), 2200);
+        } catch (e) {}
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

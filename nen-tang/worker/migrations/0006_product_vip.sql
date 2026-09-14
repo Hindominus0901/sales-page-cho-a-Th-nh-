@@ -1,0 +1,21 @@
+-- Khai bao san pham dang ban.
+--
+-- Buoc mo quyen sau khi thanh toan (worker/src/commerce/fulfil.js) doc bang nay
+-- de biet "mua cai nay thi duoc mo nhung gi". Truoc day bang rong nen khong co
+-- gi de tra cuu; he thong van ghi mot quyen theo chinh ma san pham, nhung do la
+-- duong lui, khong phai duong chinh.
+--
+-- grants_json de rong: khi nao chi Thanh tao khoa hoc that thi them vao day
+--   [{"kind":"course","ref":"<id khoa hoc>"}]
+-- va nhung nguoi mua TU DO TRO DI se tu duoc mo. Nguoi mua truoc do thi dung
+-- nut cap quyen tay trong trang quan tri.
+
+-- Hang san pham KHONG con nam o day.
+--
+-- Truoc day migration nay chen san mot san pham cu the (ma san pham, gia, ten
+-- cua mot khach). Nghia la gia san pham ton tai o BA cho co the lech nhau:
+-- config.js, wrangler.jsonc, va file nay - doi gia o hai cho dau, cho thu ba
+-- van giu gia cu, va khong ai biet cho toi khi doi soat don.
+--
+-- Gio san pham do `npm run brand:seed` tao ra tu brand/brand.json, chay lai
+-- duoc bao nhieu lan cung duoc (UPSERT). Migration chi con lo phan cau truc.

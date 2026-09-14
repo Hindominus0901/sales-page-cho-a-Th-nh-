@@ -1,0 +1,123 @@
+{
+  "_doc": "File DUY NHAT duoc phep go gia tri cua khach. Moi noi khac mang gia tri thuong hieu deu la file SINH RA tu day - chay `npm run brand:apply` de sinh lai. Xem brand/README.md.",
+  "meta": {
+    "slug": "mau",
+    "locale": "vi-VN",
+    "currencySuffix": "đ",
+    "timezoneOffsetMinutes": 420
+  },
+  "identity": {
+    "name": "Mẫu Business",
+    "legalName": "CÔNG TY MẪU",
+    "productLine": "Chương Trình Mẫu",
+    "hostName": "Người Hướng Dẫn",
+    "logoText": "MẪU",
+    "supportEmail": "",
+    "nameLead": "Mẫu",
+    "nameAccent": "Business",
+    "_doc": "nameLead + nameAccent = ten hien o tieu de lon trang chu; phan accent duoc in nghieng mau thuong hieu. De trong ca hai thi dung identity.name."
+  },
+  "theme": {
+    "primaryHex": "#3b5bdb",
+    "primaryDarkHex": "#2f49ae"
+  },
+  "domains": {
+    "workerName": "mau-platform",
+    "funnelHost": "mau.example.com",
+    "appHost": "app.mau.example.com",
+    "useCustomDomains": true,
+    "publicUrl": ""
+  },
+  "product": {
+    "sku": "MAU5D",
+    "orderPrefix": "MAU",
+    "name": "Vé VIP — Chương Trình Mẫu",
+    "price": 499000,
+    "listPrice": 999000,
+    "affiliateRate": 20
+  },
+  "payment": {
+    "_doc": "So tai khoan nay di thang vao ma VietQR khach quet de tra tien. Sai mot chu so la tien chay sang tui nguoi khac.",
+    "bankBin": "970436",
+    "bankName": "Vietcombank",
+    "account": "1234567890",
+    "accountName": "CONG TY MAU"
+  },
+  "contact": {
+    "channelLabel": "Zalo",
+    "zaloPhone": "0900000000",
+    "zaloUrl": "https://zalo.me/0900000000",
+    "zaloGroupUrl": "https://zalo.me/g/mau"
+  },
+  "media": {
+    "heroVideo": {
+      "_doc": "Video ban hang o trang chu. provider: wistia | youtube | vimeo | stream",
+      "provider": "youtube",
+      "id": "dQw4w9WgXcQ",
+      "thumb": "",
+      "autoplay": true
+    },
+    "confirmVideo": {
+      "_doc": "Video huong dan o trang cam on. KHONG tu phat: nguoi vua dien form xong, video tu keu len la giat minh.",
+      "provider": "youtube",
+      "id": "",
+      "autoplay": false
+    },
+    "fbPixelId": ""
+  },
+  "mail": {
+    "from": "Mẫu Business <no-reply@mau.example.com>"
+  },
+  "funnel": {
+    "_doc": "Duong dan va tieu de cua tung trang ban hang. Bo mot trang = xoa dong tuong ung o day (build.mjs va worker deu doc tu day nen khong the lech nhau).",
+    "pages": {
+      "landing": {
+        "route": "/",
+        "title": "Chương Trình Mẫu"
+      },
+      "form": {
+        "route": "/dang-ky",
+        "title": "Đăng ký"
+      },
+      "confirmation": {
+        "route": "/xac-nhan",
+        "title": "Xác nhận đăng ký"
+      },
+      "oto": {
+        "route": "/vip",
+        "title": "Vé VIP"
+      },
+      "checkout": {
+        "route": "/thanh-toan",
+        "title": "Thanh toán vé VIP"
+      }
+    },
+    "testimonials": {
+      "_doc": "Loi chung thuc dang video o trang chu. videoId = ma YouTube; de trong thi hien anh giu cho. CHI dung ten va video cua nguoi that KHI DA XIN PHEP ho.",
+      "danhSach": [
+        {
+          "videoId": "",
+          "name": "Học viên mẫu 1"
+        },
+        {
+          "videoId": "",
+          "name": "Học viên mẫu 2"
+        },
+        {
+          "videoId": "",
+          "name": "Học viên mẫu 3"
+        },
+        {
+          "videoId": "",
+          "name": "Học viên mẫu 4"
+        },
+        {
+          "videoId": "",
+          "name": "Học viên mẫu 5"
+        }
+      ]
+    }
+  },
+  "environment": "production",
+  "cron": "0 18 * * *"
+}

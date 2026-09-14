@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  /* Mau thuong hieu. Ba dong nay do apps/funnel/build.mjs dien tu brand.json;
+     o file thiet ke chung la gia tri mac dinh de mo truc tiep van xem duoc. */
+  :root { --brand: #111111; --brand-dark: #000000; --brand-rgb: 17 17 17; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#fff; }
+  input::placeholder { color:#8a8792; }
+  input:focus, select:focus { outline:none; border-color:var(--brand) !important; }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+  select { cursor:pointer; }
+  button { font-family: inherit; }
+  label[data-opt]:hover { border-color:rgba(var(--brand-rgb) / .4) !important; }
+
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(14px);} to { opacity:1; transform:none;} }
+  .om-step { animation: fadeInUp .35s cubic-bezier(.2,.8,.2,1) both; }
+  button[data-nav]:disabled { opacity:.45; cursor:not-allowed; }
+  button[data-nav][data-primary]:not(:disabled) { position:relative; overflow:hidden; isolation:isolate; transition: transform .2s ease, box-shadow .2s ease; }
+  button[data-nav][data-primary]:not(:disabled)::before { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); transition:left .55s ease; pointer-events:none; z-index:1; }
+  button[data-nav][data-primary]:not(:disabled):hover::before { left:130%; }
+  button[data-nav][data-primary]:not(:disabled):hover { transform: translateY(-2px) scale(1.01); box-shadow:0 20px 46px rgba(var(--brand-rgb) / .45); }
+</style>
+</helmet>
+
+  <!-- Nen gradient nam thang tren the bao ngoai. TRUOC DAY no la mot lop
+       `position:fixed; inset:0` rieng, nen trang DUC, nam duoi noi dung bang
+       z-index. Nhung the bao ngoai co `overflow-x:clip` - ma `overflow:clip`
+       bien phan tu thanh containing block cua con `fixed`, va Chrome tren
+       Windows co luc dao thu tu ve cua to hop do: lop trang duc nhay len
+       tren, xoa trang toan bo chu, chi con lai nhung phan tu tu tao lop
+       composite (nut co box-shadow/transition). Trang /vip da bi dung vay.
+       Bo lop do di la het duong cho loi ay xay ra. -->
+<div style="position:relative; min-height:100vh; font-family:'Plus Jakarta Sans',system-ui,sans-serif; color:#0A0A0A; background:radial-gradient(900px 700px at 15% 0%, rgba(var(--brand-rgb) / .07), transparent 60%), radial-gradient(800px 700px at 100% 100%, rgba(245,184,65,.06), transparent 62%), #fff; background-repeat:no-repeat; -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:clip;">
+
+  <div style="position:relative; z-index:1; display:flex; justify-content:center; padding:28px 20px 0;">
+    <img src="assets/logo.png" alt="[[brand.legalName]]" style="height:48px; width:auto;">
+  </div>
+
+  <div style="position:relative; z-index:1; max-width:600px; margin:0 auto; padding:clamp(30px,5vw,50px) 20px 60px;">
+    <div style="height:6px; border-radius:999px; background:rgba(0,0,0,.08); overflow:hidden;">
+      <div style="width:{{ progressPercent }}; height:100%; background:linear-gradient(90deg,var(--brand),#ff6fc0); border-radius:999px; transition:width .35s ease;"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:12px; color:#726f7a; font-family:'JetBrains Mono',monospace;">
+      <span>Bước {{ stepDisplay }}/{{ totalSteps }}</span>
+      <span>{{ stepLabel }}</span>
+    </div>
+
+    <div data-card style="width:100%; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:24px; padding:clamp(28px,4vw,40px); box-shadow:0 24px 60px rgba(0,0,0,.08); margin-top:18px; min-height:340px; display:flex; flex-direction:column;">
+
+      <sc-if value="{{ isStep0 }}" hint-placeholder-val="{{ true }}">
+        <div class="om-step" style="flex:1; display:grid; gap:16px;">
+          <h1 style="margin:0 0 4px; font-weight:800; font-size:clamp(22px,3vw,26px); letter-spacing:-.02em;">Nhập thông tin của bạn</h1>
+          <p style="margin:0 0 6px; color:#5b5963; font-size:14.5px;">Để giữ chỗ và mở khoá Bộ Prompt AI miễn phí trong nhóm Zalo.</p>
+          <label style="display:block;">
+            <span style="display:block; font-size:13px; font-weight:600; margin-bottom:8px;">Họ và tên đầy đủ <span style="color:var(--brand);">*</span></span>
+            <input type="text" value="{{ name }}" onChange="{{ setName }}" placeholder="Họ và tên của bạn" style="width:100%; padding:13px 15px; border-radius:11px; background:#fff; border:1px solid rgba(0,0,0,.14); color:#0A0A0A; font-size:14.5px; font-family:inherit;">
+          </label>
+          <label style="display:block;">
+            <span style="display:block; font-size:13px; font-weight:600; margin-bottom:8px;">Địa chỉ email <span style="color:var(--brand);">*</span></span>
+            <input type="email" value="{{ email }}" onChange="{{ setEmail }}" placeholder="Email của bạn" style="width:100%; padding:13px 15px; border-radius:11px; background:#fff; border:1px solid rgba(0,0,0,.14); color:#0A0A0A; font-size:14.5px; font-family:inherit;">
+          </label>
+          <label style="display:block;">
+            <span style="display:block; font-size:13px; font-weight:600; margin-bottom:8px;">Số điện thoại <span style="color:var(--brand);">*</span></span>
+            <div style="display:grid; grid-template-columns:82px 1fr; gap:8px;">
+              <select value="{{ phoneCode }}" onChange="{{ setPhoneCode }}" style="padding:13px 8px; border-radius:11px; background:#fff; border:1px solid rgba(0,0,0,.14); color:#0A0A0A; font-size:14.5px; font-family:inherit;">
+                <option value="+84">+84</option>
+                <option value="+1">+1</option>
+                <option value="+61">+61</option>
+              </select>
+              <input type="tel" value="{{ phone }}" onChange="{{ setPhone }}" placeholder="09xx xxx xxx" style="width:100%; padding:13px 15px; border-radius:11px; background:#fff; border:1px solid rgba(0,0,0,.14); color:#0A0A0A; font-size:14.5px; font-family:inherit;">
+            </div>
+          </label>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep1 }}" hint-placeholder-val="{{ false }}">
+        <div class="om-step" style="flex:1;">
+          <p style="margin:0 0 18px; font-weight:700; font-size:18px; line-height:1.4;">Bạn đã từng thử mô hình kinh doanh online nào trước đây chưa?</p>
+          <div style="display:grid; gap:10px;">
+            <sc-for list="{{ q1Options }}" as="opt" hint-placeholder-count="2">
+              <label data-opt style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:#fff; border:1.5px solid {{ opt.borderColor }}; border-radius:14px; cursor:pointer;">
+                <input type="radio" checked="{{ opt.checked }}" onChange="{{ opt.onSelect }}" style="width:18px; height:18px; accent-color:var(--brand);">
+                <span style="font-size:14.5px; font-weight:500;">{{ opt.label }}</span>
+              </label>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep2 }}" hint-placeholder-val="{{ false }}">
+        <div class="om-step" style="flex:1;">
+          <p style="margin:0 0 18px; font-weight:700; font-size:18px; line-height:1.4;">Mục tiêu thu nhập bạn muốn đạt trong 6 tháng tới là gì?</p>
+          <div style="display:grid; gap:10px;">
+            <sc-for list="{{ q2Options }}" as="opt" hint-placeholder-count="3">
+              <label data-opt style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:#fff; border:1.5px solid {{ opt.borderColor }}; border-radius:14px; cursor:pointer;">
+                <input type="radio" checked="{{ opt.checked }}" onChange="{{ opt.onSelect }}" style="width:18px; height:18px; accent-color:var(--brand);">
+                <span style="font-size:14.5px; font-weight:500;">{{ opt.label }}</span>
+              </label>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep3 }}" hint-placeholder-val="{{ false }}">
+        <div class="om-step" style="flex:1;">
+          <p style="margin:0 0 18px; font-weight:700; font-size:18px; line-height:1.4;">Mỗi tuần bạn có thể dành bao nhiêu thời gian cho việc này?</p>
+          <div style="display:grid; gap:10px;">
+            <sc-for list="{{ q3Options }}" as="opt" hint-placeholder-count="3">
+              <label data-opt style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:#fff; border:1.5px solid {{ opt.borderColor }}; border-radius:14px; cursor:pointer;">
+                <input type="radio" checked="{{ opt.checked }}" onChange="{{ opt.onSelect }}" style="width:18px; height:18px; accent-color:var(--brand);">
+                <span style="font-size:14.5px; font-weight:500;">{{ opt.label }}</span>
+              </label>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep4 }}" hint-placeholder-val="{{ false }}">
+        <div class="om-step" style="flex:1;">
+          <p style="margin:0 0 18px; font-weight:700; font-size:18px; line-height:1.4;">Bạn đã dùng công cụ AI (ChatGPT...) ở mức nào?</p>
+          <div style="display:grid; gap:10px;">
+            <sc-for list="{{ q5Options }}" as="opt" hint-placeholder-count="3">
+              <label data-opt style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:#fff; border:1.5px solid {{ opt.borderColor }}; border-radius:14px; cursor:pointer;">
+                <input type="radio" checked="{{ opt.checked }}" onChange="{{ opt.onSelect }}" style="width:18px; height:18px; accent-color:var(--brand);">
+                <span style="font-size:14.5px; font-weight:500;">{{ opt.label }}</span>
+              </label>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isStep5 }}" hint-placeholder-val="{{ false }}">
+        <div class="om-step" style="flex:1;">
+          <p style="margin:0 0 18px; font-weight:700; font-size:18px; line-height:1.4;">Thu nhập hiện tại của bạn ước tính khoảng bao nhiêu/tháng?</p>
+          <div style="display:grid; gap:10px;">
+            <sc-for list="{{ q8Options }}" as="opt" hint-placeholder-count="4">
+              <label data-opt style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:#fff; border:1.5px solid {{ opt.borderColor }}; border-radius:14px; cursor:pointer;">
+                <input type="radio" checked="{{ opt.checked }}" onChange="{{ opt.onSelect }}" style="width:18px; height:18px; accent-color:var(--brand);">
+                <span style="font-size:14.5px; font-weight:500;">{{ opt.label }}</span>
+              </label>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="display:flex; gap:10px; margin-top:26px;">
+        <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+          <button data-nav onClick="{{ goBack }}" style="padding:15px 20px; border-radius:999px; background:#fff; color:#0A0A0A; border:1.5px solid rgba(0,0,0,.14); font-weight:700; font-size:14.5px; cursor:pointer;">← Quay lại</button>
+        </sc-if>
+        <sc-if value="{{ isLastStep }}" hint-placeholder-val="{{ false }}">
+          <button data-nav data-primary disabled="{{ nextDisabled }}" onClick="{{ submitForm }}" style="flex:1; text-align:center; background:var(--brand); color:#fff; padding:16px; border-radius:999px; border:none; font-weight:800; font-size:15.5px; cursor:pointer;">NHẬN VÉ MIỄN PHÍ CỦA TÔI →</button>
+        </sc-if>
+        <sc-if value="{{ isLastStep }}" hint-placeholder-val="{{ true }}">
+        </sc-if>
+        <sc-if value="{{ showNextInstead }}" hint-placeholder-val="{{ true }}">
+          <button data-nav data-primary disabled="{{ nextDisabled }}" onClick="{{ goNext }}" style="flex:1; text-align:center; background:var(--brand); color:#fff; padding:16px; border-radius:999px; border:none; font-weight:800; font-size:15.5px; cursor:pointer;">Tiếp tục →</button>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    step: 0,
+    name: '', email: '', phone: '', phoneCode: '+84',
+    q1: null, q2: null, q3: null, q5: null, q8: null
+  };
+
+  // Nam cau, khong tam. Form cang dai cang nhieu nguoi bo giua chung; ba cau da
+  // bo (tro ngai, linh vuc, ky vong) khong doi duoc phan khuc khach hang.
+  stepMeta = [
+    { label: 'Thông tin' },
+    { label: 'Kinh nghiệm' },
+    { label: 'Mục tiêu' },
+    { label: 'Thời gian' },
+    { label: 'AI' },
+    { label: 'Thu nhập' }
+  ];
+
+  radioOptions(field, labels) {
+    return labels.map(label => ({
+      label,
+      checked: this.state[field] === label,
+      borderColor: this.state[field] === label ? 'var(--brand)' : '#E4E2E8',
+      onSelect: () => this.setState({ [field]: label })
+    }));
+  }
+
+  checkboxOptions(field, labels) {
+    const current = this.state[field];
+    return labels.map(label => {
+      const checked = current.includes(label);
+      return {
+        label,
+        checked,
+        borderColor: checked ? 'var(--brand)' : '#E4E2E8',
+        onToggle: () => this.setState(s => {
+          const arr = s[field];
+          const next = arr.includes(label) ? arr.filter(l => l !== label) : arr.concat(label);
+          return { [field]: next };
+        })
+      };
+    });
+  }
+
+  canProceed(step) {
+    const s = this.state;
+    switch (step) {
+      case 0: return !!(s.name.trim() && s.email.trim() && s.phone.trim());
+      case 1: return !!s.q1;
+      case 2: return !!s.q2;
+      case 3: return !!s.q3;
+      case 4: return !!s.q5;
+      case 5: return !!s.q8;
+      default: return true;
+    }
+  }
+
+  renderVals() {
+    const step = this.state.step;
+    const total = this.stepMeta.length;
+    const vals = {
+      progressPercent: Math.round(((step + 1) / total) * 100) + '%',
+      stepDisplay: step + 1,
+      totalSteps: total,
+      stepLabel: this.stepMeta[step].label,
+      name: this.state.name,
+      email: this.state.email,
+      phone: this.state.phone,
+      phoneCode: this.state.phoneCode,
+      setName: e => this.setState({ name: e.target.value }),
+      setEmail: e => this.setState({ email: e.target.value }),
+      setPhone: e => this.setState({ phone: e.target.value }),
+      setPhoneCode: e => this.setState({ phoneCode: e.target.value }),
+      q1Options: this.radioOptions('q1', ['Chưa, tôi chưa từng thử mô hình nào', 'Rồi, tôi đã từng thử mô hình kinh doanh online trước đây']),
+      q2Options: this.radioOptions('q2', ['Có thêm 5–10 triệu/tháng, thu nhập phụ ổn định', 'Thay thế được thu nhập công việc chính hiện tại', 'Xây một hệ thống thu nhập lớn, quy mô dài hạn']),
+      q3Options: this.radioOptions('q3', ['Dưới 5 giờ/tuần', '5–15 giờ/tuần', 'Trên 15 giờ/tuần']),
+      q5Options: this.radioOptions('q5', ['Chưa dùng bao giờ', 'Dùng để hỏi đáp thông thường, chưa ứng dụng vào công việc', 'Đã dùng để làm việc/kinh doanh nhưng chưa có hệ thống']),
+      q8Options: this.radioOptions('q8', ['Dưới 10 triệu/tháng', '10–30 triệu/tháng', '30–70 triệu/tháng', 'Trên 70 triệu/tháng']),
+      showBack: step > 0,
+      isLastStep: step === total - 1,
+      showNextInstead: step < total - 1,
+      nextDisabled: !this.canProceed(step),
+      goNext: () => { if (this.canProceed(step)) this.setState({ step: step + 1 }); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+      goBack: () => { this.setState({ step: Math.max(0, step - 1) }); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+      submitForm: () => { if (this.canProceed(step)) window.location.href = 'AI Funnel - 3 Confirmation.dc.html'; }
+    };
+    for (let i = 0; i < total; i++) vals['isStep' + i] = step === i;
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

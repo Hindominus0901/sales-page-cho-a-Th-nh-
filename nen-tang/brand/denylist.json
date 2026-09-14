@@ -1,0 +1,46 @@
+{
+  "_doc": "Chuoi CAM khong duoc con trong ban template. `npm run brand:check` quet ca cay va thoat voi ma loi neu con. Da BO cac mau mang du lieu ca nhan cua khach goc (so tai khoan, so dien thoai, ten hoc vien that): mot danh sach dung de do khong duoc phep la noi luu tru du lieu cua nguoi khac. Moi mau con lai deu phai co NEO, vi grep tran chu de trung nham (thanh toan, /admin).",
+  "boQua": [
+    "node_modules",
+    ".git",
+    "dist",
+    ".wrangler",
+    "package-lock.json",
+    "brand/denylist.json",
+    "docs/RELEASE.md"
+  ],
+  "mau": [
+    {
+      "re": "\\bADM\\s+Group\\b",
+      "vi": "ten to chuc cua khach"
+    },
+    {
+      "re": "adm-logo|adm-platform|ADM GROUP",
+      "vi": "thuong hieu khach"
+    },
+    {
+      "re": "111business|xaytaisanso",
+      "vi": "ten mien cua khach"
+    },
+    {
+      "re": "#eb1696|#d4127f",
+      "vi": "mau thuong hieu chua duoc dua vao bien"
+    },
+    {
+      "re": "thuyle|Lửng Mật",
+      "vi": "nguoi that / linh vat cua khach"
+    },
+    {
+      "re": "1-1-1 Business|1·1·1 Business|Doanh Nghiệp 1 Người",
+      "vi": "ten chuong trinh cua khach"
+    },
+    {
+      "re": "VIP5D",
+      "vi": "ma san pham cua khach"
+    },
+    {
+      "re": "25771886",
+      "vi": "ma broadcast Kit cua khach"
+    }
+  ]
+}

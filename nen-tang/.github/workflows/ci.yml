@@ -1,0 +1,57 @@
+# Chay bo test tren moi lan day ma len.
+#
+# Ba bo test deu doc/ghi vao CUNG MOT co so du lieu D1 cuc bo va deu ket thuc
+# bang lenh DELETE de don. Chay song song la chung dam nhau: khoa SQLite, loi
+# "FOREIGN KEY constraint failed", va ket qua sai ma khong hieu vi sao. Nen o
+# day co dung mot job, mot buoc, tuan tu - dung tach ra cho "nhanh".
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # .env phai ton tai vi cac bo test chay bang `node --env-file=.env`.
+      # Gia tri that khong can - chung noi vao ban chay o may, khong ra ngoai.
+      - name: Tao .env cho ban chay o may
+        run: |
+          cat > .env <<'EOF'
+          ADMIN_USER=admin
+          ADMIN_TOKEN=test123
+          ADMIN_SERVICE_TOKEN=test123
+          BANK_WEBHOOK_SECRET=hook123
+          SESSION_SECRET=ci-session-secret-khong-dung-that
+          OTP_PEPPER=ci-otp-pepper-khong-dung-that
+          ENVIRONMENT=development
+          EOF
+          npm run hash-password "matkhau-ci-123" | tail -1 \
+            | sed 's/^/ADMIN_PASSWORD_HASH=/' >> .env
+          echo 'SMOKE_ADMIN_PASSWORD=matkhau-ci-123' >> .env
+
+      - run: npm run db:migrate
+      - run: npm run build
+
+      - name: Dung wrangler dev roi cho no san sang
+        run: |
+          npx wrangler dev --port 8787 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8787/api/health && break
+            sleep 1
+          done
+
+      # Tuan tu - xem chu thich dau file.
+      - run: npm test

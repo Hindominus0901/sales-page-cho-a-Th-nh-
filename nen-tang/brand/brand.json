@@ -1,0 +1,124 @@
+{
+  "_doc": "File DUY NHAT duoc phep go gia tri cua khach. Moi noi khac mang gia tri thuong hieu deu la file SINH RA tu day - chay `npm run brand:apply` de sinh lai. Xem brand/README.md.",
+  "meta": {
+    "slug": "goc-creator",
+    "locale": "vi-VN",
+    "currencySuffix": "đ",
+    "timezoneOffsetMinutes": 420
+  },
+  "identity": {
+    "name": "Góc Creator",
+    "legalName": "CÔNG TY TNHH THƯƠNG MẠI & DỊCH VỤ ANLIFE GROUP",
+    "productLine": "Thử Thách 21 Ngày",
+    "hostName": "Thành",
+    "logoText": "GÓC CREATOR",
+    "supportEmail": "nhipsongsoserenitylife@gmail.com",
+    "nameLead": "Góc",
+    "nameAccent": "Creator",
+    "_doc": "nameLead + nameAccent = ten hien o tieu de lon trang chu; phan accent duoc in nghieng mau thuong hieu. De trong ca hai thi dung identity.name."
+  },
+  "theme": {
+    "primaryHex": "#3d9962",
+    "primaryDarkHex": "#2f7a4d"
+  },
+  "domains": {
+    "workerName": "goc-creator-platform",
+    "funnelHost": "manhthanh.net",
+    "appHost": "app.manhthanh.net",
+    "useCustomDomains": false,
+    "publicUrl": ""
+  },
+  "product": {
+    "sku": "GC21",
+    "orderPrefix": "GC",
+    "name": "Thử Thách 21 Ngày — Góc Creator",
+    "price": 2000000,
+    "listPrice": 4000000,
+    "affiliateRate": 20
+  },
+  "payment": {
+    "_doc": "So tai khoan nay di thang vao ma VietQR khach quet de tra tien. Sai mot chu so la tien chay sang tui nguoi khac.",
+    "bankBin": "970407",
+    "bankName": "Techcombank",
+    "account": "0000000000",
+    "accountName": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+    "_CANDIEN": "payment.account va contact.zalo* dang la so 0 gia. PHAI thay bang so that truoc khi deploy."
+  },
+  "contact": {
+    "channelLabel": "Zalo",
+    "zaloPhone": "0000000000",
+    "zaloUrl": "https://zalo.me/0000000000",
+    "zaloGroupUrl": "https://zalo.me/g/chua-co"
+  },
+  "media": {
+    "heroVideo": {
+      "_doc": "Video ban hang o trang chu. provider: wistia | youtube | vimeo | stream",
+      "provider": "youtube",
+      "id": "",
+      "thumb": "",
+      "autoplay": true
+    },
+    "confirmVideo": {
+      "_doc": "Video huong dan o trang cam on. KHONG tu phat: nguoi vua dien form xong, video tu keu len la giat minh.",
+      "provider": "youtube",
+      "id": "",
+      "autoplay": false
+    },
+    "fbPixelId": ""
+  },
+  "mail": {
+    "from": "Góc Creator <no-reply@manhthanh.net>"
+  },
+  "funnel": {
+    "_doc": "Duong dan va tieu de cua tung trang ban hang. Bo mot trang = xoa dong tuong ung o day (build.mjs va worker deu doc tu day nen khong the lech nhau).",
+    "pages": {
+      "landing": {
+        "route": "/",
+        "title": "Thử thách 21 ngày — Xây thương hiệu cá nhân | Góc Creator"
+      },
+      "form": {
+        "route": "/dang-ky",
+        "title": "Đăng ký Thử Thách 21 Ngày"
+      },
+      "confirmation": {
+        "route": "/xac-nhan",
+        "title": "Đã nhận đăng ký"
+      },
+      "oto": {
+        "route": "/vip",
+        "title": "Nâng cấp"
+      },
+      "checkout": {
+        "route": "/thanh-toan",
+        "title": "Thanh toán"
+      }
+    },
+    "testimonials": {
+      "_doc": "Loi chung thuc dang video o trang chu. videoId = ma YouTube; de trong thi hien anh giu cho. CHI dung ten va video cua nguoi that KHI DA XIN PHEP ho.",
+      "danhSach": [
+        {
+          "videoId": "",
+          "name": ""
+        },
+        {
+          "videoId": "",
+          "name": ""
+        },
+        {
+          "videoId": "",
+          "name": ""
+        },
+        {
+          "videoId": "",
+          "name": ""
+        },
+        {
+          "videoId": "",
+          "name": ""
+        }
+      ]
+    }
+  },
+  "environment": "production",
+  "cron": "0 18 * * *"
+}

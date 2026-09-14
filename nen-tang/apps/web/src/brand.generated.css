@@ -1,0 +1,12 @@
+/* SINH TU brand/brand.json BOI scripts/brand/apply.mjs - DUNG SUA TAY.
+   Nap sau index.css nen de len cac bien mau o do. Doi mau thuong hieu = sua
+   theme.primaryHex trong brand/brand.json roi chay: npm run brand:apply */
+:root {
+  --primary: 144 43% 42%;
+  --ring: 144 43% 42%;
+  --chart-1: 144 43% 42%;
+  --secondary-foreground: 144 44% 33%;
+  --accent-foreground: 144 44% 33%;
+  --brand-hex: #3d9962;
+  --brand-hex-dark: #2f7a4d;
+}

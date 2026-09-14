@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Playfair+Display:ital,wght@1,500;1,600&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  /* Mau thuong hieu. Ba dong nay do apps/funnel/build.mjs dien tu brand.json;
+     o file thiet ke chung la gia tri mac dinh de mo truc tiep van xem duoc. */
+  :root { --brand: #111111; --brand-dark: #000000; --brand-rgb: 17 17 17; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#fff; }
+  a:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(18px);} to { opacity:1; transform:none;} }
+  a[data-cta] { position:relative; overflow:hidden; transition: transform .2s ease, box-shadow .2s ease; isolation:isolate; }
+  a[data-cta]::before { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); transition:left .55s ease; pointer-events:none; z-index:1; }
+  a[data-cta]:hover::before { left:130%; }
+  a[data-cta]:hover { transform: translateY(-2px) scale(1.01); box-shadow:0 20px 46px rgba(var(--brand-rgb) / .45); }
+  a[data-cta]:active { transform: translateY(0) scale(.99); }
+  button[data-pay-btn] { position:relative; overflow:hidden; transition: transform .2s ease, box-shadow .2s ease; isolation:isolate; }
+  button[data-pay-btn]::before { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); transition:left .55s ease; pointer-events:none; z-index:1; }
+  button[data-pay-btn]:hover::before { left:130%; }
+  button[data-pay-btn]:hover { transform: translateY(-2px); box-shadow:0 20px 46px rgba(var(--brand-rgb) / .4); }
+  div[data-card] { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  div[data-card]:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+  .om-fade-1 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) both; }
+  .om-fade-2 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) .12s both; }
+  .om-fade-3 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) .24s both; }
+</style>
+</helmet>
+
+  <!-- Nen gradient nam thang tren the bao ngoai. TRUOC DAY no la mot lop
+       `position:fixed; inset:0` rieng, nen trang DUC, nam duoi noi dung bang
+       z-index. Nhung the bao ngoai co `overflow-x:clip` - ma `overflow:clip`
+       bien phan tu thanh containing block cua con `fixed`, va Chrome tren
+       Windows co luc dao thu tu ve cua to hop do: lop trang duc nhay len tren,
+       xoa trang toan bo chu, chi con lai nhung phan tu tu tao lop composite
+       (nut co box-shadow/transition). Trang /vip da bi dung nhu vay.
+       Bo lop do di la het duong cho loi ay xay ra. -->
+<div style="position:relative; min-height:100vh; font-family:'Plus Jakarta Sans',system-ui,sans-serif; color:#0A0A0A; background:radial-gradient(900px 700px at 15% 0%, rgba(212,140,20,.1), transparent 60%), radial-gradient(900px 800px at 100% 100%, rgba(var(--brand-rgb) / .06), transparent 62%), #fff; background-repeat:no-repeat; -webkit-font-smoothing:antialiased; line-height:1.5; overflow-x:clip;">
+
+  <div style="position:sticky; top:0; z-index:20; background:#E8283C; color:#fff; text-align:center; padding:12px 18px; font-weight:800; font-size:13.5px; letter-spacing:.01em;">CHỜ ĐÃ! ĐỪNG ĐÓNG TRANG NÀY — ĐĂNG KÝ CHƯA HOÀN TẤT</div>
+
+  <div style="position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:clamp(30px,5vw,50px) 20px 100px;">
+    <div style="display:flex; justify-content:center; padding-bottom:24px;">
+      <img src="assets/logo.png" alt="[[brand.legalName]]" style="height:44px; width:auto;">
+    </div>
+    <div style="height:7px; border-radius:999px; background:rgba(0,0,0,.08); overflow:hidden; max-width:640px; margin:0 auto;">
+      <div style="width:74%; height:100%; background:linear-gradient(90deg,#F5B841,#f7c869); border-radius:999px;"></div>
+    </div>
+
+    <div style="text-align:center; margin-top:30px;">
+      <h1 class="om-fade-1" style="margin:0; font-weight:800; font-size:clamp(28px,4vw,44px); letter-spacing:-.03em; text-wrap:pretty;"><em style="font-family:'Playfair Display',serif; font-style:italic; color:#9c6a08;">Chọn Loại Vé</em> để Tối Đa Hoá Trải Nghiệm Challenge Của Bạn</h1>
+      <p style="margin:18px auto 0; max-width:620px; color:#5b5963; font-size:16.5px; line-height:1.6;">Trước khi vào nhóm Zalo, có <b style="color:#0A0A0A;">một quyết định</b> phân biệt người sẽ triển khai và kiếm tiền thật với người chỉ ghi chép rồi không bao giờ hành động.</p>
+    </div>
+
+    <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:32px;">
+      <a href="Checkout.dc.html" data-cta style="background:var(--brand); color:#fff; padding:17px 30px; border-radius:999px; font-weight:800; font-size:15.5px; text-decoration:none; box-shadow:0 16px 40px rgba(var(--brand-rgb) / .4);">CÓ! TÔI MUỐN VÉ VIP</a>
+      <a href="#vuot-rao" onClick="{{ scrollToVuotRao }}" style="color:#5b5963; padding:17px 30px; border-radius:999px; border:1px solid rgba(0,0,0,.16); font-weight:600; font-size:15px; text-decoration:none;">KHÔNG, TÔI GIỮ VÉ MIỄN PHÍ</a>
+    </div>
+
+    <!-- 3 hang ve -->
+    <div style="margin-top:64px; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; align-items:start;">
+      <div data-card style="padding:clamp(24px,2.6vw,30px); background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:22px;">
+        <div style="font-size:13px; font-weight:700; color:#726f7a; letter-spacing:.04em;">FREE</div>
+        <div style="font-weight:800; font-size:17px; color:#2c2933; margin:6px 0 18px;">VÉ STANDARD</div>
+        <ul style="list-style:none; margin:0; padding:0; display:grid; gap:11px; font-size:14.5px;">
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Tham gia 5 ngày học trực tiếp</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Tài liệu học trong chương trình</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Bản đồ 90 ngày [[brand.name]]</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> Nhận toàn bộ record 5 buổi</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> Quà tặng riêng vé Premium</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> Template Visual Branding</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> Template Reels / Facebook Cover</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> 1 buổi Zoom dành riêng cho VIP</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> 7Days Tài Sản Số (Video)</li>
+        </ul>
+      </div>
+      <div style="padding:clamp(24px,2.6vw,30px); background:linear-gradient(180deg, rgba(var(--brand-rgb) / .09), rgba(var(--brand-rgb) / .02)); border:1.5px solid rgba(var(--brand-rgb) / .32); border-radius:22px;">
+        <div style="font-size:13px; font-weight:700; color:var(--brand-dark); letter-spacing:.04em;">MỜI 2 NGƯỜI BẠN</div>
+        <div style="font-weight:800; font-size:17px; color:#2c2933; margin:6px 0 18px;">VÉ PREMIUM</div>
+        <ul style="list-style:none; margin:0; padding:0; display:grid; gap:11px; font-size:14.5px;">
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Tham gia 5 ngày học trực tiếp</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Tài liệu học trong chương trình</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Bản đồ 90 ngày [[brand.name]]</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Nhận toàn bộ record 5 buổi</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Quà tặng riêng vé Premium</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Template Visual Branding</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Template Reels / Facebook Cover</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> 1 buổi Zoom dành riêng cho VIP</li>
+          <li style="display:flex; gap:10px; color:#8a8792;"><span>❌</span> 7Days Tài Sản Số (Video)</li>
+        </ul>
+        <a href="AI Funnel - 3 Confirmation.dc.html" style="display:block; text-align:center; margin-top:20px; padding:13px 20px; border-radius:999px; border:1.5px solid rgba(var(--brand-rgb) / .4); color:var(--brand-dark); font-weight:800; font-size:14px; text-decoration:none;">LẤY LINK MỜI BẠN →</a>
+      </div>
+      <div style="padding:clamp(24px,2.6vw,30px); background:linear-gradient(180deg, rgba(245,184,65,.16), rgba(245,184,65,.03)); border:1.5px solid rgba(212,150,20,.42); border-radius:22px;">
+        <div style="display:flex; align-items:baseline; gap:9px;">
+          <span style="color:#8a8792; text-decoration:line-through; font-size:14px;">[[listPrice]]</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:21px; color:#9c6a08;">[[price]]</span>
+        </div>
+        <div style="font-weight:800; font-size:17px; color:#2c2933; margin:6px 0 4px;">👑 VÉ VIP</div>
+        <div style="font-size:12.5px; color:#726f7a; margin-bottom:16px; font-style:italic;">Giá early bird — chỉ áp dụng cho 50 suất đầu, trong 3 ngày. Sau đó về giá chính thức [[listPrice]].</div>
+        <ul style="list-style:none; margin:0; padding:0; display:grid; gap:11px; font-size:14.5px; color:#2c2933;">
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Tham gia 5 ngày học trực tiếp</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Tài liệu học trong chương trình</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Bản đồ 90 ngày [[brand.name]]</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Nhận toàn bộ record 5 buổi</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Quà tặng riêng vé Premium</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Template Visual Branding</li>
+          <li style="display:flex; gap:10px;"><span style="color:var(--brand-dark);">✅</span> Template Reels / Facebook Cover</li>
+          <li style="display:flex; gap:10px;"><span style="color:#c08a10;">✅</span> 1 buổi Zoom dành riêng cho VIP</li>
+          <li style="display:flex; gap:10px;"><span style="color:#c08a10;">✅</span> 7Days Tài Sản Số (Video)</li>
+        </ul>
+        <a href="Checkout.dc.html" data-cta style="display:block; text-align:center; margin-top:20px; padding:13px 20px; border-radius:999px; background:var(--brand); color:#fff; font-weight:800; font-size:14px; text-decoration:none; box-shadow:0 12px 30px rgba(var(--brand-rgb) / .32);">CÓ! TÔI MUỐN VÉ VIP</a>
+      </div>
+    </div>
+
+    <!-- results -->
+    <div style="text-align:center; margin-top:80px;">
+      <h2 style="margin:0; font-weight:800; font-size:clamp(24px,3.2vw,32px); letter-spacing:-.02em;">Kết Quả Thật Từ Học Viên Đã Áp Dụng Hệ Thống</h2>
+      <p style="margin:10px 0 0; color:#726f7a; font-style:italic; font-size:14.5px;">Người trả phí, thường là người tập trung nhất.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:32px;">
+        <div data-card style="text-align:center; padding:28px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:18px;">
+          <div style="font-size:36px; font-weight:800; color:var(--brand-dark); letter-spacing:-.03em; line-height:1;">300tr<span style="font-size:.5em; color:#5b5963;">/tháng</span></div>
+          <div style="font-size:14px; color:#0A0A0A; font-weight:600; margin-top:10px;">Doanh thu đều đặn từ sản phẩm số</div>
+          <div style="font-size:12.5px; color:#726f7a; margin-top:6px;">Chị Diệu Hoa, sản phẩm "Dạy con tự ngủ"</div>
+        </div>
+        <div data-card style="text-align:center; padding:28px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:18px;">
+          <div style="font-size:36px; font-weight:800; color:var(--brand-dark); letter-spacing:-.03em; line-height:1;">300tr</div>
+          <div style="font-size:14px; color:#0A0A0A; font-weight:600; margin-top:10px;">Bán AI Agent chỉ trong một tháng</div>
+          <div style="font-size:12.5px; color:#726f7a; margin-top:6px;">Thành viên team [[brand.hostName]]</div>
+        </div>
+        <div data-card style="text-align:center; padding:28px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:18px;">
+          <div style="font-size:36px; font-weight:800; color:var(--brand-dark); letter-spacing:-.03em; line-height:1;">×2</div>
+          <div style="font-size:14px; color:#0A0A0A; font-weight:600; margin-top:10px;">Doanh thu nhân đôi sau thử thách</div>
+          <div style="font-size:12.5px; color:#726f7a; margin-top:6px;">Học viên theo dõi Facebook [[brand.hostName]]</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- bonus stack -->
+    <div style="margin-top:90px;">
+      <h2 style="text-align:center; margin:0 0 40px; font-weight:800; font-size:clamp(24px,3.2vw,34px); letter-spacing:-.02em;">Chi Tiết Từng Phần Trong VIP</h2>
+      <div style="display:grid; gap:14px;">
+        <div data-card style="padding:26px 28px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:18px; font-weight:700;">BONUS 1 — 1 Buổi Zoom Dành Riêng Cho VIP</h3>
+          <ul style="margin:0; padding-left:18px; color:#3c3947; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Buổi riêng chỉ dành cho nhóm VIP, chia sẻ chiến lược nâng cao</li>
+            <li>Xây trực tiếp cùng nhau theo thời gian thực, ngay trên màn hình</li>
+            <li>Lý do đằng sau từng bước — điều phân biệt người triển khai ra kết quả với người triển khai mà không thấy gì</li>
+          </ul>
+        </div>
+        <div data-card style="padding:26px 28px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:18px; font-weight:700;">BONUS 2 — 7Days Tài Sản Số (bộ video)</h3>
+          <ul style="margin:0; padding-left:18px; color:#3c3947; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Bảy ngày, mỗi ngày một video ngắn, đi từ chỗ chưa có gì tới lúc có một tài sản số chạy được</li>
+            <li>Xem lúc nào cũng được, xem lại bao nhiêu lần cũng được</li>
+            <li>Của bạn, giữ lại sau khi Challenge kết thúc</li>
+          </ul>
+        </div>
+        <div data-card style="padding:26px 28px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:18px; font-weight:700;">BONUS 3 — Toàn Bộ Record 5 Buổi Live</h3>
+          <ul style="margin:0; padding-left:18px; color:#3c3947; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Lỡ buổi nào xem lại buổi đó, không phải chạy theo lịch</li>
+            <li>Bản ghi gửi trong nhóm Zalo trong vòng 24 giờ sau mỗi buổi</li>
+          </ul>
+        </div>
+        <div data-card style="padding:26px 28px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:18px; font-weight:700;">BONUS 4 — Template Visual Branding + Template Reels / Facebook Cover</h3>
+          <ul style="margin:0; padding-left:18px; color:#3c3947; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Mở ra là dùng được ngay, không cần biết thiết kế</li>
+            <li>Đủ để bộ nhận diện của bạn nhìn đồng bộ ngay từ ngày đầu</li>
+          </ul>
+        </div>
+        <div style="padding:26px 28px; background:linear-gradient(180deg, rgba(245,184,65,.14), rgba(245,184,65,.03)); border:1.5px solid rgba(212,150,20,.4); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:18px; font-weight:700;">BONUS 5 — Quà Tặng Riêng Vé Premium</h3>
+          <ul style="margin:0; padding-left:18px; color:#3c3947; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Vé VIP nhận luôn phần quà của Vé Premium, không cần mời ai</li>
+            <li>Người đi bằng Vé Standard cần mời đủ 2 người bạn mới mở khoá phần này</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- early bonus -->
+    <div style="margin-top:90px; max-width:720px; margin-left:auto; margin-right:auto; text-align:center; padding:clamp(36px,5vw,48px); background:rgba(245,184,65,.08); border:1px solid rgba(212,150,20,.3); border-radius:24px;">
+      <h2 style="margin:0 0 16px; font-weight:800; font-size:clamp(22px,3vw,28px); letter-spacing:-.02em;">Đăng Ký Sớm, Nhận Thêm Bonus</h2>
+      <p style="margin:0 0 14px; color:#3c3947; font-size:15.5px; line-height:1.6;">Vé VIP không chỉ dừng ở những gì liệt kê phía trên. Những bạn chốt vé trong <b style="color:#0A0A0A;">50 suất đầu, trong 3 ngày</b> giữ giá early bird [[price]] — sau đó vé VIP về giá chính thức [[listPrice]].</p>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:28px;">
+        <a href="Checkout.dc.html" data-cta style="background:var(--brand); color:#fff; padding:17px 30px; border-radius:999px; font-weight:800; font-size:15.5px; text-decoration:none; box-shadow:0 16px 40px rgba(var(--brand-rgb) / .4);">CÓ! TÔI MUỐN VÉ VIP</a>
+        <a href="#vuot-rao" onClick="{{ scrollToVuotRao }}" style="color:#5b5963; padding:17px 30px; border-radius:999px; border:1px solid rgba(0,0,0,.16); font-weight:600; font-size:15px; text-decoration:none;">KHÔNG, TÔI GIỮ VÉ MIỄN PHÍ</a>
+      </div>
+    </div>
+
+    <!-- transition to Bo Vuot Rao offer -->
+    <div id="vuot-rao" style="margin-top:110px; padding-top:10px; border-top:1px solid rgba(0,0,0,.08);">
+      <p style="text-align:center; margin:0 auto 26px; max-width:640px; color:#5b5963; font-size:16.5px; line-height:1.6;">Chúng tôi phân tích 3 sai lầm từ các chương trình trước khiến người tham gia không thành công, rồi đóng gói thành 1 "Bộ Công Cụ VIP" để bạn không mắc lại.</p>
+    </div>
+
+    <!-- 3 problems -->
+    <div style="margin-top:80px;">
+      <h2 style="text-align:center; margin:0 0 40px; font-weight:800; font-size:clamp(24px,3.2vw,34px); letter-spacing:-.02em;">3 Lý Do Người Tham Gia Không Thành Công</h2>
+      <div style="display:grid; gap:14px;">
+        <div style="padding:26px 28px; background:#FBEFF0; border:1px solid rgba(200,30,50,.3); border-radius:18px;">
+          <h3 style="margin:0 0 10px; font-size:17px; font-weight:700; color:#ff6b7a;">❌ VẤN ĐỀ 1: Bị Kẹt Và Không Biết Hỏi Ai</h3>
+          <p style="margin:0 0 8px; color:#5b5963; font-size:14.5px; line-height:1.65;">Xây hệ thống đòi hỏi làm những việc bạn chưa từng làm. Khi không chắc chắn, bạn dừng lại.</p>
+          <p style="margin:0 0 8px; color:#5b5963; font-size:14.5px; line-height:1.65;">Bạn research, google, gặp thông tin trái chiều. Hàng giờ trôi qua trong vòng lặp tìm hiểu.</p>
+          <p style="margin:0; color:#5b5963; font-size:14.5px; line-height:1.65;">Khoảng cách giữa "biết phải làm gì" và "thực sự làm đúng" là nơi hầu hết mọi người bỏ cuộc.</p>
+        </div>
+        <div style="padding:26px 28px; background:#FBEFF0; border:1px solid rgba(200,30,50,.3); border-radius:18px;">
+          <h3 style="margin:0 0 10px; font-size:17px; font-weight:700; color:#ff6b7a;">❌ VẤN ĐỀ 2: Không Tin Nó Sẽ Work Với Mình</h3>
+          <p style="margin:0 0 8px; color:#5b5963; font-size:14.5px; line-height:1.65;">Bạn xem case study người khác thành công, não bạn nói: "Hay đấy, nhưng chắc họ có lợi thế mà mình không có."</p>
+          <p style="margin:0 0 8px; color:#5b5963; font-size:14.5px; line-height:1.65;">Suy nghĩ này khiến bạn trì hoãn, suy nghĩ quá nhiều, rồi bỏ cuộc.</p>
+          <p style="margin:0; color:#5b5963; font-size:14.5px; line-height:1.65;">Không chiến lược nào sửa được điều này — cần thay đổi niềm tin đang chạy ngầm trong đầu bạn.</p>
+        </div>
+        <div style="padding:26px 28px; background:#FBEFF0; border:1px solid rgba(200,30,50,.3); border-radius:18px;">
+          <h3 style="margin:0 0 10px; font-size:17px; font-weight:700; color:#ff6b7a;">❌ VẤN ĐỀ 3: Không Biết Thứ Gì Thực Sự Ra Tiền</h3>
+          <p style="margin:0 0 8px; color:#5b5963; font-size:14.5px; line-height:1.65;">Hầu hết mọi người xây dựa trên phỏng đoán, chọn nhắm vào thị trường quá cạnh tranh hoặc không có nhu cầu.</p>
+          <p style="margin:0; color:#5b5963; font-size:14.5px; line-height:1.65;">Vấn đề không phải ở bạn — mà ở sản phẩm/hướng đi bạn chọn để xây.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- solutions -->
+    <div style="margin-top:80px;">
+      <h2 style="text-align:center; margin:0 0 40px; font-weight:800; font-size:clamp(24px,3.2vw,34px); letter-spacing:-.02em;">VIP Giải Quyết Cả 3 Vấn Đề</h2>
+      <div style="display:grid; gap:14px;">
+        <div style="padding:26px 28px; background:#FDF0F7; border:1px solid rgba(var(--brand-rgb) / .3); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:17px; font-weight:700; color:var(--brand-dark);">✅ GIẢI PHÁP 1 — Buổi Zoom Riêng Cho VIP (Mang Chỗ Kẹt Tới Là Được Gỡ)</h3>
+          <ul style="margin:0; padding-left:18px; color:#5b5963; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Một buổi Zoom chỉ có nhóm VIP, bạn hỏi trực tiếp và được gỡ ngay trên màn hình</li>
+            <li>Nhóm Zalo riêng của VIP — chỗ nào vướng cứ nhắn, không phải tự mò một mình</li>
+            <li>Mang một câu hỏi cụ thể tới thường được gỡ trong vài phút</li>
+          </ul>
+        </div>
+        <div style="padding:26px 28px; background:#FDF0F7; border:1px solid rgba(var(--brand-rgb) / .3); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:17px; font-weight:700; color:var(--brand-dark);">✅ GIẢI PHÁP 2 — Tăng Tốc Tư Duy (Reprogram Niềm Tin)</h3>
+          <ul style="margin:0; padding-left:18px; color:#5b5963; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Loại bỏ rào cản tâm lý vô hình khiến bạn không hành động dù đã biết phải làm gì</li>
+            <li>Ngừng tự phá hoại chính mình ngay trước lúc sắp đột phá</li>
+            <li>Biến hội chứng "tôi chưa đủ giỏi" thành sự tự tin để bắt đầu dù chưa hoàn hảo</li>
+          </ul>
+        </div>
+        <div style="padding:26px 28px; background:#FDF0F7; border:1px solid rgba(var(--brand-rgb) / .3); border-radius:18px;">
+          <h3 style="margin:0 0 12px; font-size:17px; font-weight:700; color:var(--brand-dark);">✅ GIẢI PHÁP 3 — 7Days Tài Sản Số (Đi Theo Đúng Thứ Đã Chạy Được)</h3>
+          <ul style="margin:0; padding-left:18px; color:#5b5963; font-size:14.5px; line-height:1.7; display:grid; gap:5px;">
+            <li>Bảy ngày, mỗi ngày một video ngắn, đi từ chỗ chưa có gì tới lúc có một tài sản số chạy được</li>
+            <li>Đường đi đã được kiểm chứng, bạn không phải tự đoán nên bắt đầu từ đâu</li>
+            <li>Xem lúc nào cũng được, và giữ lại sau khi Challenge kết thúc</li>
+          </ul>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:32px;">
+        <a href="Checkout.dc.html" data-cta style="display:inline-flex; background:var(--brand); color:#fff; padding:17px 30px; border-radius:999px; font-weight:800; font-size:15.5px; text-decoration:none; box-shadow:0 16px 40px rgba(var(--brand-rgb) / .4);">CÓ, TÔI MUỐN VÉ VIP</a>
+        <a href="[[zaloUrl]]" target="_blank" rel="noopener" style="display:block; margin-top:14px; color:#6E6C75; font-size:13.5px; text-decoration:underline;">KHÔNG, TÔI BỎ QUA ƯU ĐÃI NÀY</a>
+      </div>
+    </div>
+
+    <!-- value stack -->
+    <div data-card style="margin-top:80px; max-width:560px; margin-left:auto; margin-right:auto; text-align:left; padding:clamp(30px,4vw,40px); background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:22px;">
+      <h2 style="margin:0 0 22px; text-align:center; font-weight:800; font-size:clamp(20px,2.6vw,24px); letter-spacing:-.02em;">Bạn Nhận Được Những Gì</h2>
+      <div style="display:grid; gap:12px; font-size:14.5px;">
+        <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#2c2933;">1 buổi Zoom dành riêng cho VIP</span><span style="color:#726f7a; text-decoration:line-through; flex-shrink:0;">1.990.000đ</span></div>
+        <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#2c2933;">7Days Tài Sản Số (bộ video)</span><span style="color:#726f7a; text-decoration:line-through; flex-shrink:0;">1.490.000đ</span></div>
+        <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#2c2933;">Toàn bộ record 5 buổi live</span><span style="color:#726f7a; text-decoration:line-through; flex-shrink:0;">990.000đ</span></div>
+        <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#2c2933;">Template Visual Branding</span><span style="color:#726f7a; text-decoration:line-through; flex-shrink:0;">590.000đ</span></div>
+        <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#2c2933;">Template Reels / Facebook Cover</span><span style="color:#726f7a; text-decoration:line-through; flex-shrink:0;">590.000đ</span></div>
+        <div style="display:flex; justify-content:space-between; gap:12px;"><span style="color:#2c2933;">Quà tặng riêng vé Premium</span><span style="color:#726f7a; text-decoration:line-through; flex-shrink:0;">490.000đ</span></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:15px; color:#726f7a; padding:16px 0; margin-top:14px; border-top:1px dashed rgba(0,0,0,.14); border-bottom:1px dashed rgba(0,0,0,.14);"><span>Tổng giá trị</span><span style="text-decoration:line-through;">6.140.000đ</span></div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:16px;"><span style="font-weight:600; font-size:16px;">Giá early bird của bạn hôm nay</span><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:26px; color:var(--brand-dark);">[[price]]</span></div>
+      <a href="Checkout.dc.html" data-cta style="display:block; text-align:center; margin-top:22px; background:var(--brand); color:#fff; padding:16px; border-radius:999px; font-weight:800; font-size:15px; text-decoration:none;">CÓ, TÔI MUỐN VIP</a>
+    </div>
+
+    <!-- comparison table -->
+    <div style="margin-top:70px; overflow-x:auto;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; min-width:520px; border:1px solid rgba(0,0,0,.1); border-radius:18px; overflow:hidden;">
+        <div data-card style="padding:20px 24px; background:#F6F5F8; font-weight:700; font-size:14px; color:#5b5963; border-bottom:1px solid rgba(0,0,0,.1);">Không Có VIP</div>
+        <div style="padding:20px 24px; background:rgba(var(--brand-rgb) / .08); font-weight:700; font-size:14px; color:#9c0f63; border-bottom:1px solid rgba(0,0,0,.1);">Có VIP</div>
+
+        <div style="padding:16px 24px; font-size:14px; color:#5b5963; border-top:1px solid rgba(0,0,0,.08); border-right:1px solid rgba(0,0,0,.08);">Bị kẹt không ai hỏi (mất động lực)</div>
+        <div style="padding:16px 24px; font-size:14px; color:#2c2933; border-top:1px solid rgba(0,0,0,.08);">Mang chỗ kẹt vào buổi Zoom riêng, được gỡ ngay</div>
+
+        <div style="padding:16px 24px; font-size:14px; color:#5b5963; border-top:1px solid rgba(0,0,0,.08); border-right:1px solid rgba(0,0,0,.08);">Đoán mò nên xây sản phẩm gì</div>
+        <div style="padding:16px 24px; font-size:14px; color:#2c2933; border-top:1px solid rgba(0,0,0,.08);">Đi theo 7Days Tài Sản Số, đường đã có người đi trước</div>
+
+        <div style="padding:16px 24px; font-size:14px; color:#5b5963; border-top:1px solid rgba(0,0,0,.08); border-right:1px solid rgba(0,0,0,.08);">Mất gấp 10 lần thời gian vì niềm tin giới hạn</div>
+        <div style="padding:16px 24px; font-size:14px; color:#2c2933; border-top:1px solid rgba(0,0,0,.08);">Đạt mục tiêu nhanh hơn, không còn nghi ngờ bản thân</div>
+
+        <div style="padding:16px 24px; font-size:14px; color:#5b5963; border-top:1px solid rgba(0,0,0,.08); border-right:1px solid rgba(0,0,0,.08);">Liên tục tự hỏi "mình làm đúng chưa"</div>
+        <div style="padding:16px 24px; font-size:14px; color:#2c2933; border-top:1px solid rgba(0,0,0,.08);">Hỏi trực tiếp trong buổi Zoom riêng và nhóm VIP</div>
+
+        <div style="padding:16px 24px; font-size:14px; color:#5b5963; border-top:1px solid rgba(0,0,0,.08); border-right:1px solid rgba(0,0,0,.08); border-bottom:1px solid rgba(0,0,0,.08);">Vật lộn với hội chứng tự ti</div>
+        <div style="padding:16px 24px; font-size:14px; color:#2c2933; border-top:1px solid rgba(0,0,0,.08); border-bottom:1px solid rgba(0,0,0,.08);">Bắt đầu và kiếm tiền sớm nhờ đi theo lộ trình đã kiểm chứng</div>
+      </div>
+      <div style="text-align:center; margin-top:32px;">
+        <a href="Checkout.dc.html" data-cta style="display:inline-flex; background:var(--brand); color:#fff; padding:17px 30px; border-radius:999px; font-weight:800; font-size:15.5px; text-decoration:none; box-shadow:0 16px 40px rgba(var(--brand-rgb) / .4);">CÓ, TÔI MUỐN VIP</a>
+        <a href="[[zaloUrl]]" target="_blank" rel="noopener" style="display:block; margin-top:14px; color:#6E6C75; font-size:13.5px; text-decoration:underline;">KHÔNG, TÔI BỎ QUA ƯU ĐÃI NÀY</a>
+      </div>
+
+      <div style="margin-top:36px; padding-top:28px; border-top:1px solid rgba(0,0,0,.08);">
+        <p style="margin:0; font-size:15px; color:#3c3947; line-height:1.7;"><b style="color:#0A0A0A;">P.S.</b> Đội ngũ hỗ trợ VIP có giới hạn — để đảm bảo chất lượng, chúng tôi chỉ mở giá early bird [[price]] trong <b style="color:#0A0A0A;">3 ngày / 50 suất đầu</b> kể từ hôm nay. Sau đó vé VIP về giá chính thức [[listPrice]]. Sau mốc đó, vé VIP sẽ đóng lại cho đợt Challenge này. Nếu bạn đã đọc đến đây và thấy phù hợp, đừng chần chừ — đăng ký ngay trong khi vẫn còn suất.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      scrollToVuotRao: (e) => {
+        e.preventDefault();
+        const el = document.getElementById('vuot-rao');
+        if (!el) return;
+        const y = el.getBoundingClientRect().top + window.pageYOffset - 20;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

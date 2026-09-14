@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Playfair+Display:ital,wght@1,500;1,600&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  /* Mau thuong hieu. Ba dong nay do apps/funnel/build.mjs dien tu brand.json;
+     o file thiet ke chung la gia tri mac dinh de mo truc tiep van xem duoc. */
+  :root { --brand: #111111; --brand-dark: #000000; --brand-rgb: 17 17 17; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background:#fff; }
+  ::selection { background:var(--brand); color:#fff; }
+  @keyframes orbDrift1 { 0%,100% { transform: translate3d(0,0,0) scale(1);} 50% { transform: translate3d(6%,5%,0) scale(1.1);} }
+  @keyframes orbDrift2 { 0%,100% { transform: translate3d(0,0,0) scale(1);} 50% { transform: translate3d(-5%,7%,0) scale(0.94);} }
+  @keyframes sheen { 0% { transform: translateX(-130%) skewX(-20deg);} 60%,100% { transform: translateX(260%) skewX(-20deg);} }
+  @keyframes priceSheen { 0% { transform: translateX(-160%);} 100% { transform: translateX(340%);} }
+  @keyframes marquee { 0% { transform: translateX(0);} 100% { transform: translateX(-50%);} }
+  @keyframes testimonialMarquee { 0% { transform: translateX(0);} 100% { transform: translateX(-50%);} }
+  /* Bang tin cam nhan: cuon ngang that de nguoi xem tu keo. An thanh cuon cho gon. */
+  .om-scroll-x { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .om-scroll-x::-webkit-scrollbar { display: none; }
+  .om-scroll-x.dang-keo { cursor: grabbing; user-select: none; }
+  .om-scroll-x.dang-keo * { pointer-events: none; }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(18px);} to { opacity:1; transform:none;} }
+  .om-price-glow { position:relative; overflow:hidden; }
+  .om-price-glow::after { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); animation:priceSheen 3.2s ease-in-out infinite; pointer-events:none; }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+  a { cursor:pointer; }
+  a[data-cta] { position:relative; overflow:hidden; transition: transform .2s ease, box-shadow .2s ease; isolation:isolate; }
+  a[data-cta]::before { content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); transition:left .55s ease; pointer-events:none; z-index:1; }
+  a[data-cta]:hover::before { left:130%; }
+  a[data-cta]:hover { transform: translateY(-2px) scale(1.01); box-shadow:0 20px 46px rgba(var(--brand-rgb) / .45); }
+  a[data-cta]:active { transform: translateY(0) scale(.99); }
+  div[data-card] { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  div[data-card]:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+  .om-fade-1 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) both; }
+  .om-fade-2 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) .12s both; }
+  .om-fade-3 { animation: fadeInUp .7s cubic-bezier(.2,.8,.2,1) .24s both; }
+</style>
+</helmet>
+
+  <!-- Nen gradient nam thang tren the bao ngoai. TRUOC DAY no la mot lop
+       `position:fixed; inset:0` rieng, nen trang DUC, nam duoi noi dung bang
+       z-index. Nhung the bao ngoai co `overflow-x:clip` - ma `overflow:clip`
+       bien phan tu thanh containing block cua con `fixed`, va Chrome tren
+       Windows co luc dao thu tu ve cua to hop do: lop trang duc nhay len tren,
+       xoa trang toan bo chu, chi con lai nhung phan tu tu tao lop composite
+       (nut co box-shadow/transition). Trang /vip da bi dung nhu vay.
+       Bo lop do di la het duong cho loi ay xay ra. -->
+<div style="position:relative; font-family:'Plus Jakarta Sans',system-ui,sans-serif; color:#0A0A0A; background:radial-gradient(900px 700px at 12% 0%, rgba(var(--brand-rgb) / .07), transparent 60%), radial-gradient(900px 800px at 100% 90%, rgba(245,184,65,.06), transparent 62%), #fff; background-repeat:no-repeat; overflow-x:clip; -webkit-font-smoothing:antialiased; line-height:1.5;">
+  <div style="position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;">
+    <div style="position:absolute; width:60vw; height:60vw; left:-14%; top:-8%; border-radius:50%; filter:blur(120px); mix-blend-mode:screen; background:radial-gradient(circle, rgba(var(--brand-rgb) / .09), transparent 65%); animation:orbDrift1 44s ease-in-out infinite;"></div>
+    <div style="position:absolute; width:60vw; height:60vw; right:-16%; top:38%; border-radius:50%; filter:blur(130px); mix-blend-mode:screen; background:radial-gradient(circle, rgba(245,184,65,.07), transparent 65%); animation:orbDrift2 52s ease-in-out infinite;"></div>
+  </div>
+
+  <div style="position:relative; z-index:1;">
+    <!-- marquee -->
+    <div style="overflow:hidden; background:var(--brand); color:#fff; padding:14px 0;">
+      <div style="display:inline-flex; gap:0; white-space:nowrap; animation:marquee 30s linear infinite; will-change:transform; font-weight:800; font-size:clamp(14px,1.7vw,18px); letter-spacing:-.01em;">
+        <span style="flex-shrink:0;">Chuyển giao toàn bộ hệ thống — miễn phí&nbsp;&nbsp;•&nbsp;&nbsp;Chỉ 99 người đầu tiên&nbsp;&nbsp;•&nbsp;&nbsp;1 người – 1 laptop – 1 hệ thống&nbsp;&nbsp;•&nbsp;&nbsp;Dòng tiền 9 chữ số&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+        <span style="flex-shrink:0;">Chuyển giao toàn bộ hệ thống — miễn phí&nbsp;&nbsp;•&nbsp;&nbsp;Chỉ 99 người đầu tiên&nbsp;&nbsp;•&nbsp;&nbsp;1 người – 1 laptop – 1 hệ thống&nbsp;&nbsp;•&nbsp;&nbsp;Dòng tiền 9 chữ số&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+      </div>
+    </div>
+
+    <!-- Thanh tren cung: logo o giua, nut dang nhap ben phai.
+         Nguoi da co tai khoan (ai dien form deu duoc tao san mot cai) khong co
+         duong nao vao lop tu trang nay - ho phai tu nho ten mien khu vuc thanh
+         vien, ma khong ai nho. Duong dan de TUONG DOI: khu vuc thanh vien duoc
+         phuc vu ngay tren ten mien nay, va viet cung ten mien vao ban thiet ke
+         la dieu duy nhat CLAUDE.md cam thang. -->
+    <div style="max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:26px clamp(16px,4vw,56px) 6px;">
+      <span style="flex:1 1 0;" aria-hidden="true"></span>
+      <img src="assets/logo.png" alt="[[brand.legalName]]" style="height:48px; width:auto;">
+      <div style="flex:1 1 0; display:flex; justify-content:flex-end;">
+        <a href="/login" data-login style="display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:999px; border:1.5px solid rgba(var(--brand-rgb) / .35); background:rgba(255,255,255,.7); color:var(--brand-dark); font-weight:700; font-size:14px; text-decoration:none; white-space:nowrap;">
+          Đăng nhập
+        </a>
+      </div>
+    </div>
+
+    <header style="max-width:1400px; margin:0 auto; padding:8px clamp(20px,4vw,56px) 0; text-align:center;">
+      <div class="om-fade-1" style="display:inline-flex; align-items:center; gap:8px; padding:6px 16px; border-radius:999px; background:rgba(var(--brand-rgb) / .08); border:1px solid rgba(var(--brand-rgb) / .28); font-size:12.5px; font-weight:700; letter-spacing:.03em; color:var(--brand-dark);">CHUYỂN GIAO TOÀN BỘ HỆ THỐNG — MIỄN PHÍ</div>
+
+      <h1 class="om-fade-1" style="margin:22px 0 0; font-weight:800; font-size:clamp(38px,6.8vw,96px); line-height:1.02; letter-spacing:-.035em; text-wrap:balance;">[[brand.nameLead]] <em style="font-family:'Playfair Display',serif; font-style:italic; font-weight:500; color:var(--brand-dark);">[[brand.nameAccent]]</em></h1>
+      <p style="margin:14px auto 0; max-width:1000px; font-size:clamp(20px,2.9vw,40px); line-height:1.24; font-weight:700; color:#0A0A0A;">1 người – 1 laptop – 1 hệ thống<br>xây dựng dòng tiền <em style="font-family:'Playfair Display',serif; font-style:italic; color:var(--brand-dark);">9 chữ số</em></p>
+      <p style="margin:16px auto 0; max-width:1080px; font-size:clamp(16px,1.5vw,22px); line-height:1.55; color:#5b5963;">Chương trình thực chiến 5 ngày dành cho chuyên gia, coach, trainer, chủ doanh nghiệp nhỏ và người xây thương hiệu cá nhân — biến kiến thức, kinh nghiệm và thế mạnh của bạn thành một hệ thống kinh doanh tinh gọn với AI.</p>
+
+      <div id="hero-video" data-card style="margin-top:24px; max-width:1120px; margin-left:auto; margin-right:auto; position:relative; aspect-ratio:16/9; border-radius:20px; overflow:hidden; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); box-shadow:0 24px 60px rgba(0,0,0,.1);">
+        <sc-if value="{{ heroVideoPlaying }}" hint-placeholder-val="{{ false }}">
+          <iframe src="{{ heroEmbedSrc }}" title="1 Người - 1 Laptop - 1 Hệ Thống xây dựng thu nhập 9 chữ số" style="position:absolute; inset:0; width:100%; height:100%; border:0;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen=""></iframe>
+        </sc-if>
+        <sc-if value="{{ heroVideoNotPlaying }}" hint-placeholder-val="{{ true }}">
+          <div onClick="{{ playHeroVideo }}" style="position:absolute; inset:0; cursor:pointer;">
+            <img src="{{ heroThumb }}" alt="1 Người - 1 Laptop - 1 Hệ Thống xây dựng thu nhập 9 chữ số" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.85;">
+            <div style="position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,.55), transparent 55%);"></div>
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.18); backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,.75); display:grid; place-items:center; font-size:20px; padding-left:3px; color:#fff;">▶</div>
+            <div style="position:absolute; left:16px; bottom:14px; font-size:12.5px; font-weight:600; color:#fff;">[[brand.hostName]] giới thiệu mô hình [[brand.name]]</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div class="om-fade-3" style="margin-top:18px;">
+        <a href="AI Funnel - 2 Form.dc.html" data-cta style="position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:10px; background:var(--brand); color:#fff; padding:18px 34px; border-radius:999px; font-weight:800; font-size:17px; text-decoration:none; box-shadow:0 16px 40px rgba(var(--brand-rgb) / .4);">
+          NHẬN QUÀ TẶNG MIỄN PHÍ <span style="font-size:19px;">→</span>
+          <span style="position:absolute; top:0; left:0; width:40%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent); animation:sheen 4.8s ease-in-out infinite;"></span>
+        </a>
+        <div style="margin-top:14px; font-size:13.5px; font-weight:700; color:#9c0f63;">Chỉ 99 người đầu tiên</div>
+      </div>
+    </header>
+
+    <!-- stats bar -->
+    <section style="padding:clamp(56px,6vw,80px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:1240px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); gap:20px; text-align:center;">
+        <div><div style="font-weight:800; font-size:clamp(28px,3.4vw,42px); letter-spacing:-.03em; color:var(--brand-dark);">1</div><div style="font-size:12.5px; color:#726f7a; margin-top:6px;">người vận hành</div></div>
+        <div><div style="font-weight:800; font-size:clamp(28px,3.4vw,42px); letter-spacing:-.03em; color:var(--brand-dark);">1</div><div style="font-size:12.5px; color:#726f7a; margin-top:6px;">laptop</div></div>
+        <div><div style="font-weight:800; font-size:clamp(28px,3.4vw,42px); letter-spacing:-.03em; color:var(--brand-dark);">1</div><div style="font-size:12.5px; color:#726f7a; margin-top:6px;">hệ thống</div></div>
+        <div><div style="font-weight:800; font-size:clamp(28px,3.4vw,42px); letter-spacing:-.03em; color:var(--brand-dark);">9+</div><div style="font-size:12.5px; color:#726f7a; margin-top:6px;">chữ số doanh thu</div></div>
+      </div>
+    </section>
+
+    <!-- intro letter -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:740px; margin:0 auto;">
+        <p style="margin:0 0 22px; font-weight:700; font-size:17px;">Gửi tới các chuyên gia, nhà đào tạo và chủ doanh nghiệp,</p>
+        <div style="font-size:16px; line-height:1.8; color:#3c3947; display:grid; gap:18px;">
+          <p style="margin:0;"><span style="background:linear-gradient(180deg, transparent 68%, rgba(var(--brand-rgb) / .22) 68%);">[[brand.hostName]] sẽ thẳng thắn nói với bạn rằng, AI đã thay đổi cuộc chơi kinh doanh 2026 rất nhiều.</span></p>
+          <p style="margin:0;">Dường như những biến động đang trở thành cơm bữa hằng ngày, nhưng chúng ta vẫn luôn đau đáu một cảm giác, một thứ gì đó trong lòng trước làn sóng thay đổi rất lớn này.</p>
+          <p style="margin:0;">Và dù muốn hay không, mỗi chúng ta đều sẽ phải quyết định chấp nhận thay đổi và thích nghi để vươn lên, hay sẽ dừng lại và chấp nhận bị đào thải?</p>
+          <p style="margin:0;">Thế nhưng, với AI phát triển như vậy cũng đã tạo ra một mô hình mà [[brand.hostName]] đã áp dụng và thử nghiệm trong 2 năm nay, khi mà mình không còn phải làm những công việc lặp đi lặp lại, ôm đồm mọi thứ một mình — mà mình có thể hoàn toàn giao lại cho AI, làm việc với một hệ thống tự vận hành, và có thời gian cho những trải nghiệm của riêng mình, kể cả những chuyến du lịch dài ngày mà vẫn không lo công việc đình trệ.</p>
+          <p style="margin:0; font-weight:700; color:#0A0A0A;">[[brand.hostName]] gọi đó là: [[brand.productLine]] với AI, và trước khi bạn quyết định, hãy đọc tiếp ở dưới...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- problem -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:820px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(26px,3.6vw,40px); letter-spacing:-.03em; margin:0 0 40px; line-height:1.25;">Bạn Giỏi Việc Của Mình. Nhưng Giỏi Không Có Nghĩa Là Giàu.</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px;">
+          <div data-card style="padding:24px 26px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <h3 style="margin:0 0 8px; font-size:16.5px; font-weight:700;">Giỏi việc của mình — nhưng chưa giàu</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Bạn có chuyên môn, có kinh nghiệm, có khách hàng. Nhưng thu nhập vẫn bị giới hạn bởi số giờ trong ngày.</p>
+          </div>
+          <div data-card style="padding:24px 26px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <h3 style="margin:0 0 8px; font-size:16.5px; font-weight:700;">Làm một mình — và làm tất cả</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Content, sales, chăm sóc khách hàng, vận hành, công nghệ… Bạn quay đều 12 tiếng mỗi ngày và vẫn thấy không đủ.</p>
+          </div>
+          <div data-card style="padding:24px 26px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <h3 style="margin:0 0 8px; font-size:16.5px; font-weight:700;">Kiến thức đang "ngủ" trong đầu bạn</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Bạn biết mình có giá trị lớn. Nhưng chưa biết cách biến nó thành một hệ thống có thể nhân bản và bán.</p>
+          </div>
+          <div data-card style="padding:24px 26px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <h3 style="margin:0 0 8px; font-size:16.5px; font-weight:700;">Người khác scale — mình vẫn đứng yên</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Bạn nhìn những người ít giỏi hơn nhưng có hệ thống, họ đi nhanh hơn. Còn bạn vẫn trao đổi thời gian lấy tiền.</p>
+          </div>
+        </div>
+        <p style="text-align:center; margin:36px 0 0; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(19px,2.2vw,24px); color:#0A0A0A;">"Điều gì sẽ thay đổi nếu tôi có một hệ&nbsp;thống?"</p>
+        <p style="text-align:center; margin:28px 0 0; font-weight:800; font-size:19px;">Đó chính là lý do [[brand.name]] tồn tại — và tại sao 5 ngày này dành cho bạn.</p>
+      </div>
+    </section>
+
+    <!-- 3 pillars -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:960px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(26px,3.6vw,38px); letter-spacing:-.03em; margin:0 0 16px;">Bạn Không Cần Bắt Đầu Bằng Một Công Ty Lớn</h2>
+        <p style="text-align:center; max-width:640px; margin:0 auto 44px; color:#5b5963; font-size:15.5px; line-height:1.7;">Bạn có thể bắt đầu với 1 người — chính bạn. Với 1 laptop — nơi có Internet, mạng xã hội, AI, công cụ bán hàng. Và xây 1 hệ thống, biến kiến thức thành dòng tiền.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;">
+          <div data-card style="padding:28px 26px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:20px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">01</div>
+            <h3 style="margin:0 0 8px; font-size:18px; font-weight:700;">1 người</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Không cần phải giỏi tất cả. Bạn chỉ cần biết giá trị lớn nhất mình có thể tạo ra là gì.</p>
+          </div>
+          <div data-card style="padding:28px 26px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:20px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">02</div>
+            <h3 style="margin:0 0 8px; font-size:18px; font-weight:700;">1 laptop</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">AI và công nghệ trở thành đòn bẩy giúp một cá nhân sở hữu những năng lực mà trước đây phải cần nhiều người.</p>
+          </div>
+          <div data-card style="padding:28px 26px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:20px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">03</div>
+            <h3 style="margin:0 0 8px; font-size:18px; font-weight:700;">1 hệ thống</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Thay vì mỗi ngày bắt đầu lại từ đầu, bạn xây những tài sản có thể tiếp tục hoạt động cho mình.</p>
+          </div>
+        </div>
+        <p style="text-align:center; margin:36px 0 0; font-size:15px; color:#3c3947; line-height:1.8;">Kiến thức <span style="color:var(--brand-dark);">→</span> Nội dung <span style="color:var(--brand-dark);">→</span> Sự chú ý <span style="color:var(--brand-dark);">→</span> Khách hàng tiềm năng <span style="color:var(--brand-dark);">→</span> Offer <span style="color:var(--brand-dark);">→</span> Doanh thu <span style="color:var(--brand-dark);">→</span> Tài sản <span style="color:var(--brand-dark);">→</span> Dòng tiền</p>
+      </div>
+    </section>
+
+    <!-- Sam Altman quote -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div data-card style="max-width:680px; margin:0 auto; text-align:center; padding:clamp(30px,4vw,44px); background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:24px;">
+        <p style="margin:0 0 18px; font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(19px,2.4vw,24px); line-height:1.5; color:#0A0A0A;">"Trong tương lai không xa, chúng ta sẽ chứng kiến một công ty trị giá 1 tỷ USD chỉ được vận hành bởi một người."</p>
+        <div style="font-weight:700; font-size:14.5px;">Sam Altman</div>
+        <div style="font-size:12.5px; color:#726f7a; margin-top:2px;">CEO, OpenAI</div>
+      </div>
+    </section>
+
+    <!-- 9-figure story -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:960px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(26px,3.6vw,38px); letter-spacing:-.03em; margin:0 0 44px;">Câu Chuyện 9 Chữ Số Của Tôi</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;">
+          <div data-card style="padding:24px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">01</div>
+            <h3 style="margin:0 0 8px; font-size:16px; font-weight:700;">Bắt đầu một mình</h3>
+            <p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.6;">Một người. Một chuyên môn. Không đội ngũ. Không hệ thống. Trao đổi thời gian lấy tiền.</p>
+          </div>
+          <div data-card style="padding:24px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">02</div>
+            <h3 style="margin:0 0 8px; font-size:16px; font-weight:700;">Xây [[brand.name]]</h3>
+            <p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.6;">Biến kiến thức thành content, content thành sự chú ý, sự chú ý thành khách hàng, doanh thu thành tài sản.</p>
+          </div>
+          <div data-card style="padding:24px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">03</div>
+            <h3 style="margin:0 0 8px; font-size:16px; font-weight:700;">Kết nối AI &amp; automation</h3>
+            <p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.6;">Một cá nhân sở hữu sức mạnh của cả một đội ngũ — content, research, marketing, sales, chăm sóc khách hàng.</p>
+          </div>
+          <div style="padding:24px 22px; background:linear-gradient(180deg, rgba(var(--brand-rgb) / .08), rgba(var(--brand-rgb) / .02)); border:1px solid rgba(var(--brand-rgb) / .35); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">04</div>
+            <h3 style="margin:0 0 8px; font-size:16px; font-weight:700;">Kết quả 9 chữ số</h3>
+            <p style="margin:0; color:#2c2933; font-size:13.5px; line-height:1.6;">Hệ thống tiếp tục hoạt động kể cả khi tôi ngủ. Dòng tiền không còn phụ thuộc vào số giờ tôi làm.</p>
+          </div>
+        </div>
+        <p style="text-align:center; margin:32px 0 0; color:#5b5963; font-size:14.5px; font-style:italic;">9 chữ số là con số khiêm tốn. Vì thực tế, tôi đã chạm 10 chữ số.</p>
+
+        <div style="margin-top:36px; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px;">
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div style="background:#EDECF0; padding:12px; border-bottom:1px solid rgba(0,0,0,.07); aspect-ratio:4/5; display:flex; align-items:center; justify-content:center;"><img src="assets/success-1.jpg" alt="Tin nhắn cảm ơn và biên lai chuyển khoản của học viên" style="max-width:100%; max-height:100%; border-radius:8px; object-fit:contain;"></div>
+          </div>
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div style="background:#EDECF0; padding:12px; border-bottom:1px solid rgba(0,0,0,.07); aspect-ratio:4/5; display:flex; align-items:center; justify-content:center;"><img src="assets/success-2.jpg" alt="Tin nhắn cảm ơn và biên lai chuyển khoản của học viên" style="max-width:100%; max-height:100%; border-radius:8px; object-fit:contain;"></div>
+          </div>
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div style="background:#EDECF0; padding:12px; border-bottom:1px solid rgba(0,0,0,.07); aspect-ratio:4/5; display:flex; align-items:center; justify-content:center;"><img src="assets/success-3.jpg" alt="Tin nhắn cảm ơn và biên lai chuyển khoản của học viên" style="max-width:100%; max-height:100%; border-radius:8px; object-fit:contain;"></div>
+          </div>
+        </div>
+        <p style="text-align:center; margin:14px 0 0; font-size:13px; color:#726f7a;">Tin nhắn và biên lai thật từ học viên đã áp dụng hệ thống — đơn về đều đặn, kể cả khi đang ngủ.</p>
+      </div>
+    </section>
+
+    <!-- about [[brand.hostName]] -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:1080px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:clamp(32px,5vw,60px); align-items:start;">
+        <img src="assets/avatar.jpg" alt="[[brand.hostName]]" style="width:460px; max-width:100%; aspect-ratio:4/5; object-fit:cover; border-radius:22px; border:1px solid rgba(0,0,0,.08);">
+        <div>
+          
+          <h2 style="margin:0 0 6px; font-weight:800; font-size:clamp(26px,3.6vw,38px); letter-spacing:-.03em;">[[brand.hostName]]</h2>
+          <div style="font-family:'Playfair Display',serif; font-style:italic; font-size:clamp(18px,2vw,22px); color:var(--brand-dark); margin-bottom:18px;">Founder, Học Viện AI Việt Nam</div>
+          <p style="color:#5b5963; font-size:15.5px; line-height:1.55; margin:0 0 20px;">Cố vấn chiến lược xây dựng thương hiệu cá nhân và doanh nghiệp · Ứng dụng AI · Xây kênh thần tốc</p>
+          <p style="color:#3c3947; font-size:15px; line-height:1.7; margin:0 0 12px;">Tôi không theo đuổi việc trở thành một "chuyên gia". Tôi theo đuổi sự tự do.</p>
+          <p style="color:#3c3947; font-size:15px; line-height:1.7; margin:0 0 12px;">Với hơn bảy năm kinh nghiệm trong lĩnh vực truyền thông và marketing, tôi đã từng cố vấn cho hàng trăm công ty và tập đoàn công nghệ tại châu Á, sinh sống và làm việc tại nhiều quốc gia hàng đầu về công nghệ như Dubai, Hàn Quốc, Singapore, Trung Quốc, Nhật Bản và Ấn Độ.</p>
+          <p style="color:#3c3947; font-size:15px; line-height:1.7; margin:0 0 18px;">Chính những trải nghiệm đó giúp tôi thấu hiểu rất rõ những vấn đề mà các doanh nghiệp và cá nhân thường gặp phải khi xây dựng thương hiệu — và đưa ra được những hệ thống thực sự hiệu quả. Sáu tháng qua, tôi đã tổ chức hơn 100 chương trình đào tạo Zoom online và offline, đồng hành cùng hơn 100.000 thành viên. [[brand.name]] là những gì tôi đã trực tiếp thử nghiệm, vận hành và tối ưu trên chính công việc kinh doanh của mình.</p>
+          <div style="padding:16px 20px; background:rgba(var(--brand-rgb) / .06); border-left:3px solid var(--brand); border-radius:0 12px 12px 0; margin-bottom:26px;">
+            <p style="margin:0; font-family:'Playfair Display',serif; font-style:italic; font-size:16px; color:#0A0A0A;">Work less – Earn more – Enjoy life.</p>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; padding-top:2px;">
+            <div><div style="font-size:30px; font-weight:800; letter-spacing:-.02em;">7<span style="color:var(--brand-dark);">+</span></div><div style="font-size:12.5px; color:#726f7a; margin-top:4px; line-height:1.4;">Năm trong ngành truyền thông &amp; marketing</div></div>
+            <div><div style="font-size:30px; font-weight:800; letter-spacing:-.02em;">100K<span style="color:var(--brand-dark);">+</span></div><div style="font-size:12.5px; color:#726f7a; margin-top:4px; line-height:1.4;">Học viên đã đồng hành</div></div>
+            <div><div style="font-size:30px; font-weight:800; letter-spacing:-.02em; color:var(--brand-dark);">99</div><div style="font-size:12.5px; color:#726f7a; margin-top:4px; line-height:1.4;">Suất Founding Member miễn phí</div></div>
+          </div>
+          <a href="AI Funnel - 2 Form.dc.html" data-cta style="display:inline-flex; align-items:center; gap:10px; background:var(--brand); color:#fff; padding:15px 28px; border-radius:999px; font-weight:800; font-size:15px; text-decoration:none; box-shadow:0 14px 34px rgba(var(--brand-rgb) / .35);">NHẬN QUÀ TẶNG MIỄN PHÍ <span style="font-size:16px;">→</span></a>
+        </div>
+      </div>
+      <div style="max-width:1080px; margin:56px auto 0;">
+        <div style="border-radius:20px; overflow:hidden; border:1px solid rgba(0,0,0,.08);">
+          <img src="assets/hero.jpg" alt="[[brand.hostName]] chia sẻ trực tiếp tại hội thảo offline" style="width:100%; display:block;">
+        </div>
+      </div>
+    </section>
+
+    <!-- market shift -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:820px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(24px,3.4vw,34px); letter-spacing:-.03em; margin:0 0 20px; line-height:1.3;">Những Business Rất Nhỏ Về Con Người, Nhưng Cực Kỳ Lớn Về Năng Lực</h2>
+        <p style="text-align:center; color:#5b5963; font-size:15px; line-height:1.7; margin:0 0 32px;">Một cá nhân ngày hôm nay có thể dùng AI để điều phối những công việc mà trước đây cần cả một đội ngũ — tất cả từ một chiếc laptop.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px;">
+          <div data-card style="padding:16px 18px; background:#F6F5F8; border-radius:12px; font-size:13.5px; color:#3c3947;">Nghiên cứu hàng nghìn dữ liệu khách hàng</div>
+          <div data-card style="padding:16px 18px; background:#F6F5F8; border-radius:12px; font-size:13.5px; color:#3c3947;">Phân tích insight, lên ý tưởng sản phẩm</div>
+          <div data-card style="padding:16px 18px; background:#F6F5F8; border-radius:12px; font-size:13.5px; color:#3c3947;">Viết content, tạo video, thiết kế hình ảnh</div>
+          <div data-card style="padding:16px 18px; background:#F6F5F8; border-radius:12px; font-size:13.5px; color:#3c3947;">Tạo landing page, xây Offer</div>
+          <div data-card style="padding:16px 18px; background:#F6F5F8; border-radius:12px; font-size:13.5px; color:#3c3947;">Chuẩn bị kịch bản bán hàng, follow-up khách hàng</div>
+          <div data-card style="padding:16px 18px; background:#F6F5F8; border-radius:12px; font-size:13.5px; color:#3c3947;">Chuẩn hoá quy trình, kết nối thành một hệ thống</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 ngày, 5 tài sản -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:1080px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(26px,3.6vw,40px); letter-spacing:-.03em; margin:0 0 16px;">5 Ngày Tới, Bạn Hoàn Thành 5 Tài Sản Kinh Doanh</h2>
+        <p style="text-align:center; max-width:640px; margin:0 auto 44px; color:#5b5963; font-size:15px; line-height:1.65;">Đây không phải 5 buổi học rời rạc. Đây là một hành trình — mỗi ngày bạn bước ra với một tài sản cụ thể, sẵn sàng dùng ngay, không phải một cuốn sổ đầy kiến thức.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;">
+          <div data-card style="padding:26px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">NGÀY 01 · Một Hướng Kinh Doanh</div>
+            <h3 style="margin:0 0 8px; font-size:17px; font-weight:700;">Biết chính xác mình bán cho ai, bán cái gì</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Xác định một khách hàng, một vấn đề, một kết quả. Bạn rời ngày 1 với một câu định vị rõ ràng — nền móng cho cả 4 ngày sau.</p>
+          </div>
+          <div data-card style="padding:26px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">NGÀY 02 · Sản Phẩm Chủ Lực</div>
+            <h3 style="margin:0 0 8px; font-size:17px; font-weight:700;">Có một thứ khách hàng thực sự muốn mua</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Biến chuyên môn của bạn thành một Offer rõ ràng, dễ hiểu, dễ nói giá — sẵn sàng bán ngay khi Challenge kết thúc.</p>
+          </div>
+          <div data-card style="padding:26px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">NGÀY 03 · Cỗ Máy Thu Hút Khách Hàng</div>
+            <h3 style="margin:0 0 8px; font-size:17px; font-weight:700;">Có hệ thống kéo đúng người đến mỗi ngày</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Một ý tưởng, AI biến thành nội dung đa kênh — dẫn thẳng vào database khách hàng của riêng bạn, không phụ thuộc thuật toán.</p>
+          </div>
+          <div data-card style="padding:26px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">NGÀY 04 · Cỗ Máy Bán Hàng</div>
+            <h3 style="margin:0 0 8px; font-size:17px; font-weight:700;">Biến người quan tâm thành người trả tiền</h3>
+            <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Một hành trình bán hàng rõ ràng kèm kịch bản cụ thể, để "quan tâm" không còn dừng lại ở lượt thả tim.</p>
+          </div>
+          <div style="padding:26px 24px; background:linear-gradient(180deg, rgba(var(--brand-rgb) / .08), rgba(var(--brand-rgb) / .02)); border:1px solid rgba(var(--brand-rgb) / .35); border-radius:18px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--brand-dark); margin-bottom:10px;">NGÀY 05 · Hệ Thống Vận Hành</div>
+            <h3 style="margin:0 0 8px; font-size:17px; font-weight:700;">Biết việc gì AI làm, việc gì bạn giữ lại</h3>
+            <p style="margin:0; color:#2c2933; font-size:14px; line-height:1.6;">Ghép 4 ngày thành một hệ thống vận hành bằng AI, và hoàn thành <b>Bản Đồ 90 Ngày</b> của riêng bạn — tài sản cuối cùng, quan trọng nhất.</p>
+          </div>
+        </div>
+        <div style="margin-top:20px; border-radius:20px; overflow:hidden; border:1px solid rgba(0,0,0,.08);">
+          <img src="assets/workshop-2.jpg" alt="Buổi đào tạo online với hàng trăm học viên tham gia cùng lúc" style="width:100%; display:block;">
+        </div>
+      </div>
+    </section>
+
+    <!-- deliverables -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:1000px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(26px,3.6vw,38px); letter-spacing:-.03em; margin:0 0 44px;">Bạn Còn Nhận Được Toàn Bộ Công Cụ Triển Khai</h2>
+        <div style="display:grid; gap:14px;">
+          <div data-card style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; padding:22px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+            <div><h3 style="margin:0 0 6px; font-size:16.5px; font-weight:700;">[[brand.name]] Score</h3><p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.55;">Đánh giá hệ thống kinh doanh hiện tại trên 8 chiều: phụ thuộc cá nhân, tạo lead, chuyển đổi, AI, dòng tiền, khả năng mở rộng.</p></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#726f7a; text-decoration:line-through; white-space:nowrap;">990.000đ</div>
+          </div>
+          <div data-card style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; padding:22px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+            <div><h3 style="margin:0 0 6px; font-size:16.5px; font-weight:700;">[[brand.name]] Canvas</h3><p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.55;">Bản đồ business của bạn trên một trang: Customer, Offer, Content, Traffic, Lead, Sales, Delivery, AI, Revenue.</p></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#726f7a; text-decoration:line-through; white-space:nowrap;">990.000đ</div>
+          </div>
+          <div data-card style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; padding:22px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+            <div><h3 style="margin:0 0 6px; font-size:16.5px; font-weight:700;">AI Business Prompt Vault</h3><p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.55;">Bộ Prompt cho market research, insight, positioning, offer, content, sales, follow-up, chăm sóc khách hàng.</p></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#726f7a; text-decoration:line-through; white-space:nowrap;">1.990.000đ</div>
+          </div>
+          <div data-card style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; padding:22px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+            <div><h3 style="margin:0 0 6px; font-size:16.5px; font-weight:700;">30-Day Content Machine</h3><p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.55;">Framework biến một Big Idea thành 30 ngày nội dung đa kênh — Facebook, video ngắn, email, carousel.</p></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#726f7a; text-decoration:line-through; white-space:nowrap;">1.490.000đ</div>
+          </div>
+          <div data-card style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; padding:22px 24px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+            <div><h3 style="margin:0 0 6px; font-size:16.5px; font-weight:700;">AI Digital Team Blueprint</h3><p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.55;">Bản thiết kế đội ngũ AI của riêng bạn: research, content, offer, sales, customer care, operations assistant.</p></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#726f7a; text-decoration:line-through; white-space:nowrap;">1.990.000đ</div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; padding:22px 24px; background:linear-gradient(180deg, rgba(var(--brand-rgb) / .08), rgba(var(--brand-rgb) / .02)); border:1px solid rgba(var(--brand-rgb) / .35); border-radius:16px;">
+            <div><h3 style="margin:0 0 6px; font-size:16.5px; font-weight:700;">5-Day Live [[brand.name]] Challenge</h3><p style="margin:0; color:#2c2933; font-size:13.5px; line-height:1.55;">5 ngày Zoom trực tiếp cùng [[brand.hostName]] — mỗi ngày hoàn thành một tài sản kinh doanh, kết thúc bằng Bản Đồ 90 Ngày của riêng bạn.</p></div>
+            <div style="font-family:'JetBrains Mono',monospace; font-weight:700; color:#8a6a48; text-decoration:line-through; white-space:nowrap;">5.990.000đ</div>
+          </div>
+        </div>
+        <div class="om-price-glow" style="margin-top:24px; max-width:480px; margin-left:auto; margin-right:auto; text-align:center; padding:clamp(28px,4vw,36px); background:#0A0A0A; color:#fff; border-radius:20px;">
+          <div style="font-size:13px; color:#b5b3bc; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;">Tổng giá trị gói chuyển giao</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:26px; text-decoration:line-through; color:#8a8792;">13.440.000đ</div>
+          <div style="font-size:13px; color:#ff9fd4; margin-top:12px;">99 người đăng ký sớm nhất, mời đủ 2 bạn để nâng cấp Vé Premium</div>
+          <div style="font-weight:800; font-size:44px; color:#ff5cb0; letter-spacing:-.03em; margin-top:4px;">0đ</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2-level mechanic -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:960px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(26px,3.6vw,40px); letter-spacing:-.03em; margin:0 0 12px;">Lần Đầu Tiên, [[brand.name]] Mở Theo 3 Hạng Vé</h2>
+        <p style="text-align:center; max-width:600px; margin:0 auto 44px; color:#5b5963; font-size:15px; line-height:1.65;">Tôi không tìm những người quan tâm nhất. Tôi muốn tìm những người nghiêm túc nhất.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px;">
+          <div data-card style="padding:clamp(22px,2.4vw,28px); background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:20px;">
+            <div style="display:inline-flex; padding:4px 12px; border-radius:999px; background:rgba(0,0,0,.06); font-size:11.5px; font-weight:700; letter-spacing:.04em; color:#5b5963; margin-bottom:14px;">VÉ STANDARD</div>
+            <h3 style="margin:0 0 16px; font-size:19px; font-weight:800;">Đăng Ký Miễn Phí</h3>
+            <ul style="margin:0; padding:0; list-style:none; display:grid; gap:10px;">
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Tham gia 5 ngày học trực tiếp</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Tài liệu học trong chương trình</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Bản đồ 90 ngày [[brand.name]]</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>Nhận toàn bộ record 5 buổi</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>Quà tặng riêng vé Premium</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>Template Visual Branding</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>Template Reels / Facebook Cover</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>1 buổi Zoom dành riêng cho VIP</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>7Days Tài Sản Số (bộ video)</li>
+            </ul>
+            <div style="margin-top:18px; padding-top:14px; border-top:1px dashed rgba(0,0,0,.14); font-weight:700; font-size:14.5px; color:#2c2933;">0 đồng · chỉ cần hoàn tất đăng ký</div>
+          </div>
+          <div style="padding:clamp(22px,2.4vw,28px); background:linear-gradient(180deg, rgba(var(--brand-rgb) / .08), rgba(var(--brand-rgb) / .02)); border:1.5px solid rgba(var(--brand-rgb) / .4); border-radius:20px;">
+            <div style="display:inline-flex; padding:4px 12px; border-radius:999px; background:rgba(var(--brand-rgb) / .14); font-size:11.5px; font-weight:700; letter-spacing:.04em; color:#9c0f63; margin-bottom:14px;">VÉ PREMIUM</div>
+            <h3 style="margin:0 0 16px; font-size:19px; font-weight:800;">Mời 2 Người Bạn</h3>
+            <ul style="margin:0; padding:0; list-style:none; display:grid; gap:10px;">
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Tham gia 5 ngày học trực tiếp</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Tài liệu học trong chương trình</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Bản đồ 90 ngày [[brand.name]]</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Nhận toàn bộ record 5 buổi</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Quà tặng riêng vé Premium</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Template Visual Branding</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Template Reels / Facebook Cover</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>1 buổi Zoom dành riêng cho VIP</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#8a8792;"><span style="flex:none; color:#b5b3bc; font-weight:800;">✗</span>7Days Tài Sản Số (bộ video)</li>
+            </ul>
+            <div style="margin-top:18px; padding-top:14px; border-top:1px dashed rgba(0,0,0,.14); font-weight:700; font-size:14.5px; color:#9c0f63;">Mở khoá bằng lời mời 2 người bạn, không phải bằng tiền</div>
+          </div>
+          <div style="padding:clamp(22px,2.4vw,28px); background:linear-gradient(180deg, rgba(245,184,65,.16), rgba(245,184,65,.03)); border:1.5px solid rgba(212,150,20,.42); border-radius:20px;">
+            <div style="display:inline-flex; padding:4px 12px; border-radius:999px; background:rgba(245,184,65,.28); font-size:11.5px; font-weight:700; letter-spacing:.04em; color:#9c6a08; margin-bottom:14px;">VÉ VIP</div>
+            <h3 style="margin:0 0 16px; font-size:19px; font-weight:800;">[[price]]</h3>
+            <ul style="margin:0; padding:0; list-style:none; display:grid; gap:10px;">
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Tham gia 5 ngày học trực tiếp</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Tài liệu học trong chương trình</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Bản đồ 90 ngày [[brand.name]]</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Nhận toàn bộ record 5 buổi</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Quà tặng riêng vé Premium</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Template Visual Branding</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>Template Reels / Facebook Cover</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>1 buổi Zoom dành riêng cho VIP</li>
+              <li style="display:flex; gap:10px; align-items:flex-start; font-size:13.8px; color:#2c2933;"><span style="flex:none; color:var(--brand); font-weight:800;">✓</span>7Days Tài Sản Số (bộ video)</li>
+            </ul>
+            <div style="margin-top:18px; padding-top:14px; border-top:1px dashed rgba(0,0,0,.14); font-weight:700; font-size:14.5px; color:#9c6a08;">Giá early bird cho 50 suất đầu · sau đó [[listPrice]]</div>
+          </div>
+        </div>
+
+        <div style="margin-top:44px;">
+          <h3 style="text-align:center; font-weight:800; font-size:clamp(20px,2.6vw,26px); margin:0 0 28px;">Cam Kết Của Bạn Chỉ Có 3 Bước</h3>
+          <div style="display:grid; gap:12px;">
+            <div data-card style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+              <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">1</div>
+              <div><h4 style="margin:0 0 4px; font-size:15.5px; font-weight:700;">Hoàn tất đăng ký Level 1</h4><p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.55;">Bạn chính thức được tham gia 5 ngày Zoom trực tiếp, và nhận link giới thiệu riêng của mình.</p></div>
+            </div>
+            <div data-card style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:16px;">
+              <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">2</div>
+              <div><h4 style="margin:0 0 4px; font-size:15.5px; font-weight:700;">Chọn 2 người bạn phù hợp</h4><p style="margin:0; color:#5b5963; font-size:13.5px; line-height:1.55;">Gửi link giới thiệu cho họ: "Tôi đang tham gia chương trình này, thấy khá phù hợp với bạn. Tham gia cùng tôi nhé."</p></div>
+            </div>
+            <div style="display:grid; grid-template-columns:36px 1fr; gap:16px; padding:20px 22px; background:linear-gradient(180deg, rgba(var(--brand-rgb) / .08), rgba(var(--brand-rgb) / .02)); border:1px solid rgba(var(--brand-rgb) / .35); border-radius:16px;">
+              <div style="width:32px; height:32px; border-radius:50%; background:var(--brand); color:#fff; font-weight:800; display:grid; place-items:center; font-size:14px;">3</div>
+              <div><h4 style="margin:0 0 4px; font-size:15.5px; font-weight:700;">Khi 2 người bạn hoàn tất đăng ký</h4><p style="margin:0; color:#2c2933; font-size:13.5px; line-height:1.55;">Vé Premium mở khoá — bạn nhận toàn bộ Bộ Quà Triển Khai và bản ghi các buổi học, hoàn toàn miễn phí.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- founding 99 -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div class="om-price-glow" data-card style="max-width:680px; margin:0 auto; text-align:center; padding:clamp(32px,4.5vw,44px); background:#F6F5F8; border:1px solid rgba(0,0,0,.08); border-radius:24px;">
+        <h2 style="margin:0 0 16px; font-weight:800; font-size:clamp(22px,3vw,28px); letter-spacing:-.02em;">Lần Đầu Tiên Này Có Một Điều Đặc Biệt</h2>
+        <p style="margin:0 0 20px; color:#3c3947; font-size:15px; line-height:1.7;">Tôi quyết định mở toàn bộ chương trình [[brand.name]] với mức phí chính thức <span style="text-decoration:line-through; color:#726f7a;">5.990.000 đồng</span> cho <b style="color:#0A0A0A;">99 người đầu tiên</b> — hoàn toàn miễn phí.</p>
+        <div style="font-weight:800; font-size:48px; color:var(--brand); letter-spacing:-.03em;">0 đồng</div>
+        <p style="margin:16px 0 0; color:#726f7a; font-size:13.5px;">Founding 99 — cùng tôi trải nghiệm, thực hành và xây những case study đầu tiên của [[brand.name]].</p>
+      </div>
+    </section>
+
+    <!-- VIP teaser (still available for those who want faster) -->
+    <section style="padding:clamp(56px,6vw,80px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:820px; margin:0 auto; padding:clamp(26px,3.5vw,36px); background:linear-gradient(180deg, rgba(245,184,65,.1), rgba(245,184,65,.02)); border:1px solid rgba(212,150,20,.3); border-radius:22px; display:grid; grid-template-columns:1fr auto; gap:20px; align-items:center;">
+        <div>
+          <h3 style="margin:0 0 8px; font-size:17.5px; font-weight:700;">Muốn đi nhanh hơn 99 người khác?</h3>
+          <p style="margin:0; color:#5b5963; font-size:14px; line-height:1.6;">Có Vé VIP trả phí tuỳ chọn: một buổi Zoom riêng cho nhóm VIP, bộ video 7Days Tài Sản Số và toàn bộ quyền lợi của Vé Premium — dành cho ai không muốn chờ đủ 2 lượt giới thiệu.</p>
+        </div>
+        <a href="AI Funnel - 6 OTO2.dc.html" style="white-space:nowrap; background:#0A0A0A; color:#fff; padding:14px 24px; border-radius:999px; font-weight:700; font-size:14px; text-decoration:none;">Xem gói VIP →</a>
+      </div>
+    </section>
+
+    <!-- testimonials -->
+    <section style="padding:clamp(70px,7vw,100px) 0 0; overflow:hidden;">
+      <h2 style="text-align:center; font-weight:800; font-size:clamp(28px,4vw,42px); letter-spacing:-.03em; margin:0 0 44px; padding:0 clamp(20px,5vw,64px);">Họ Đã Trải Nghiệm Hệ Thống</h2>
+      <div id="testimonial-track" class="om-scroll-x" style="overflow-x:auto; overflow-y:hidden; cursor:grab;" onMouseEnter="{{ pauseTestimonialMarquee }}" onMouseLeave="{{ resumeTestimonialMarquee }}">
+        <div style="{{ testimonialMarqueeStyle }} display:inline-flex; gap:22px; white-space:nowrap;">
+          <sc-for list="{{ testimonialLoop }}" as="t" hint-placeholder-count="10">
+            <div style="display:inline-flex; flex-direction:column; width:340px; white-space:normal; vertical-align:top; background:#F0EFF3; border:1px solid rgba(0,0,0,.08); border-radius:18px; overflow:hidden;">
+              <div style="position:relative; aspect-ratio:16/9; background:#000;">
+                <sc-if value="{{ t.playing }}" hint-placeholder-val="{{ false }}">
+                  <iframe src="{{ t.embedSrc }}" title="{{ t.name }}" style="position:absolute; inset:0; width:100%; height:100%; border:0;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen=""></iframe>
+                </sc-if>
+                <sc-if value="{{ t.notPlaying }}" hint-placeholder-val="{{ true }}">
+                  <div onClick="{{ t.onPlay }}" style="position:absolute; inset:0; cursor:pointer;">
+                    <img src="{{ t.thumb }}" alt="" style="width:100%; height:100%; object-fit:cover; display:block;"><span style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:58px; height:58px; border-radius:50%; background:rgba(0,0,0,.6); border:2px solid rgba(255,255,255,.85); display:grid; place-items:center; color:#fff; font-size:18px; padding-left:3px;">▶</span>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="padding:16px 18px;"><div style="font-weight:700; font-size:16px;">{{ t.name }}</div><div style="font-size:13px; color:#726f7a; margin-top:3px;">Thành viên [[brand.name]]</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 figures not a promise -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) 0;">
+      <div style="max-width:700px; margin:0 auto; text-align:center;">
+        <h2 style="font-weight:800; font-size:clamp(24px,3.2vw,32px); letter-spacing:-.03em; margin:0 0 18px;">9 Chữ Số Không Phải Một Lời Hứa</h2>
+        <p style="margin:0 0 14px; color:#3c3947; font-size:15px; line-height:1.75;">Đó không phải lời hứa rằng bạn tham gia chương trình này và chắc chắn sẽ đạt được kết quả giống tôi. Nhưng tôi hứa sẽ không giấu bất kỳ điều gì, và chia sẻ, chuyển giao cho bạn toàn bộ những gì tôi đã làm.</p>
+        <p style="margin:0; color:#3c3947; font-size:15px; line-height:1.75;">Tôi không tin vào những lời hứa làm giàu nhanh. Nhưng có một điều tôi có thể làm: mở toàn bộ hệ thống ra, và chuyển giao lại cho bạn.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section style="padding:clamp(70px,7vw,100px) clamp(20px,5vw,64px) clamp(90px,9vw,130px);">
+      <div style="max-width:760px; margin:0 auto;">
+        <h2 style="text-align:center; font-weight:800; font-size:clamp(26px,3.6vw,38px); letter-spacing:-.03em; margin:0 0 40px;">Câu Hỏi Thường Gặp</h2>
+        <div style="display:grid; gap:12px;">
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div onClick="{{ faqToggle0 }}" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 26px; cursor:pointer;">
+              <h3 style="margin:0; font-size:16px; font-weight:700;">Tại sao phải mời 2 người bạn mới nhận được Bộ Quà?</h3>
+              <span style="{{ faqIconStyle0 }}">▾</span>
+            </div>
+            <div style="{{ faqBodyStyle0 }}">
+              <p style="margin:0 26px 22px; color:#5b5963; font-size:14.5px; line-height:1.65;">Hành trình thay đổi mạnh hơn nhiều khi bạn không đi một mình — có người cùng học, cùng nhắc nhau hành động. Đây cũng là hành động đầu tiên chứng minh bạn nghiêm túc, không chỉ quan tâm.</p>
+            </div>
+          </div>
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div onClick="{{ faqToggle1 }}" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 26px; cursor:pointer;">
+              <h3 style="margin:0; font-size:16px; font-weight:700;">Nếu 2 người bạn tôi mời chưa đăng ký thì sao?</h3>
+              <span style="{{ faqIconStyle1 }}">▾</span>
+            </div>
+            <div style="{{ faqBodyStyle1 }}">
+              <p style="margin:0 26px 22px; color:#5b5963; font-size:14.5px; line-height:1.65;">Bạn vẫn giữ nguyên quyền tham gia 5 ngày Zoom trực tiếp của Vé Standard. Bộ Quà Triển Khai và bản ghi các buổi học (Vé Premium) sẽ mở khoá ngay khi đủ 2 người bạn hoàn tất đăng ký — không có deadline gấp gáp.</p>
+            </div>
+          </div>
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div onClick="{{ faqToggle2 }}" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 26px; cursor:pointer;">
+              <h3 style="margin:0; font-size:16px; font-weight:700;">Tôi chưa có kinh nghiệm gì về AI hay kinh doanh, có tham gia được không?</h3>
+              <span style="{{ faqIconStyle2 }}">▾</span>
+            </div>
+            <div style="{{ faqBodyStyle2 }}">
+              <p style="margin:0 26px 22px; color:#5b5963; font-size:14.5px; line-height:1.65;">Được — chương trình thiết kế cho người mới bắt đầu hoàn toàn. Bạn cần một chuyên môn, kinh nghiệm hoặc câu chuyện của riêng mình; phần còn lại là điều [[brand.hostName]] sẽ đồng hành xây cùng bạn.</p>
+            </div>
+          </div>
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div onClick="{{ faqToggle3 }}" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 26px; cursor:pointer;">
+              <h3 style="margin:0; font-size:16px; font-weight:700;">Gói VIP trả phí có bắt buộc không?</h3>
+              <span style="{{ faqIconStyle3 }}">▾</span>
+            </div>
+            <div style="{{ faqBodyStyle3 }}">
+              <p style="margin:0 26px 22px; color:#5b5963; font-size:14.5px; line-height:1.65;">Không. Vé VIP chỉ là lựa chọn thêm cho ai muốn có buổi Zoom riêng và không muốn chờ đủ lượt giới thiệu. Vé Standard và Vé Premium vẫn hoàn toàn miễn phí theo đúng cơ chế mời bạn.</p>
+            </div>
+          </div>
+          <div data-card style="background:#F6F5F8; border:1px solid rgba(0,0,0,.07); border-radius:16px; overflow:hidden;">
+            <div onClick="{{ faqToggle4 }}" style="display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 26px; cursor:pointer;">
+              <h3 style="margin:0; font-size:16px; font-weight:700;">Nếu tôi không tham gia live được thì sao?</h3>
+              <span style="{{ faqIconStyle4 }}">▾</span>
+            </div>
+            <div style="{{ faqBodyStyle4 }}">
+              <p style="margin:0 26px 22px; color:#5b5963; font-size:14.5px; line-height:1.65;">Buổi live nào cũng được ghi lại. Người tham gia Vé Premium nhận bản ghi gửi trong nhóm Zalo trong vòng 24 giờ để xem lại bất cứ lúc nào; Vé Standard tham gia trực tiếp theo đúng lịch 5 ngày live.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- final CTA -->
+    <section style="padding:0 clamp(20px,5vw,64px) clamp(90px,9vw,130px);">
+      <div style="max-width:720px; margin:0 auto; text-align:center;">
+        <h2 style="font-weight:800; font-size:clamp(28px,4vw,42px); letter-spacing:-.03em; margin:0 0 18px; line-height:1.2;">1 người. 1 laptop. 1 hệ thống.</h2>
+        <p style="margin:0 0 28px; color:#5b5963; font-size:15.5px; line-height:1.7;">9 chữ số là kết quả của tôi. Nhưng toàn bộ hệ thống đã giúp tôi đi đến kết quả đó — lần này, tôi sẽ chuyển giao cho bạn. Hoàn toàn miễn phí cho 99 thành viên đầu tiên đủ điều kiện.</p>
+        <a href="AI Funnel - 2 Form.dc.html" data-cta style="position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:10px; background:var(--brand); color:#fff; padding:18px 34px; border-radius:999px; font-weight:800; font-size:17px; text-decoration:none; box-shadow:0 16px 40px rgba(var(--brand-rgb) / .4);">
+          THAM GIA MIỄN PHÍ <span style="font-size:19px;">→</span>
+          <span style="position:absolute; top:0; left:0; width:40%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent); animation:sheen 4.8s ease-in-out infinite;"></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- footer -->
+    <footer style="border-top:1px solid rgba(0,0,0,.08); padding:44px clamp(20px,5vw,64px) 32px;">
+      <div style="max-width:1080px; margin:0 auto; display:flex; flex-wrap:wrap; gap:24px; align-items:center; justify-content:space-between;">
+        <img src="assets/logo.png" alt="[[brand.legalName]]" style="height:26px; width:auto; opacity:.8;">
+        <div style="display:flex; gap:22px; flex-wrap:wrap; font-size:13.5px; color:#726f7a;">
+          <a href="[[zaloUrl]]" target="_blank" rel="noopener" style="color:var(--brand); text-decoration:none;">Liên hệ Zalo</a>
+          <a href="#top" style="color:inherit; text-decoration:none;">Điều khoản</a>
+          <a href="#top" style="color:inherit; text-decoration:none;">Chính sách bảo mật</a>
+        </div>
+      </div>
+      <p style="max-width:1080px; margin:24px auto 0; font-size:12px; color:#5b5963; line-height:1.6;">© 2026 [[brand.legalName]]. Dòng tiền 9 chữ số là kết quả cá nhân của [[brand.hostName]], không phải cam kết thu nhập cho học viên.</p>
+    </footer>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { faqOpen: [false, false, false, false, false], heroVideoPlaying: false, playingVideo: null, marqueePaused: false };
+  testimonialIds = [[testimonialIds]];
+  testimonialNames = [[testimonialNames]];
+
+  makeFaqToggle(i) {
+    return () => this.setState(s => {
+      const faqOpen = s.faqOpen.slice();
+      faqOpen[i] = !faqOpen[i];
+      return { faqOpen };
+    });
+  }
+
+  bodyStyle(open) {
+    return open
+      ? 'max-height:400px; opacity:1; transition:max-height .35s ease, opacity .25s ease;'
+      : 'max-height:0px; opacity:0; overflow:hidden; transition:max-height .3s ease, opacity .2s ease;';
+  }
+
+  iconStyle(open) {
+    return 'display:inline-block; flex-shrink:0; font-size:14px; color:#726f7a; transition:transform .25s ease; transform:rotate(' + (open ? '180deg' : '0deg') + ');';
+  }
+
+  renderVals() {
+    const o = this.state.faqOpen;
+    const vals = {};
+    for (let i = 0; i < 5; i++) {
+      vals['faqToggle' + i] = this.makeFaqToggle(i);
+      vals['faqBodyStyle' + i] = this.bodyStyle(o[i]);
+      vals['faqIconStyle' + i] = this.iconStyle(o[i]);
+    }
+    vals.heroVideoPlaying = this.state.heroVideoPlaying;
+    vals.heroVideoNotPlaying = !this.state.heroVideoPlaying;
+    // Chi tra ve URL that khi nguoi xem da bam phat. De san URL trong HTML tho
+    // thi trinh duyet nap iframe ngay luc doc trang, keo theo ca tieng.
+    // funnel.js dat this.heroId / this.heroProvider khi .env chi dinh mot video
+    // khac (VSL that cua chi [[brand.hostName]]). Khong cau hinh thi dung video co san day.
+    const heroId = this.heroId || 'gXNrv1UBUWk';
+    const heroProvider = this.heroProvider || 'youtube';
+    const heroBase = heroProvider === 'vimeo' ? 'https://player.vimeo.com/video/'
+      : heroProvider === 'stream' ? 'https://iframe.videodelivery.net/'
+        : 'https://www.youtube.com/embed/';
+    // Chi YouTube cho san anh dai dien theo ma video; noi khac phai tu dat.
+    vals.heroThumb = heroProvider === 'youtube'
+      ? 'https://i.ytimg.com/vi/' + heroId + '/hqdefault.jpg'
+      : (this.heroThumb || '');
+    vals.heroEmbedSrc = this.state.heroVideoPlaying
+      ? heroBase + heroId + '?autoplay=1&rel=0&playsinline=1'
+      : 'about:blank';
+    vals.playHeroVideo = () => this.setState({ heroVideoPlaying: true });
+
+    // Bang tin chay ngang nhan doi danh sach cho lien mach, nen moi video co HAI
+    // the. Khoa theo ma video thi bam mot cai la ca hai cung phat -> chong tieng.
+    // Vi vay khoa theo tung the: id + vi tri.
+    const loopIds = this.testimonialIds.concat(this.testimonialIds);
+    vals.testimonialLoop = loopIds.map((id, i) => {
+      const key = id + '-' + i;
+      const playing = this.state.playingVideo === key;
+      return {
+        id: key,
+        name: this.testimonialNames[id],
+        thumb: id ? 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg' : '/f/assets/placeholder.svg',
+        embedSrc: playing
+          ? 'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0&playsinline=1'
+          : 'about:blank',
+        playing,
+        notPlaying: !playing,
+        onPlay: () => this.setState({ playingVideo: key, marqueePaused: true })
+      };
+    });
+    // Khong dung animation CSS nua: bang tin gio la vung cuon ngang that de
+    // nguoi xem tu keo. funnel.js lo phan tu chay va keo bang chuot.
+    vals.testimonialMarqueeStyle = '';
+    vals.pauseTestimonialMarquee = () => this.setState({ marqueePaused: true });
+    vals.resumeTestimonialMarquee = () => this.setState({ marqueePaused: false });
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

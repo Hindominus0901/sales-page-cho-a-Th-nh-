@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+
+data/
+.env
+*.log
+
+# anh nguon thiet ke, khong can deploy
+*.zip
+
+# thu muc chua file cua du an khac, giu lai phong khi can
+_unused/
+
+# Ma tag/sequence Kit do scripts/kit-setup.mjs sinh ra
+kit-ids.json
+
+# Sao ke ngan hang: ten khach, so tien, so du that. Khong bao gio vao git.
+*.xlsx
+
+# Nhat ky loi cua wrangler dev o may
+wd.err
+
+# Ban HTML sinh ra tu scripts/kit-broadcast-dieu-chinh-diem.mjs va log cua
+# wrangler dev - deu la thu sinh ra khi chay, khong phai ma nguon.
+wd.out
+wd3.out
+wd3.err
+thu-dieu-chinh-diem.html

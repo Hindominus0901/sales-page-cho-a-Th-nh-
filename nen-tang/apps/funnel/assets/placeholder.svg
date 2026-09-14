@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800" role="img" aria-label="Ảnh mẫu — thay bằng ảnh của bạn">
+  <rect width="1200" height="800" fill="#eceaf0"/>
+  <rect x="24" y="24" width="1152" height="752" fill="none" stroke="#cfcbd6" stroke-width="3" stroke-dasharray="14 12" rx="24"/>
+  <g fill="#8a8792" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" text-anchor="middle">
+    <circle cx="600" cy="330" r="74" fill="none" stroke="#b8b4c2" stroke-width="6"/>
+    <path d="M600 296v68M566 330h68" stroke="#b8b4c2" stroke-width="6" stroke-linecap="round"/>
+    <text x="600" y="470" font-size="46" font-weight="700">ẢNH MẪU</text>
+    <text x="600" y="524" font-size="28">Thay bằng ảnh của bạn trong apps/funnel/assets/</text>
+    <text x="600" y="568" font-size="24">Giữ nguyên tên file để không phải sửa thiết kế</text>
+  </g>
+</svg>

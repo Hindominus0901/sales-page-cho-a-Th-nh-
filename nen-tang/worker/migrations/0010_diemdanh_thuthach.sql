@@ -1,0 +1,11 @@
+-- Diem danh nam ngay trong thu thach, theo tung ngay.
+--
+-- Khong lam mot co che diem danh THU HAI: buoi live da co calendar_events voi
+-- khung gio va event_signups ghi lai ai co mat. Hai co che song song la mot
+-- ngay nao do mot nguoi duoc cong diem chuyen can hai lan cho cung mot buoi,
+-- va khong ai doi soat noi. O day chi noi ngay N cua thu thach ung voi buoi
+-- nao - roi muon diem danh o trang Lich hay ngay trong thu thach cung duoc,
+-- van la mot ban ghi.
+--
+-- De trong = ngay do khong co buoi live -> the ngay khong hien nut diem danh.
+ALTER TABLE challenge_day_tasks ADD COLUMN event_id TEXT;

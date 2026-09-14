@@ -1,0 +1,45 @@
+{
+  "name": "goc-creator-platform",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Nen tang cong dong + funnel ban hang cua CÔNG TY TNHH THƯƠNG MẠI & DỊCH VỤ ANLIFE GROUP, chay tren Cloudflare Workers + D1",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "build:funnel": "node apps/funnel/build.mjs",
+    "build:web": "node scripts/clean-web-dist.mjs && npm run build --workspace apps/web",
+    "build": "npm run build:web && npm run build:funnel",
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:worker": "wrangler dev",
+    "db:migrate": "wrangler d1 migrations apply platform --local",
+    "db:migrate:remote": "node scripts/cf.mjs d1 migrations apply platform --remote",
+    "db:sql": "wrangler d1 execute platform --local --command",
+    "test": "node scripts/chay-test.mjs",
+    "test:tuan-tu": "npm run test:funnel && npm run test:auth && npm run test:platform",
+    "test:funnel": "node --env-file=.env tests/smoke.mjs",
+    "test:auth": "node --env-file=.env tests/auth.mjs",
+    "hash-password": "node scripts/hash-password.mjs",
+    "deploy": "npm run build && node scripts/cf.mjs deploy",
+    "setup:cloudflare": "node scripts/setup-cloudflare.mjs",
+    "test:platform": "node --env-file=.env tests/platform.mjs",
+    "brand:validate": "node scripts/brand/validate.mjs",
+    "brand:apply": "node scripts/brand/apply.mjs",
+    "brand:seed": "node scripts/brand/seed.mjs",
+    "brand:check": "node scripts/brand/check.mjs",
+    "brand:init": "node scripts/brand/init.mjs",
+    "prebuild": "node scripts/brand/check.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.42.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.25.12": true,
+    "workerd@1.20260903.1": true
+  }
+}

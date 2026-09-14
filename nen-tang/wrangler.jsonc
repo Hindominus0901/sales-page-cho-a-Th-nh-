@@ -1,0 +1,164 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // <<< BRAND:NAME (sinh boi scripts/brand/apply.mjs - dung sua tay)
+  "name": "goc-creator-platform",
+  // >>> BRAND:NAME
+  "main": "worker/src/index.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // File tinh: SPA cong dong o goc, trang ban hang o /f/.
+  // run_worker_first = nhung duong dan Worker phai tu quyet dinh; con lai
+  // (js, css, anh) di thang tu bien Cloudflare, khong ton lan chay Worker.
+  // Ten mien that. custom_domain=true -> Cloudflare tu tao ban ghi DNS va tu cap
+  // chung chi HTTPS. Dia chi .workers.dev van song song, khong mat.
+  //
+  // CHUA gan ten-mien-cua-ban: cho do dang chay app Base44 that voi hoc
+  // vien dang dang nhap. Doi sang day khi chua co noi dung va chua chuyen tai
+  // khoan sang la khoa cua nhot ho o ngoai.
+  // <<< BRAND:ROUTES (sinh boi scripts/brand/apply.mjs - dung sua tay)
+  // Chua gan ten mien rieng: khai "routes" se khien Cloudflare TAT dia chi
+  // .workers.dev, ma do dang la duong duy nhat vao duoc site. Them ten mien vao
+  // tai khoan Cloudflare roi dat domains.useCustomDomains = true va chay lai
+  // `npm run brand:apply`.
+  // >>> BRAND:ROUTES
+  // Khai "routes" khien Cloudflare TAT dia chi .workers.dev - link demo dang dua
+  // cho khach xem chet ngay (404). Giu lai lam duong lui khi ten mien co van de.
+  "workers_dev": true,
+
+  "assets": {
+    "directory": "./dist/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // Worker xu ly MOI trang, tru file tinh. Truoc day chi liet ke vai duong
+    // nen /dashboard, /community... duoc bien Cloudflare tra thang, khong qua
+    // Worker -> khong he co header bao mat nao (CSP, noindex, nosniff).
+    // Loai tru /assets/* va /f/* de anh, js, css khong ton lan chay Worker.
+    "run_worker_first": [
+      "/*",
+      "!/assets/*",
+      "!/f/assets/*",
+      "!/f/*.js",
+      "!/favicon.ico"
+    ]
+  },
+
+  // Ma tai nguyen la GIA TRI GIA cho toi khi chay `npm run setup:cloudflare` -
+  // script do tao D1/KV/R2 that roi vá ma that vao day. De so gia chu khong de
+  // trong vi wrangler tu choi chay khi truong nay rong; va tuyet doi khong de
+  // san ma cua mot tai khoan khac, keo deploy nham vao co so du lieu cua ho.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "platform",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "worker/migrations"
+    }
+  ],
+
+
+  "kv_namespaces": [
+    { "binding": "CACHE", "id": "00000000000000000000000000000000" }
+  ],
+
+  // Kho anh. setup-cloudflare.mjs TAO thung R2 tu lau roi, nhung khong ai khai
+  // binding o day - nen worker/src/routes/files.js khong bao gio thay
+  // env.UPLOADS va tra 503 "kho anh dang tam tat" vinh vien. Tao mot thu roi
+  // quen noi day vao la kieu hong im lang nhat: khong log, khong bao loi khi
+  // deploy, chi co hoc vien khong tai duoc anh len ma khong ai biet vi sao.
+  // <<< BRAND:R2 (sinh boi scripts/brand/apply.mjs - dung sua tay)
+  "r2_buckets": [
+    { "binding": "UPLOADS", "bucket_name": "goc-creator-platform-uploads" }
+  ],
+  // >>> BRAND:R2
+
+  // <<< BRAND:VARS (sinh boi scripts/brand/apply.mjs - dung sua tay)
+  // CAN THAN: nhung gia tri nay duoc deploy len that va GHI DE gia tri dat trong
+  // bang dieu khien Cloudflare. Truoc day o day ghi PUBLIC_URL=localhost, khien
+  // moi link gioi thieu affiliate tren ban that tro ve localhost - tuc la ca
+  // chuong trinh affiliate ship link chet. Khi chay o may, .env ghi de muc nay.
+  //
+  // PUBLIC_URL de trong = tu lay ten mien cua chinh request.
+  "vars": {
+    "PUBLIC_URL": "",
+    "ENVIRONMENT": "production",
+
+    // Cron khong co request nao de suy ra ten mien, nen phai khai thang o day -
+    // neu khong, link trong email nhac se tro ve dau.
+    "APP_ORIGIN": "https://manhthanh.net",
+    // Ten mien cua KHU VUC THANH VIEN. worker/src/index.js doc bien nay de tach
+    // webapp khoi trang ban hang; de trong thi ca hai ten mien tra ve mot thu.
+    "APP_HOST": "app.manhthanh.net",
+
+    // VSL o trang chu. De trong = dung video co san trong ban thiet ke.
+    "HERO_VIDEO_PROVIDER": "youtube",
+    "HERO_VIDEO_ID": "",
+    "HERO_VIDEO_THUMB": "",
+    "HERO_VIDEO_AUTOPLAY": "true",
+    // Video huong dan o trang cam on. Khong tu phat: nguoi vua dien form xong,
+    // mot doan video tu keu len la giat minh.
+    "CONFIRM_VIDEO_PROVIDER": "youtube",
+    "CONFIRM_VIDEO_ID": "",
+    "CONFIRM_VIDEO_AUTOPLAY": "false",
+
+    "FB_PIXEL_ID": "",
+
+    "PRODUCT_NAME": "Thử Thách 21 Ngày — Góc Creator",
+    "PRODUCT_SKU": "GC21",
+    "PRICE_VIP": "2000000",
+    "PRICE_VIP_LIST": "4000000",
+    "AFFILIATE_RATE": "20",
+
+    // Bon dong nay di thang vao ma VietQR khach quet de tra tien. Truoc day
+    // chung khong duoc khai o day ma nam lam GIA TRI MAC DINH trong
+    // worker/src/config.js - ai quen dat la in ra ma QR tra tien cho nguoi khac.
+    "BANK_BIN": "970407",
+    "BANK_NAME": "Techcombank",
+    "BANK_ACCOUNT": "0000000000",
+    "BANK_ACCOUNT_NAME": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
+    "BANK_MEMO_PREFIX": "",
+
+    "ZALO_PHONE": "0000000000",
+    "ZALO_URL": "https://zalo.me/0000000000",
+    "ZALO_GROUP_URL": "https://zalo.me/g/chua-co",
+
+    // Ten mien gui thu phai duoc xac minh ben Resend (ban ghi DKIM va send.),
+    // khong thi Resend tu choi va khong ai nhan duoc ma xac thuc.
+    "MAIL_FROM": "Góc Creator <no-reply@manhthanh.net>",
+
+    // Ten thuong hieu cho phan hien thi (email, trang ban hang, webapp).
+    "BRAND_NAME": "Góc Creator",
+    "BRAND_LEGAL_NAME": "CÔNG TY TNHH THƯƠNG MẠI & DỊCH VỤ ANLIFE GROUP",
+    "BRAND_PRODUCT_LINE": "Thử Thách 21 Ngày",
+    "BRAND_HOST_NAME": "Thành",
+    "BRAND_LOGO_TEXT": "GÓC CREATOR",
+    "BRAND_COLOR": "#3d9962",
+    "BRAND_COLOR_DARK": "#2f7a4d",
+    "ORDER_PREFIX": "GC",
+    "TZ_OFFSET_MINUTES": "420",
+    "LOCALE": "vi-VN",
+    "CURRENCY_SUFFIX": "đ"
+  },
+  // >>> BRAND:VARS
+
+  "observability": { "enabled": true },
+
+  // 18:00 UTC = 01:00 gio Viet Nam. Xem worker/src/cron.js: nhac chuoi ngay,
+  // nhac buoi live ngay mai, doi soat diem, don ban ghi tam.
+  "triggers": { "crons": ["0 18 * * *"] },
+
+  // Queues can goi Workers Paid - bat lai khi len goi:
+  //
+  // "queues": {
+  //   "producers": [{ "binding": "MAILQ", "queue": "<ten-worker>-mail" }],
+  //   "consumers": [{ "queue": "<ten-worker>-mail", "max_batch_size": 10,
+  //                   "max_retries": 5, "dead_letter_queue": "<ten-worker>-mail-dlq" }]
+  // },
+  // "ratelimits": [
+  //   { "name": "RL_LOGIN", "namespace_id": "1001", "simple": { "limit": 8,   "period": 60 } },
+  //   { "name": "RL_OTP",   "namespace_id": "1002", "simple": { "limit": 5,   "period": 60 } },
+  //   { "name": "RL_LEAD",  "namespace_id": "1003", "simple": { "limit": 10,  "period": 60 } },
+  //   { "name": "RL_TRACK", "namespace_id": "1004", "simple": { "limit": 120, "period": 60 } },
+  //   { "name": "RL_WRITE", "namespace_id": "1005", "simple": { "limit": 60,  "period": 60 } }
+  // ]
+}

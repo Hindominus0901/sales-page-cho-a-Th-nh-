@@ -1,0 +1,14 @@
+-- Dieu kien thu ba de doi mot mon qua: DA MOI DU BAO NHIEU NGUOI.
+--
+-- Truoc day bang `rewards` chi khoa duoc theo hai thu: so xu (coin_cost) va cap
+-- bac XP (min_level). Ma trang ban hang thi hua mot thu khac han:
+--
+--   "Ve Premium - Moi 2 nguoi ban - mo khoa bang loi moi, khong phai bang tien"
+--
+-- Khong co cot nao dien ta duoc cau do, nen ve Premium chua bao gio ton tai
+-- trong he thong: 28 nguoi da moi du 2 ban, va khong mot ai trong so do nhan
+-- duoc gi tu nen tang. Ai nhan duoc la do co nguoi gui link tay, khong ghi lai
+-- o dau, nen khong ai biet ai da nhan.
+--
+-- 0 = khong doi hoi gi (moi mon qua dang co deu the).
+ALTER TABLE rewards ADD COLUMN min_referrals INTEGER NOT NULL DEFAULT 0;

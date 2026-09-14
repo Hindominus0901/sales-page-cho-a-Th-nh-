@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin
+Disallow: /dai-ly
+Disallow: /quan-tri-funnel
+Disallow: /xem-truoc/
+Disallow: /api/
+# Ban dung san cua trang ban hang - dia chi that la "/" , "/dang-ky"...
+Disallow: /f/
+Allow: /

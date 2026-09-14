@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trang cộng tác viên — [[brand.productLine]]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --brand: #111111; --brand-dark: #000000; --brand-rgb: 17 17 17; }
+  :root { --pink:var(--brand); --pink-dark:var(--brand-dark); --ink:#0a0a0a; --muted:#726f7a;
+          --line:rgba(0,0,0,.09); --bg:#f6f5f8; --green:#12a05e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.55 "Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+         -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:940px; margin:0 auto; padding:26px 18px 70px; }
+  .hero { background:linear-gradient(160deg,#fff,#fdf4fa); border:1.5px solid rgba(235,22,150,.22);
+          border-radius:22px; padding:26px; box-shadow:0 20px 50px rgba(235,22,150,.10); }
+  h1 { margin:0 0 6px; font-size:22px; font-weight:800; letter-spacing:-.01em; }
+  .sub { margin:0 0 20px; color:var(--muted); font-size:14px; }
+  .linkrow { display:flex; gap:9px; flex-wrap:wrap; }
+  input.link { flex:1; min-width:250px; padding:14px 15px; border-radius:13px; border:1px solid var(--line);
+               background:#fff; font:600 13px/1.4 "JetBrains Mono",ui-monospace,monospace; }
+  button { font:800 13.5px/1 inherit; padding:14px 20px; border-radius:13px; border:none;
+           background:var(--pink); color:#fff; cursor:pointer; }
+  button.ghost { background:#fff; color:var(--ink); border:1px solid var(--line); font-weight:700; }
+  button:hover { filter:brightness(1.05); }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:22px 0; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 17px; }
+  .card .k { font-size:11.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
+  .card .v { font-size:23px; font-weight:800; margin-top:5px; letter-spacing:-.02em; }
+  .card .s { font-size:12px; color:var(--muted); margin-top:3px; }
+  .card.hl { background:linear-gradient(160deg,#fff,#f0fbf5); border-color:rgba(18,160,94,.3); }
+  .card.hl .v { color:var(--green); }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:18px; overflow:hidden; margin-top:18px; }
+  .panel h2 { margin:0; padding:15px 18px; font-size:14.5px; border-bottom:1px solid var(--line); }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th,td { text-align:left; padding:11px 16px; border-bottom:1px solid var(--line); }
+  th { font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); }
+  .tag { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+  .paid { background:#e4f7ee; color:#0b6b42; } .pending { background:#fff3d9; color:#8a5a06; }
+  .cancelled { background:#f2eff3; color:#726f7a; }
+  .steps { margin:22px 0 0; padding:18px 20px; background:#fff; border:1px solid var(--line); border-radius:16px; }
+  .steps ol { margin:8px 0 0; padding-left:20px; color:#4b4855; font-size:14px; }
+  .steps li { margin-bottom:6px; }
+  .empty { padding:20px; color:var(--muted); font-size:13.5px; }
+  .hide { display:none !important; }
+  #err { max-width:520px; margin:16vh auto; text-align:center; }
+  a { color:var(--pink-dark); }
+  .prog { height:12px; border-radius:999px; background:#efecf2; overflow:hidden; flex:1; }
+  .prog i { display:block; height:100%; border-radius:999px;
+            background:linear-gradient(90deg,var(--brand),#ff6cc0); transition:width .6s ease; }
+  .tier { display:flex; align-items:center; gap:11px; padding:12px 14px; border-radius:13px;
+          background:#fff; border:1px solid var(--line); }
+  .tier.on { background:#f0fbf5; border-color:#a8e0c4; }
+  .tier .n { width:27px; height:27px; flex:none; border-radius:50%; display:grid; place-items:center;
+             background:#efecf2; color:#8a8792; font:800 12px/1 inherit; }
+  .tier.on .n { background:var(--green); color:#fff; }
+  .rank { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:13.5px; }
+  .rank .p { width:24px; height:24px; flex:none; border-radius:50%; display:grid; place-items:center;
+             background:#efecf2; color:#5b5766; font:800 11px/1 inherit; }
+  .rank.top .p { background:var(--pink); color:#fff; }
+  .me { background:#fdf4fa; border-radius:10px; padding:9px 11px; }
+  .switch { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); }
+  @media (max-width:560px) { .wrap { padding:16px 13px 60px; } .hero { padding:20px; } }
+</style>
+</head>
+<body>
+
+<div id="err" class="hide">
+  <h1>Chưa có link giới thiệu</h1>
+  <p class="sub" id="errMsg">Bạn cần đăng ký Challenge trước để được cấp link giới thiệu riêng.</p>
+  <a href="/dang-ky"><button>Đăng ký Challenge miễn phí</button></a>
+</div>
+
+<div class="wrap hide" id="app">
+  <div class="hero">
+    <h1>Xin chào <span id="name"></span> 👋</h1>
+    <p class="sub">
+      Đây là link giới thiệu riêng của bạn.<span id="heroThuong"> Mỗi người đăng ký qua link giúp
+      bạn tiến gần hơn tới phần thưởng tiếp theo.</span> Nếu họ mua vé VIP, bạn nhận thêm
+      <b id="rate"></b> hoa hồng (khoảng <b id="perSale"></b> mỗi vé).
+    </p>
+    <div id="progressRow" style="margin:0 0 16px">
+      <div style="font-size:14px;color:#4b4855;margin-bottom:8px" id="progressText"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="prog"><i id="progressBar" style="width:0%"></i></div>
+        <b id="progressCount" style="white-space:nowrap"></b>
+      </div>
+    </div>
+
+    <div class="linkrow">
+      <input class="link" id="shareLink" readonly>
+      <button onclick="copyLink()">Copy link</button>
+      <button class="ghost" onclick="shareLink()">Chia sẻ</button>
+    </div>
+    <p class="sub" style="margin:12px 0 0; font-size:12.5px;">
+      Mã giới thiệu của bạn: <b id="code" style="user-select:all"></b> ·
+      Lưu lại trang này để xem hoa hồng bất cứ lúc nào.
+    </p>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <!-- An khi chua dat REWARD_TIERS_JSON: xem renderProgress. -->
+  <div class="panel" id="tiersPanel" hidden>
+    <h2>Phần thưởng của bạn</h2>
+    <div style="padding:14px 16px; display:grid; gap:9px" id="tiers"></div>
+  </div>
+
+  <div class="panel">
+    <h2 id="contestTitle">Bảng xếp hạng</h2>
+    <div style="padding:12px 16px" id="leaderboard"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Người đăng ký qua link của bạn</h2>
+    <div style="overflow:auto"><table id="referrals"></table></div>
+  </div>
+
+  <div class="panel">
+    <h2>Hoa hồng</h2>
+    <div style="overflow:auto"><table id="commissions"></table></div>
+  </div>
+
+  <div class="panel">
+    <h2>Cài đặt</h2>
+    <div style="padding:14px 16px">
+      <label class="switch">
+        <input type="checkbox" id="hideName" onchange="toggleHideName()" style="width:18px;height:18px;accent-color:var(--pink)">
+        Ẩn tên tôi khỏi bảng xếp hạng công khai (hiển thị dạng viết tắt)
+      </label>
+    </div>
+  </div>
+
+  <div class="steps">
+    <b id="stepsTitle">Cách mở khoá phần thưởng nhanh nhất</b>
+    <ol>
+      <li>Gửi link trực tiếp cho 2–3 người bạn mà bạn thấy hợp — nhắn riêng hiệu quả hơn đăng công khai.</li>
+      <li>Kèm một câu thật của bạn: vì sao bạn tham gia, bạn mong nhận được gì.</li>
+      <li>Lượt giới thiệu được tính ngay khi người đó điền xong form đăng ký, bạn không cần báo lại.</li>
+      <li>Nếu họ mua vé VIP, hoa hồng tự động cộng vào bảng bên dưới.</li>
+      <li>Cần hỗ trợ? <a id="zalo" href="#" target="_blank" rel="noopener">Nhắn Zalo cho [[brand.hostName]]</a>.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+var DATA = null;
+
+function q(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+function dt(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function vnd(n) { return new Intl.NumberFormat('vi-VN').format(n || 0) + 'đ'; }
+
+function copyLink() {
+  var input = q('shareLink');
+  input.select();
+  if (navigator.clipboard) navigator.clipboard.writeText(input.value);
+  else document.execCommand('copy');
+  alert('Đã copy link giới thiệu.');
+}
+
+function shareLink() {
+  var url = q('shareLink').value;
+  var text = (DATA && DATA.share && DATA.share.messages.zalo) || url;
+  if (navigator.share) {
+    navigator.share({ title: '[[brand.productLine]]', text: text, url: url }).catch(function () {});
+    return;
+  }
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+  alert('Đã copy lời mời — mở Zalo/Facebook và dán cho bạn bè nhé.');
+}
+
+function renderProgress(d) {
+  var p = d.progress;
+  var next = d.next_tier;
+
+  // Chua cau hinh phan thuong that (tiers_configured = false): khong nhac toi
+  // moc nao ca. Ban cu van chay bang ten mac dinh trong ma, nen cong tac vien
+  // duoc hua "Phần thưởng mốc 5 người (0đ)" - mot mon qua chua ai chot noi dung.
+  if (!d.tiers_configured) {
+    q('progressText').innerHTML = p.valid_referrals
+      ? 'Bạn đã giới thiệu <b>' + p.valid_referrals + ' người</b>. Cảm ơn bạn!'
+      : 'Gửi link cho bạn bè để bắt đầu nhận hoa hồng.';
+    q('progressBar').style.width = Math.min(100, p.valid_referrals * 20) + '%';
+    q('progressCount').textContent = p.valid_referrals + ' người';
+    // Hai cau tinh nay cung dang tro toi mot thu khong ton tai.
+    q('heroThuong').hidden = true;
+    q('stepsTitle').textContent = 'Cách mời thêm người hiệu quả nhất';
+    return;
+  }
+
+  q('tiersPanel').hidden = false;
+  q('progressText').innerHTML = next
+    ? (p.valid_referrals === 0
+      ? 'Giới thiệu <b>' + next.target + ' người bạn</b> để mở khoá <b>' + esc(next.title) + '</b>'
+      : 'Còn <b>' + next.remaining + ' người</b> nữa là mở khoá <b>' + esc(next.title) +
+        '</b> (' + esc(next.value_text) + ')')
+    : 'Bạn đã mở khoá toàn bộ phần thưởng 🎉';
+  q('progressBar').style.width = p.percent + '%';
+  q('progressCount').textContent = p.valid_referrals + (p.next_target ? '/' + p.next_target : '') + ' người';
+
+  q('tiers').innerHTML = d.tiers.map(function (t) {
+    return '<div class="tier' + (t.unlocked ? ' on' : '') + '">' +
+      '<span class="n">' + (t.unlocked ? '✓' : t.target) + '</span>' +
+      '<div style="flex:1;min-width:0"><b>' + esc(t.title) + '</b>' +
+      '<div class="muted" style="font-size:12.5px">' + esc(t.description || '') + '</div></div>' +
+      '<span style="font-weight:800;font-size:12.5px;white-space:nowrap;color:' +
+      (t.unlocked ? 'var(--green)' : 'var(--pink)') + '">' +
+      (t.unlocked ? 'Đã mở · ' + esc(t.value_text) : t.remaining + ' người nữa') + '</span></div>';
+  }).join('');
+}
+
+function renderLeaderboard(d) {
+  q('contestTitle').textContent = d.contest.title + ' · giải thưởng ' + d.contest.prize_pool_text;
+  var me = d.rank || {};
+  var mine = me.in_top
+    ? 'Bạn đang ở <b>hạng ' + me.position + '</b> — giữ vững nhé!'
+    : (me.position
+      ? 'Bạn đang hạng <b>' + me.position + '</b>, thêm <b>' + me.need_for_top + ' lượt</b> nữa là vào top ' + me.top + '.'
+      : 'Chỉ cần <b>1 lượt giới thiệu</b> là bạn có tên trên bảng này.');
+
+  q('leaderboard').innerHTML = (d.leaderboard || []).map(function (row) {
+    return '<div class="rank' + (row.position <= 3 ? ' top' : '') + '">' +
+      '<span class="p">' + row.position + '</span>' +
+      '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+      esc(row.name) + '</span><b>' + row.referrals + '</b></div>';
+  }).join('') + '<div class="me" style="margin-top:10px">' + mine + '</div>';
+}
+
+function toggleHideName() {
+  var hidden = q('hideName').checked;
+  var token = new URLSearchParams(location.search).get('token') || 'me';
+  fetch('/api/affiliate/' + encodeURIComponent(token) + '/settings', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hide_from_leaderboard: hidden }),
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    if (!data.ok) { q('hideName').checked = !hidden; return; }
+    load();
+  }).catch(function () { q('hideName').checked = !hidden; });
+}
+
+function render(d) {
+  DATA = d;
+  renderProgress(d);
+  renderLeaderboard(d);
+  q('hideName').checked = !!d.affiliate.hide_from_leaderboard;
+  q('app').classList.remove('hide');
+  q('name').textContent = d.affiliate.full_name;
+  q('rate').textContent = d.affiliate.commission_rate_text;
+  q('perSale').textContent = d.product.commission_per_sale_text;
+  q('shareLink').value = d.links.share_url;
+  q('code').textContent = d.affiliate.code;
+  q('zalo').href = d.zalo_url;
+
+  q('cards').innerHTML = [
+    ['Lượt bấm link', d.stats.clicks, ''],
+    ['Người đã đăng ký', d.stats.referrals, d.stats.conversion_rate + '% từ lượt bấm'],
+    ['Vé VIP đã bán', d.stats.paid_orders, d.stats.revenue_text + ' doanh thu'],
+    ['Hoa hồng chờ trả', d.stats.commission_pending_text, '', 'hl'],
+    ['Đã nhận', d.stats.commission_paid_text, '', ''],
+  ].map(function (r) {
+    return '<div class="card ' + (r[3] || '') + '"><div class="k">' + r[0] + '</div>' +
+      '<div class="v">' + esc(r[1]) + '</div><div class="s">' + esc(r[2]) + '</div></div>';
+  }).join('');
+
+  var refHead = '<thead><tr><th>Người đăng ký</th><th>Thời gian</th><th>Trạng thái</th><th>Vé VIP</th></tr></thead>';
+  var refBody = d.referrals.map(function (r) {
+    var status = r.order_status === 'paid'
+      ? '<span class="tag paid">đã mua VIP</span>'
+      : (r.order_status === 'pending' ? '<span class="tag pending">đang chờ chuyển khoản</span>'
+                                      : '<span class="tag cancelled">mới đăng ký</span>');
+    return '<tr><td><b>' + esc(r.name) + '</b></td><td>' + dt(r.created_at) + '</td><td>' + status +
+      '</td><td>' + (r.paid_amount ? vnd(r.paid_amount) : '—') + '</td></tr>';
+  }).join('');
+  q('referrals').innerHTML = refHead + '<tbody>' + (refBody ||
+    '<tr><td colspan="4" class="empty">Chưa có ai đăng ký qua link của bạn. Chia sẻ link ở trên để bắt đầu nhé!</td></tr>') + '</tbody>';
+
+  var comHead = '<thead><tr><th>Đơn</th><th>Hoa hồng</th><th>Trạng thái</th><th>Thời gian</th></tr></thead>';
+  var comBody = d.commissions.map(function (c) {
+    return '<tr><td><b>' + esc(c.order_code) + '</b></td><td><b>' + esc(c.amount_text) + '</b></td>' +
+      '<td><span class="tag ' + (c.status === 'paid' ? 'paid' : 'pending') + '">' +
+      (c.status === 'paid' ? 'đã trả' : 'chờ trả') + '</span></td><td>' + dt(c.paid_at || c.created_at) + '</td></tr>';
+  }).join('');
+  q('commissions').innerHTML = comHead + '<tbody>' + (comBody ||
+    '<tr><td colspan="4" class="empty">Chưa có hoa hồng nào. Hoa hồng xuất hiện ngay khi người bạn giới thiệu thanh toán vé VIP.</td></tr>') + '</tbody>';
+}
+
+function load() {
+  var token = new URLSearchParams(location.search).get('token') || 'me';
+  fetch('/api/affiliate/' + encodeURIComponent(token), { credentials: 'same-origin' })
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data && data.ok) render(data);
+      else {
+        q('err').classList.remove('hide');
+        if (data && data.error) q('errMsg').textContent = data.error.message;
+      }
+    })
+    .catch(function () { q('err').classList.remove('hide'); });
+}
+
+load();
+</script>
+</body>
+</html>
