@@ -162,7 +162,19 @@ step(`Thung R2 "${R2_NAME}"`);
 const r2 = wrangler(['r2', 'bucket', 'create', R2_NAME], { quiet: true });
 if (r2.ok) console.log('  da tao');
 else if (/already exists|10004/i.test(r2.out)) console.log('  da co');
-else console.log('  ⚠ chua tao duoc (chua dung toi - tai anh len la giai doan sau)');
+else {
+  // Loi nhan cu noi "chua dung toi - giai doan sau", nghe nhu bo qua duoc.
+  // KHONG bo qua duoc: wrangler.jsonc co khai binding UPLOADS tro toi thung
+  // nay, ma Cloudflare kiem binding luc deploy - thung khong ton tai thi
+  // `npm run deploy` HONG, khong phai "de sau".
+  console.log('  ⚠ CHUA TAO DUOC. R2 thuong phai bat trong dashboard truoc'
+    + ' (Storage & databases -> R2, can them phuong thuc thanh toan).');
+  console.log('    Deploy se HONG vi wrangler.jsonc dang khai binding UPLOADS.');
+  console.log('    Hai duong: bat R2 roi chay lai lenh nay, HOAC xoa khoi');
+  console.log('    "r2_buckets" trong wrangler.jsonc (hoc vien se khong tai');
+  console.log('    anh len duoc, moi thu khac van chay).');
+  console.log('    Chi tiet loi: ' + String(r2.out).trim().split('\n').slice(-2).join(' ').slice(0, 200));
+}
 
 fs.writeFileSync(WRANGLER, config);
 console.log('\n  wrangler.jsonc da cap nhat ma tai nguyen');
