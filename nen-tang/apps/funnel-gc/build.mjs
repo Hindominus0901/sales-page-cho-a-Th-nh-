@@ -29,6 +29,28 @@ const PUBLIC = path.join(DIST, 'f');
 const PARTIALS = path.join(__dirname, 'partials');
 fs.mkdirSync(PUBLIC, { recursive: true });
 
+
+/**
+ * Doc file van ban, LUON tra ve xuong dong kieu Unix.
+ *
+ * Git tren Windows mac dinh doi LF -> CRLF luc checkout. Ma phan lon phep bien
+ * doi HTML ben duoi khop bang bieu thuc co "\n" viet cung, vi du:
+ *
+ *   /<\/div>\n<\/div>\n\n<div style="max-width:1400px/
+ *
+ * Gap "\r\n" la khong khop, phep bien doi lang le khong chay, va CHI hien ra
+ * mot dong canh bao lan giua dong chu. Hau qua that da xay ra: tren Windows
+ * trang ban hang MAT nguyen luoi 5 anh feedback cua hoc vien - khoi bang chung
+ * quan trong nhat trang - va con sot lai mot dai video le ra phai go. Trang ra
+ * 116 KB thay vi 121 KB ma khong ai nhan ra.
+ *
+ * Chuan hoa ngay tai cho doc la cach chac chan nhat: no dung du git cau hinh
+ * the nao, du ai chep file qua Windows bang cach gi.
+ */
+function docVanBan(duongDan) {
+  return fs.readFileSync(duongDan, 'utf8').replace(/\r\n/g, '\n');
+}
+
 const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'site.config.json'), 'utf8'));
 const warnings = [];
 const esc = (s) => String(s ?? '')
@@ -195,7 +217,7 @@ slice(1, 5).forEach((v, i) => { videoAssign[`fc2-vw4-${i + 1}`] = v; });
 const heroVideo = videos.includes(cfg.heroVideo) ? VID(cfg.heroVideo) : (videos[0] ? VID(videos[0]) : null);
 
 // ------------------------------------------------------------ 2. Đọc nguồn
-const src = fs.readFileSync(path.join(SRC, 'AIAgentChallengeForma.dc.html'), 'utf8');
+const src = docVanBan(path.join(SRC, 'AIAgentChallengeForma.dc.html'));
 
 const helmetStyle = (src.match(/<helmet>[\s\S]*?(<style>[\s\S]*?<\/style>)/) || [])[1] || '';
 const helmetScript = (src.match(/<\/style>\s*(<script>[\s\S]*?<\/script>)\s*<\/helmet>/) || [])[1] || '';
@@ -791,7 +813,7 @@ ${L.mocNotified ? '<div style="margin-top:4px">Đã thông báo với Bộ Công
 // ------------------------------------------------------------ 6. Khối đăng ký
 // Mọi nút CTA giờ dẫn sang trang /dang-ky thay vì cuộn xuống trong trang
 body = body.replace(/href="#dang-ky"/g, 'href="/dang-ky"');
-const registerBlock = fs.readFileSync(path.join(PARTIALS, 'register.html'), 'utf8');
+const registerBlock = docVanBan(path.join(PARTIALS, 'register.html'));
 body = body.replace(
   /(<span style="font-size:38px;font-weight:800;position:relative;z-index:1">2\.000\.000đ<\/span>\s*<\/div>\s*<\/div>)/,
   `$1\n${registerBlock}`,
@@ -799,7 +821,7 @@ body = body.replace(
 if (!body.includes('id="dang-ky"')) throw new Error('Không chèn được khối đăng ký #dang-ky vào trang.');
 
 // ------------------------------------------------------------ 7. Ráp trang
-const read = (f) => fs.readFileSync(path.join(PARTIALS, f), 'utf8');
+const read = (f) => docVanBan(path.join(PARTIALS, f));
 const appCss = read('app.css');
 const commonJs = read('common.js');
 const lightbox = read('lightbox.html');
