@@ -186,8 +186,11 @@ chạy quảng cáo.**
 ### Ba trang chính sách
 
 `policies` trong `site.config.json` — bảo mật, điều khoản, và **hoàn tiền**.
-Trang đang in cam kết "14 ngày hoàn 100%, không cần lý do": đây là điều khoản
-ràng buộc, không phải câu quảng cáo, nên phải có trang chính sách thật đứng sau.
+Khoá **không hoàn tiền**; trang chính sách chỉ chừa ba ngoại lệ là những trường
+hợp bên em thu tiền mà không giao được thứ đã bán: chuyển khoản trùng hoặc
+chuyển thừa, lỗi hệ thống khiến không vào được lớp mà bên em không khắc phục
+được, và Góc Creator huỷ hoặc hoãn khoá. Đây là điều khoản ràng buộc, không phải
+câu quảng cáo, nên phải có trang chính sách thật đứng sau.
 
 ### 12 video feedback
 

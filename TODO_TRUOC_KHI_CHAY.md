@@ -15,15 +15,18 @@ chạy build sau khi điền để kiểm tra lại.
 
 ## 2. Bắt buộc theo luật thương mại điện tử
 
-- [ ] `legal` trong `site.config.json`: tên công ty (CÔNG TY TNHH THƯƠNG MẠI &
-      DỊCH VỤ ANLIFE GROUP), mã số thuế, địa chỉ, hotline, email, và
-      `mocNotified` khi đã thông báo Bộ Công Thương.
+- [x] `legal` trong `site.config.json`: tên công ty (CÔNG TY TNHH THƯƠNG MẠI &
+      DỊCH VỤ ANLIFE GROUP), mã số thuế, địa chỉ và email đã điền.
+- [ ] Còn trống: `legal.hotline`, và `legal.mocNotified` → `true` khi đã thông
+      báo Bộ Công Thương.
 - [x] Ba trang chính sách đã có: `/chinh-sach-bao-mat`, `/dieu-khoan`,
       `/chinh-sach-hoan-tien`. Còn phải **đọc và xác nhận** — xem mục 9.
 
-Cam kết hoàn tiền trên trang nay là **14 ngày, đã nộp ít nhất 3 bài** và nói
-cùng một điều kiện ở cả ba chỗ: dòng dưới giá, câu FAQ, và trang chính sách.
-Đây là điều khoản ràng buộc chứ không phải câu quảng cáo.
+Khoá **không hoàn tiền** — cam kết 14 ngày trước đây đã bỏ. Cả ba chỗ (dòng
+dưới giá, câu FAQ, trang chính sách) đang nói cùng một điều, và chỉ chừa ba
+ngoại lệ: chuyển khoản trùng hoặc chuyển thừa, lỗi hệ thống khiến không vào được
+lớp mà bên em không khắc phục được, và Góc Creator huỷ hoặc hoãn khoá. Đây là
+điều khoản ràng buộc chứ không phải câu quảng cáo.
 
 ## 3. Nội dung thật còn thiếu
 
@@ -34,7 +37,7 @@ cùng một điều kiện ở cả ba chỗ: dòng dưới giá, câu FAQ, và 
 - [ ] FAQ *"Lớp học vào khung giờ nào, học trên nền tảng gì?"* — đang bỏ trống
       nên câu này bị ẩn khỏi trang.
 - [ ] `logo.src` — bỏ file logo vào `public/media/` rồi ghi tên vào đây.
-- [ ] `contact.zalo` và `contact.email` — hiện ở chân trang.
+- [ ] `contact.zalo` — hiện ở chân trang (`contact.email` đã có).
 
 ## 4. Bản nháp cần xác nhận
 
@@ -87,12 +90,12 @@ Trang `/workshop` tự lấy buổi sắp diễn ra gần nhất. Chưa có link
 ## 9. Email xác nhận và ba trang chính sách
 
 - [ ] Đọc lại ba trang `/chinh-sach-bao-mat`, `/dieu-khoan`, `/chinh-sach-hoan-tien`.
-      Nội dung do máy soạn theo điều kiện đã chốt (14 ngày, đã nộp 3 bài). Đồng ý
-      với từng câu thì đổi `policies.confirmed` thành `true` trong
+      Nội dung do máy soạn theo điều kiện đã chốt (không hoàn tiền, trừ ba ngoại
+      lệ ở mục 2). Đồng ý với từng câu thì đổi `policies.confirmed` thành `true` trong
       `site.config.json`. Còn `false` thì preflight vẫn cảnh báo mỗi lần deploy.
-- [ ] Điền `contact.zalo` và `contact.email` trong `site.config.json` — trang
-      chính sách hoàn tiền đang bảo khách "nhắn Zalo theo số ở chân trang", mà
-      chân trang chưa có số nào.
+- [ ] Điền `contact.zalo` trong `site.config.json` — trang chính sách hoàn tiền
+      đang bảo khách "nhắn Zalo theo số ở chân trang", mà chân trang chưa có số
+      nào. (`contact.email` đã điền.)
 - [ ] Đặt `RESEND_API_KEY` nếu muốn khách nhận email xác nhận đơn. Không đặt thì
       hệ vẫn chạy, chỉ là khách phải dùng `/tra-cuu` để tìm lại đơn.
 
