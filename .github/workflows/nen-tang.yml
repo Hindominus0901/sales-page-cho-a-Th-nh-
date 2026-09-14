@@ -1,10 +1,14 @@
 # Chay bo test tren moi lan day ma len.
 #
+# File nay PHAI nam o .github/workflows/ CUA GOC REPO. Ban truoc nam trong
+# nen-tang/.github/workflows/ - GitHub khong doc thu muc do, nen CI khong bao
+# gio chay mot lan nao, va khong co gi bao la no khong chay.
+#
 # Ba bo test deu doc/ghi vao CUNG MOT co so du lieu D1 cuc bo va deu ket thuc
 # bang lenh DELETE de don. Chay song song la chung dam nhau: khoa SQLite, loi
 # "FOREIGN KEY constraint failed", va ket qua sai ma khong hieu vi sao. Nen o
 # day co dung mot job, mot buoc, tuan tu - dung tach ra cho "nhanh".
-name: CI
+name: CI — nen-tang
 
 on:
   push:
@@ -14,6 +18,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    # Nen tang nam trong thu muc con; he cu o goc repo khong dung bo test nay.
+    defaults:
+      run:
+        working-directory: nen-tang
 
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +52,7 @@ jobs:
           echo 'SMOKE_ADMIN_PASSWORD=matkhau-ci-123' >> .env
 
       - run: npm run db:migrate
+      - run: npm run brand:seed -- --local --admin-email ci@vidu.com
       - run: npm run build
 
       - name: Dung wrangler dev roi cho no san sang

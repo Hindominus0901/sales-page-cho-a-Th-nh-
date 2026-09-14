@@ -15,6 +15,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// Thuong hieu mang trang ban hang cua rieng minh (brand.json -> funnel.trangRieng)
+// thi bo dung nay khong con viec gi de lam. Truoc day no van chay va chet bang
+// "khong co file thiet ke tuong ung" - mot loi noi ve .dc.html trong khi nguyen
+// nhan that nam o mot khoa khac han trong brand.json. Va vi `npm run build` goi
+// no, ca lenh `npm run deploy` chet theo.
+{
+  const bj = JSON.parse(
+    fs.readFileSync(new URL('../../brand/brand.json', import.meta.url), 'utf8'));
+  if (bj.funnel?.trangRieng === true) {
+    console.log('  · Bo qua: thuong hieu dung trang ban hang rieng'
+      + ' (brand.json -> funnel.trangRieng = true).');
+    console.log('  · Trang ban hang do `npm run build:funnel` dung. Muon chay ban'
+      + ' cua template thi: npm run build:funnel-template');
+    process.exit(0);
+  }
+}
+
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
 const OUT = path.join(ROOT, 'dist/public/f');

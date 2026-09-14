@@ -43,6 +43,22 @@ fs.mkdirSync(MEDIA_OUT, { recursive: true });
 for (const f of fs.readdirSync(MEDIA_SRC)) {
   fs.copyFileSync(path.join(MEDIA_SRC, f), path.join(MEDIA_OUT, f));
 }
+// robots.txt: khong phai trang trang tri, no la thu chan Google lap chi muc
+// /quan-tri-funnel va /dai-ly. Ban dung trang cua template co san file nay; ban
+// nay truoc do khong sinh ra no, nen hai duong dan rieng tu bi bo ngo.
+fs.writeFileSync(path.join(PUBLIC, 'robots.txt'), [
+  'User-agent: *',
+  'Disallow: /admin',
+  'Disallow: /dai-ly',
+  'Disallow: /quan-tri-funnel',
+  'Disallow: /xem-truoc/',
+  'Disallow: /api/',
+  '# Ban dung san cua trang ban hang - dia chi that la "/", "/dang-ky"...',
+  'Disallow: /f/',
+  'Allow: /',
+  '',
+].join('\n'), 'utf8');
+
 const VIDEO_OUT = path.join(DIST, 'videos');
 fs.mkdirSync(VIDEO_OUT, { recursive: true });
 for (const f of fs.readdirSync(path.join(__dirname, 'videos'))) {

@@ -11,7 +11,7 @@
     "apps/web"
   ],
   "scripts": {
-    "build:funnel": "node apps/funnel/build.mjs",
+    "build:funnel": "node apps/funnel-gc/build.mjs",
     "build:web": "node scripts/clean-web-dist.mjs && npm run build --workspace apps/web",
     "build": "npm run build:web && npm run build:funnel",
     "dev:web": "npm run dev --workspace apps/web",
@@ -32,7 +32,8 @@
     "brand:seed": "node scripts/brand/seed.mjs",
     "brand:check": "node scripts/brand/check.mjs",
     "brand:init": "node scripts/brand/init.mjs",
-    "prebuild": "node scripts/brand/check.mjs"
+    "prebuild": "node scripts/brand/check.mjs",
+    "build:funnel-template": "node apps/funnel/build.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.42.0"

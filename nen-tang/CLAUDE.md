@@ -25,7 +25,7 @@ Các file mang dấu `SINH TU brand/brand.json` là **file sinh ra**: sửa tay 
 6. `npm run db:migrate` rồi `npm run brand:seed -- --local --admin-email <email>`.
 7. `npm run build`.
 8. `npm run dev:worker` (nền) → chờ `/api/health` trả 200.
-9. `npm test` — **323/323 phải xanh**. Nó tự bật `wrangler dev` nếu chưa có, chạy ba bộ
+9. `npm test` — **377/377 phải xanh** (86 smoke + 53 auth + 238 platform). Nó tự bật `wrangler dev` nếu chưa có, chạy ba bộ
    tuần tự, và tự bật lại máy chủ nếu giữa chừng nó sập (xem `scripts/chay-test.mjs`).
 10. `npm run brand:check` — không được còn dấu vết nào.
 11. `npm run setup:cloudflare` → tạo D1/KV/R2, chạy migration thật, in ra bí mật còn thiếu.
@@ -72,8 +72,9 @@ scripts/brand/            validate · apply · seed · check
 worker/src/config.js      đọc biến môi trường; KHÔNG có giá trị mặc định cho tiền
 worker/src/routes/        API: leads, orders, webhook ngân hàng, affiliate, files
 worker/src/mail/          Resend + 5 mẫu email (nhận `brand` làm tham số)
-apps/funnel/build.mjs     dựng 5 trang tĩnh: token, màu, ảnh giữ chỗ, pixel
-apps/funnel/designs/      .dc.html — bản thiết kế
+apps/funnel-gc/           bộ dựng trang bán hàng ĐANG DÙNG (bản của anh Thành)
+apps/funnel/              bộ dựng của template — KHÔNG dùng ở đây, xem funnel.trangRieng
+apps/funnel/designs/      .dc.html — bản thiết kế của template
 apps/web/                 React SPA của khu vực thành viên
 ```
 

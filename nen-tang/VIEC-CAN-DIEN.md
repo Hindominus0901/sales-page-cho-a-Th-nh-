@@ -97,41 +97,116 @@ tất cả trả 200. Khu vực thành viên `/dashboard` vẫn chạy song song
   riêng (khu vực thành viên, cổng cộng tác viên `/dai-ly`). Quyết định giữ cái
   nào là việc cần bàn, không phải việc kỹ thuật.
 
-## 4. Deploy — phải chạy trên máy có token Cloudflare
+## 4. Deploy lên Cloudflare — CHƯA LÀM, và phải là anh chạy
+
+**Trạng thái hiện tại: chưa deploy lần nào.** Bằng chứng nằm ngay trong
+`wrangler.jsonc`: `database_id` và KV id đang là **mã toàn số 0** — cố ý, để bỏ
+sót bước `setup:cloudflare` thì deploy hỏng to tiếng thay vì im lặng cắm vào cơ
+sở dữ liệu của khách khác.
+
+Máy chạy Claude không deploy được: chính sách mạng chặn `api.cloudflare.com`
+(gateway trả 403 ngay ở bước CONNECT), và không có token Cloudflare nào.
+
+### Đã kiểm được những gì trước khi giao
+
+| Kiểm | Kết quả |
+|---|---|
+| `npm run build` (chính lệnh `npm run deploy` gọi) | ✓ chạy trọn |
+| `wrangler deploy --dry-run` | ✓ đóng gói xong, 49 file tĩnh, đủ binding |
+| Migration từ cơ sở dữ liệu trắng | ✓ 17 migration |
+| `brand:seed` | ✓ sản phẩm GC21 · 2.000.000đ |
+| Toàn bộ đường dẫn | ✓ 13/13 trả 200 |
+| Trọn vòng tiền | ✓ đăng ký → QR → webhook → `paid` |
+| `npm test` | ✓ 377/377 |
+
+### Runbook — chạy trên máy anh, theo đúng thứ tự
+
+**Bước 0 — token Cloudflare.** Tạo ở Cloudflare → My Profile → API Tokens, với
+**sáu quyền GHI**:
+
+| | | |
+|---|---|---|
+| Account | Workers Scripts | **Edit** |
+| Account | D1 | **Edit** |
+| Account | Workers KV Storage | **Edit** |
+| Account | Workers R2 Storage | **Edit** |
+| Account | Account Settings | Read |
+| User | Memberships | Read |
+
+Đặt vào `.env`: `CLOUDFLARE_ACCOUNT_ID` và `CLOUDFLARE_API_TOKEN`.
+`scripts/cf.mjs` đọc hai biến này rồi truyền sang wrangler — **deploy nhầm tài
+khoản là không thể xảy ra**.
+
+**Bước 1 — điền ba giá trị thật** ở mục 1 bên trên, rồi:
 
 ```bash
-npm install
 npm run brand:validate && npm run brand:apply
-npm run setup:cloudflare     # tạo D1 + KV + R2, ghi mã tài nguyên thật vào wrangler.jsonc
 ```
 
-> `wrangler.jsonc` đang để **mã tài nguyên toàn số 0** cho D1 và KV. Cố ý: bỏ
-> sót bước `setup:cloudflare` thì deploy hỏng to tiếng, thay vì im lặng cắm vào
-> cơ sở dữ liệu của khách khác.
-
-Rồi nạp bí mật (mỗi cái một lệnh):
+**Bước 2 — tạo tài nguyên.** Lệnh này ghi mã D1/KV/R2 **thật** đè lên mã số 0:
 
 ```bash
-npm run hash-password "<mật khẩu quản trị>"   # dán kết quả vào ADMIN_PASSWORD_HASH
+npm run setup:cloudflare
+```
+
+**Bước 3 — nạp bí mật.** Mỗi cái một lệnh, wrangler sẽ hỏi giá trị:
+
+```bash
+npm run hash-password "<mật khẩu quản trị>"    # chép kết quả cho lệnh dưới
 npx wrangler secret put ADMIN_PASSWORD_HASH
 npx wrangler secret put ADMIN_SERVICE_TOKEN
 npx wrangler secret put SESSION_SECRET
 npx wrangler secret put OTP_PEPPER
-npx wrangler secret put BANK_WEBHOOK_SECRET   # phải TRÙNG giá trị đặt bên SePay
-npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put BANK_WEBHOOK_SECRET     # PHẢI trùng giá trị bên SePay
 ```
 
-Sinh chuỗi ngẫu nhiên: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-
-Cuối cùng:
+Tuỳ chọn, thiếu thì tính năng tương ứng tắt chứ hệ vẫn chạy:
 
 ```bash
-npm run brand:seed -- --remote --admin-email <email>
+npx wrangler secret put RESEND_API_KEY          # không có -> không gửi được email, kể cả mã OTP đăng ký
+npx wrangler secret put GOOGLE_CLIENT_ID        # không có -> tắt đăng nhập Google
+npx wrangler secret put GOOGLE_CLIENT_SECRET
+npx wrangler secret put ANTHROPIC_API_KEY       # không có -> không chấm bài bằng AI
+```
+
+Sinh chuỗi ngẫu nhiên:
+`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+
+**Bước 4 — nạp dữ liệu và deploy:**
+
+```bash
+npm run db:migrate:remote
+npm run brand:seed -- --remote --admin-email <email của anh Thành>
 npm run deploy
 ```
 
-Nghiệm thu: mở trang bán hàng → tạo một đơn → **quét mã QR, kiểm đúng số tài
-khoản của anh Thành** → đăng nhập `/admin` bằng mật khẩu vừa đặt.
+**Bước 5 — nghiệm thu trên bản thật.** Bắt buộc, không bỏ:
+
+1. Mở trang bán hàng, điền form, tạo một đơn.
+2. **Quét mã QR và kiểm đúng số tài khoản của anh Thành.** Sai một chữ số là
+   tiền sang tài khoản người khác.
+3. **Chuyển thật 2.000đ** để xác minh webhook SePay và luồng đối soát đầu-cuối.
+   Payload của SePay đổi tuỳ tài khoản có bật virtual sub-account hay không —
+   đây là thứ duy nhất không test giả lập thay được.
+4. Đăng nhập `/admin` bằng mật khẩu vừa đặt.
+5. Chạy `node scripts/ra-soat-an-toan.mjs` — bộ rà soát chỉ đọc, không ghi, an
+   toàn với bản thật.
+
+**Bước 6 — tên miền.** `brand.json` đang để `useCustomDomains: false`, nên site
+chạy tạm trên địa chỉ `.workers.dev`. Khi `manhthanh.net` đã nằm trong tài khoản
+Cloudflare của anh Thành thì đổi thành `true` rồi `npm run brand:apply` và deploy
+lại.
+
+> **Cảnh báo:** hệ cũ ở thư mục gốc repo đang trỏ `PUBLIC_BASE_URL` về
+> `https://manhthanh.net` và dùng Worker tên `goc-creator-challenge` với D1 thật
+> `aab67b83-…`. **Hai hệ không được cùng chiếm một tên miền.** Quyết định cắt
+> sang hệ mới lúc nào là việc anh Thành chốt, không phải việc kỹ thuật.
+
+### CI
+
+`.github/workflows/nen-tang.yml` ở **gốc repo** chạy trọn bộ test mỗi lần đẩy mã.
+(Bản trước nằm trong `nen-tang/.github/workflows/` — GitHub không đọc thư mục đó
+nên CI chưa từng chạy một lần nào, và không có gì báo là nó không chạy.)
 
 ## 5. Chạy ở máy
 
