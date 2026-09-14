@@ -18,6 +18,9 @@ const BASE = (process.argv[2] || 'http://127.0.0.1:8787').replace(/\/$/, '');
 
 let passed = 0;
 let failed = 0;
+let boQua = 0;
+/** Bai khong ap dung voi cau hinh hien tai - khong tinh la dat, cung khong la loi. */
+const bo = (name, vi) => { boQua += 1; console.log(`  --   ${name} (bo qua: ${vi})`); };
 const check = (name, ok, detail) => {
   if (ok) { passed += 1; console.log(`  OK   ${name}`); } else {
     failed += 1;
@@ -307,23 +310,44 @@ const otpHash = async (code) => {
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
     'base64');
 
+  // Kho anh la MOT TUY CHON cua thuong hieu (storage.r2 trong brand.json). Tat
+  // no di thi /api/files tra 503 "kho_anh_chua_bat" - dung nhu thiet ke, khong
+  // phai loi. Truoc day khoi nay cu cho la R2 luon bat: no khong chi bao FAIL ma
+  // con lam ca bo test CHET giua chung (fetch(`${BASE}${undefined}`)), nen moi
+  // bai phia sau khong bao gio duoc chay ma khong ai thay.
   const anhLen = await guiAnh(bob, { ten: 'avatar.png', kieu: 'image/png', byte: PNG_1X1 });
-  check('tai duoc anh len (khong con chet o lop doc body)',
-    anhLen.status === 200 && /^\/api\/files\//.test(anhLen.data?.file_url || ''), anhLen.data);
+  const khoAnhTat = anhLen.status === 503 && anhLen.data?.error?.code === 'kho_anh_chua_bat';
 
-  // Duong dan tra ve phai LUU DUOC vao ho so: hai ben tung khong khop dinh dang
-  // nen bam Luu la 422 "Duong dan anh khong hop le".
-  const luuAnh = await bob.call('PATCH', '/api/auth/me', { avatar_url: anhLen.data?.file_url });
-  check('duong dan anh vua tai luu duoc vao ho so',
-    luuAnh.status === 200 && luuAnh.data?.avatar_url === anhLen.data?.file_url, luuAnh.data);
+  if (khoAnhTat) {
+    const vi = 'storage.r2 = false, khach dan link anh thay vi tai len';
+    bo('tai duoc anh len', vi);
+    bo('duong dan anh vua tai luu duoc vao ho so', vi);
+    bo('doc lai duoc anh vua tai', vi);
+    bo('tep khong phai anh -> tu choi', vi);
+  } else {
+    check('tai duoc anh len (khong con chet o lop doc body)',
+      anhLen.status === 200 && /^\/api\/files\//.test(anhLen.data?.file_url || ''), anhLen.data);
 
-  const anhDoc = await fetch(`${BASE}${anhLen.data?.file_url}`);
-  check('doc lai duoc anh vua tai',
-    anhDoc.status === 200 && (anhDoc.headers.get('content-type') || '').includes('image'),
-    anhDoc.status);
+    // Duong dan tra ve phai LUU DUOC vao ho so: hai ben tung khong khop dinh dang
+    // nen bam Luu la 422 "Duong dan anh khong hop le".
+    const luuAnh = await bob.call('PATCH', '/api/auth/me', { avatar_url: anhLen.data?.file_url });
+    check('duong dan anh vua tai luu duoc vao ho so',
+      luuAnh.status === 200 && luuAnh.data?.avatar_url === anhLen.data?.file_url, luuAnh.data);
 
-  const tepLa = await guiAnh(bob, { ten: 'a.txt', kieu: 'text/plain', byte: Buffer.from('xin chao') });
-  check('tep khong phai anh -> tu choi', tepLa.status === 415, tepLa.data);
+    // Chi doc lai khi that su co duong dan: noi chuoi voi undefined se nem
+    // ERR_INVALID_URL va giet ca tien trinh, khong phai bao mot bai do.
+    if (typeof anhLen.data?.file_url === 'string' && anhLen.data.file_url) {
+      const anhDoc = await fetch(`${BASE}${anhLen.data.file_url}`);
+      check('doc lai duoc anh vua tai',
+        anhDoc.status === 200 && (anhDoc.headers.get('content-type') || '').includes('image'),
+        anhDoc.status);
+    } else {
+      check('doc lai duoc anh vua tai', false, 'khong co file_url de doc lai');
+    }
+
+    const tepLa = await guiAnh(bob, { ten: 'a.txt', kieu: 'text/plain', byte: Buffer.from('xin chao') });
+    check('tep khong phai anh -> tu choi', tepLa.status === 415, tepLa.data);
+  }
 
   const khongCsrf = await fetch(`${BASE}/api/files`, { method: 'POST', body: new FormData() });
   check('tai anh van phai qua cua CSRF', khongCsrf.status === 403, khongCsrf.status);
@@ -468,6 +492,6 @@ const otpHash = async (code) => {
   sqlQuery('DELETE FROM rate_limits');
   console.log('\n  (da don du lieu test)');
 
-  console.log(`\nKet qua: ${passed} dat, ${failed} loi`);
+  console.log(`\nKet qua: ${passed} dat, ${failed} loi${boQua ? `, ${boQua} bo qua` : ''}`);
   process.exit(failed ? 1 : 0);
 })();
