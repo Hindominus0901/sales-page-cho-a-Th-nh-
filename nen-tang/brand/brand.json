@@ -37,12 +37,11 @@
     "affiliateRate": 20
   },
   "payment": {
-    "_doc": "So tai khoan nay di thang vao ma VietQR khach quet de tra tien. Sai mot chu so la tien chay sang tui nguoi khac.",
+    "_doc": "So tai khoan nay di thang vao ma VietQR khach quet de tra tien. Sai mot chu so la tien chay sang tui nguoi khac. Doi xong PHAI quet thu ma QR that va doi chieu voi app ngan hang.",
     "bankBin": "970407",
     "bankName": "Techcombank",
-    "account": "0000000000",
-    "accountName": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP",
-    "_CANDIEN": "payment.account va contact.zalo* dang la so 0 gia. PHAI thay bang so that truoc khi deploy."
+    "account": "937213",
+    "accountName": "CONG TY TNHH THUONG MAI & DICH VU ANLIFE GROUP"
   },
   "contact": {
     "channelLabel": "Zalo",
