@@ -254,7 +254,15 @@ sau = thayVung(sau, 'ROUTES', dungRoutes(brand));
 sau = thayVung(sau, 'VARS', dungVars(brand));
 // Ten thung R2 phai theo ten Worker. De trong thi wrangler tu choi chay han
 // ("bucket_name should have a string field"), nen day khong the la o trong.
-sau = thayVung(sau, 'R2', `  "r2_buckets": [
+// R2 phai BAT trong dashboard truoc (can them phuong thuc thanh toan), nen
+// khong phai tai khoan nao cung co ngay. Khai binding toi mot thung chua ton
+// tai thi Cloudflare tu choi luc deploy - ca ban deploy chet vi mot tinh nang
+// phu. Dat storage.r2 = false de bo han khoi: worker/src/routes/files.js thay
+// thieu binding se tra 503 kem loi nhan tu te cho hoc vien, moi thu khac chay
+// binh thuong. Bat lai luc nao cung duoc: doi thanh true roi brand:apply.
+sau = thayVung(sau, 'R2', brand.storage?.r2 === false
+  ? '  // R2 dang TAT (brand.json -> storage.r2 = false). Tai anh len se tra 503.\n'
+  : `  "r2_buckets": [
     { "binding": "UPLOADS", "bucket_name": ${q(`${brand.domains.workerName}-uploads`)} }
   ],
 `);

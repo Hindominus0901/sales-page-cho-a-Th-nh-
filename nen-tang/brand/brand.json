@@ -125,5 +125,9 @@
     "_docTrangRieng": "true = thuong hieu tu mang trang ban hang cua minh (apps/funnel-gc), khong dung ban thiet ke .dc.html cua template. Bo test se bo qua nhung bai kiem noi dung rieng cua template (funnel.js, VSL Wistia) - nhung VAN kiem trang tra ve 200, dung HTML, va co day du header bao mat."
   },
   "environment": "production",
-  "cron": "0 18 * * *"
+  "cron": "0 18 * * *",
+  "storage": {
+    "r2": false,
+    "_doc": "true = khai binding R2 cho kho anh (phai bat R2 trong dashboard Cloudflare truoc, can phuong thuc thanh toan). false = bo han: hoc vien khong tai anh len duoc (API tra 503 kem loi nhan tu te), moi thu khac chay binh thuong. Doi xong chay brand:apply."
+  }
 }
