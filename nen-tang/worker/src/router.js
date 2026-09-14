@@ -13,10 +13,13 @@ import {
 import { createLead } from './routes/leads.js';
 import { track } from './routes/track.js';
 import { createOrder, getOrder } from './routes/orders.js';
+import { dangKyTuongThich, xemDonTuongThich } from './routes/tuong-thich.js';
 import { bankWebhook } from './routes/webhook.js';
 import { trackRef, getPortal, updateSettings, getLeaderboard } from './routes/affiliate.js';
 
 const ORDER_RE = /^\/api\/orders\/([A-Za-z0-9]+)$/;
+// Duong dan cu cua trang thanh toan Goc Creator (so it: `order`, khong `orders`).
+const ORDER_CU_RE = /^\/api\/order\/([A-Za-z0-9]+)$/;
 const AFFILIATE_RE = /^\/api\/affiliate\/([A-Za-z0-9]+)$/;
 const AFFILIATE_SETTINGS_RE = /^\/api\/affiliate\/([A-Za-z0-9]+)\/settings$/;
 
@@ -24,6 +27,8 @@ const POST_ROUTES = new Map([
   ['/api/leads', createLead],
   ['/api/track', track],
   ['/api/orders', createOrder],
+  // Hop dong cu cua trang ban hang Goc Creator - xem routes/tuong-thich.js
+  ['/api/register', dangKyTuongThich],
   ['/api/webhooks/bank', bankWebhook],
   ['/api/ref', trackRef],
 
@@ -151,6 +156,12 @@ export async function handleApi(rc) {
 
   const fn = await handleFunctions(rc);
   if (fn) return fn;
+
+  const orderCuMatch = method === 'GET' ? ORDER_CU_RE.exec(pathname) : null;
+  if (orderCuMatch) {
+    rc.params = { code: orderCuMatch[1] };
+    return xemDonTuongThich(rc);
+  }
 
   const orderMatch = ORDER_RE.exec(pathname);
   if (orderMatch && method === 'GET') {

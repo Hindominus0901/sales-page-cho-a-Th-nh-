@@ -8,9 +8,9 @@
 export const FUNNEL_PAGES = [
   ["/", "/f/"],
   ["/dang-ky", "/f/dang-ky"],
-  ["/xac-nhan", "/f/xac-nhan"],
-  ["/vip", "/f/vip"],
   ["/thanh-toan", "/f/thanh-toan"],
+  ["/tra-cuu", "/f/tra-cuu"],
+  ["/chinh-sach-hoan-tien", "/f/chinh-sach-hoan-tien"],
 ];
 
 /**

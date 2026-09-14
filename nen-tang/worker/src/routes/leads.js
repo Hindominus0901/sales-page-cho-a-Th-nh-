@@ -79,7 +79,12 @@ export async function createLead(rc) {
 
   const schema = body.answers_schema === 'html' ? 'html' : 'canonical';
   const { answers, missing } = normalizeAnswers(body.answers || {}, schema);
-  if (missing.length) errors.answers = `Còn thiếu câu trả lời: ${missing.join(', ')}`;
+  // Thuong hieu khai form khong co bo cau hoi (brand.json -> funnel.boCauHoi =
+  // false) thi khong the "thieu cau tra loi" duoc. Mac dinh van la CO, nen mot
+  // request thieu answers khong tu nhien lot qua duoc o thuong hieu dang dung.
+  if (rc.cfg.product.boCauHoi && missing.length) {
+    errors.answers = `Còn thiếu câu trả lời: ${missing.join(', ')}`;
+  }
 
   if (Object.keys(errors).length) {
     return apiError(422, 'validation_failed', 'Thông tin chưa hợp lệ', { fields: errors });

@@ -1,0 +1,83 @@
+<div class="fc2" style="background:#f3ead9;color:#191919;min-height:100vh">
+
+  <div style="max-width:640px;margin:0 auto;padding:32px 24px 64px">
+
+    <a href="/" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#55555c;text-decoration:none;margin-bottom:24px">← Quay lại trang giới thiệu</a>
+
+    <div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:10px">BƯỚC 1/2 — THÔNG TIN CỦA ANH CHỊ</div>
+    <h1 style="font-size:32px;font-weight:800;line-height:1.15;letter-spacing:-.02em;margin:0 0 12px">Đăng ký giữ chỗ Thử thách 21 ngày</h1>
+    <p style="font-size:15px;line-height:1.65;color:#55555c;margin:0 0 6px">
+      Điền xong, hệ thống sẽ hiện mã QR chuyển khoản ở bước tiếp theo.
+    </p>
+    <p data-seats-badge style="font-size:14px;font-weight:600;color:#2f7a4d;margin:0 0 24px;min-height:21px"></p>
+
+    <div class="fc2-shadow" style="background:#fff;border-radius:28px;padding:28px">
+
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:12px 16px;background:rgba(168,217,141,.18);border-radius:14px;margin-bottom:24px">
+        <span style="font-size:13px;color:#55555c;width:100%">Học phí</span>
+        <span style="font-size:17px;color:#9a9aa0;text-decoration:line-through">4.000.000đ</span>
+        <span data-price style="font-size:32px;font-weight:800">2.000.000đ</span>
+      </div>
+
+      <form id="fc2-form" novalidate autocomplete="on" style="display:grid;gap:14px">
+        <div class="fc2-errsummary" id="fc2-errsummary" tabindex="-1" role="alert">
+          <h2>Còn vài chỗ cần anh chị xem lại</h2>
+          <ul data-errlist></ul>
+        </div>
+
+        <div>
+          <label for="fc2-name" class="fc2-label">Họ và tên <span style="color:#d33">*</span></label>
+          <input id="fc2-name" name="name" type="text" required autocomplete="name" placeholder="Nguyễn Văn A" class="fc2-input">
+          <div class="fc2-err" role="alert" data-err="name"></div>
+        </div>
+
+        <div>
+          <label for="fc2-phone" class="fc2-label">Số điện thoại (Zalo) <span style="color:#d33">*</span></label>
+          <input id="fc2-phone" name="phone" type="tel" required autocomplete="tel" inputmode="numeric" placeholder="0912345678" class="fc2-input">
+          <div class="fc2-err" role="alert" data-err="phone"></div>
+        </div>
+
+        <div>
+          <label for="fc2-email" class="fc2-label">Email <span style="color:#d33">*</span></label>
+          <input id="fc2-email" name="email" type="email" required autocomplete="email" placeholder="email@cua-anh-chi.com" class="fc2-input">
+          <div class="fc2-err" role="alert" data-err="email"></div>
+        </div>
+
+        <div>
+          <label for="fc2-field" class="fc2-label">Anh chị đang làm lĩnh vực gì? <span style="color:#d33">*</span></label>
+          <input id="fc2-field" name="field" type="text" required placeholder="VD: nội thất, spa, bất động sản, giáo viên…" class="fc2-input">
+          <div class="fc2-err" role="alert" data-err="field"></div>
+        </div>
+
+        <div>
+          <label for="fc2-note" class="fc2-label">Điều anh chị mong muốn nhất sau 21 ngày <span style="color:#d33">*</span></label>
+          <textarea id="fc2-note" name="note" rows="3" required placeholder="Viết ngắn gọn giúp Thành hiểu anh chị hơn." class="fc2-input" style="resize:vertical"></textarea>
+          <div class="fc2-err" role="alert" data-err="note"></div>
+        </div>
+
+        <!-- bẫy bot: người thật không nhìn thấy ô này -->
+        <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
+          <label for="fc2-website">Website</label>
+          <input id="fc2-website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="fc2-formerr" data-err="_form"></div>
+
+        <button type="submit" id="fc2-submit" class="fc2-cta"
+                style="display:inline-flex;align-items:center;justify-content:center;height:58px;padding:0 28px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border-radius:16px;border:0;cursor:pointer;width:100%">
+          <span data-label>Tiếp tục tới bước thanh toán</span>
+        </button>
+
+        <p style="font-size:12px;color:#77777d;line-height:1.6;margin:0">
+          Thông tin của anh chị chỉ dùng để liên hệ xếp lớp, không chia sẻ cho bên thứ ba.
+        </p>
+      </form>
+
+      <div id="fc2-fallback" hidden style="background:rgba(211,51,51,.07);border:1px solid rgba(211,51,51,.25);border-radius:16px;padding:16px 18px;font-size:14px;line-height:1.65;color:#333"></div>
+    </div>
+
+    <p style="font-size:13px;color:#77777d;line-height:1.7;margin:24px 0 0;text-align:center">
+      Anh chị cần hỗ trợ? Nhắn Zalo cho bên Thành, sẽ có người hướng dẫn trực tiếp.
+    </p>
+  </div>
+</div>

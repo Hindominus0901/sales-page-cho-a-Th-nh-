@@ -68,6 +68,12 @@ export function readConfig(env) {
       // webhook.js) - doi SKU ma quen doi regex la webhook khong nhan ra ma don
       // nua, tien ve ma don khong tu xac nhan.
       orderPrefix: str(env, 'ORDER_PREFIX', 'DH').toUpperCase(),
+      // Form dang ky co dung bo 8 cau hoi khong. Mac dinh CO: thuong hieu nao
+      // khong khai gi thi van cham diem lead nhu cu. Chi khi brand.json noi ro
+      // funnel.boCauHoi = false (form chi hoi ten/sdt/email) thi /api/leads moi
+      // thoi doi `answers` - khong de mot request thieu answers tu nhien duoc
+      // bo qua kiem tra.
+      boCauHoi: str(env, 'FORM_BO_CAU_HOI', '1') !== '0',
       // Gia 0 = chua cau hinh -> trang thanh toan tu choi tao don (xem
       // thieuCauHinhTien ben duoi) thay vi ban voi mot cai gia bia dat.
       price: num(env, 'PRICE_VIP', 0),

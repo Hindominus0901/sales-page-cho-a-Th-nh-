@@ -89,7 +89,14 @@ export default {
         const cuu = cuuLinkGioiThieu(env, url);
         if (cuu) return cuu;
 
-        const funnelTarget = isAppHost(env, url) ? null : FUNNEL_ROUTES.get(url.pathname);
+        // Trang thanh toan cua Goc Creator mang ma don TREN DUONG DAN
+        // (/thanh-toan/GCZK8PQR) de khach dong tab roi mo lai van thay don cu.
+        // Bang FUNNEL_ROUTES la so khop chinh xac nen khong bat duoc dang nay:
+        // thieu nhanh duoi day thi vua tao don xong la rot vao trang 404 cua SPA.
+        const maDon = /^\/thanh-toan\/[A-Za-z0-9]{1,32}$/.test(url.pathname);
+        const funnelTarget = isAppHost(env, url)
+          ? null
+          : (maDon ? '/f/thanh-toan' : FUNNEL_ROUTES.get(url.pathname));
         if (funnelTarget) {
           const res = await env.ASSETS.fetch(new URL(funnelTarget, url.origin));
           const extra = PRIVATE_PATHS.has(url.pathname)

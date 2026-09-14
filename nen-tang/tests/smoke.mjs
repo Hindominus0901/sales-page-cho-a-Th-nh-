@@ -88,17 +88,32 @@ const ANSWERS = {
   check('GET /api/config', cfg.status === 200 && cfg.data.ok && cfg.data.product?.price > 0);
   if (cfg.data?.product?.price) PRODUCT_PRICE = cfg.data.product.price;
 
-  for (const path of ['/', '/dang-ky', '/xac-nhan', '/vip', '/thanh-toan']) {
+  // Danh sach trang lay tu brand.json chu khong viet cung: thuong hieu bo trang
+  // /vip hay doi duong dan la bo test cu do ma khong lien quan gi den san pham.
+  const TRANG = Object.values(BRAND_TEST.funnel?.pages || {}).map((t) => t.route);
+  // Thuong hieu mang trang ban hang cua rieng minh thi khong co funnel.js cua
+  // template - va do la dung, khong phai loi. Bai kiem chung (200 + la HTML +
+  // co header bao mat) van chay cho ca hai.
+  const TRANG_RIENG = BRAND_TEST.funnel?.trangRieng === true;
+  for (const path of TRANG) {
     const res = await fetch(BASE + path);
     const html = await res.text();
-    check(`GET ${path} tra ve HTML + funnel.js`,
-      res.status === 200 && html.includes('/funnel.js') && html.includes('__FUNNEL__'));
+    const laHtml = res.status === 200
+      && (res.headers.get('content-type') || '').includes('text/html')
+      && /<\/html>/i.test(html);
+    if (TRANG_RIENG) {
+      check(`GET ${path} tra ve trang HTML`, laHtml, res.status);
+    } else {
+      check(`GET ${path} tra ve HTML + funnel.js`,
+        laHtml && html.includes('/funnel.js') && html.includes('__FUNNEL__'));
+    }
   }
 
   // VSL o trang chu phai doi duoc bang cau hinh. Ban cu doi bang cach tim
   // 'iframe[src*="youtube.com/embed/"]' roi sua src - cach do chet am tham tu
   // luc iframe duoc go khoi DOM cho den khi bam phat.
   const landing = await fetch(`${BASE}/`).then((r) => r.text());
+  if (!TRANG_RIENG) {
   check('trang chu mang cau hinh VSL',
     /"hero_video_provider":/.test(landing) && /"hero_video_id":/.test(landing));
   const funnelJs = await fetch(`${BASE}/f/funnel.js`).then((r) => (r.ok ? r.text() : ''));
@@ -113,6 +128,7 @@ const ANSWERS = {
     funnelJs.includes("'&autoPlay=true&silentAutoPlay=allow'")
     && !funnelJs.includes('&muted='));
   check('tu phat tat duoc bang cau hinh', /"hero_video_autoplay":/.test(landing));
+  }
 
   // Header bao mat. Truoc day run_worker_first chi liet ke vai duong nen
   // /dashboard, /community... duoc bien Cloudflare tra thang, khong qua Worker

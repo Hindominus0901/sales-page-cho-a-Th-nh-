@@ -114,6 +114,7 @@ function dungVars(brand) {
     "BRAND_COLOR": ${q(brand.theme.primaryHex)},
     "BRAND_COLOR_DARK": ${q(brand.theme.primaryDarkHex)},
     "ORDER_PREFIX": ${q(product.orderPrefix)},
+    "FORM_BO_CAU_HOI": ${q(brand.funnel?.boCauHoi === false ? "0" : "1")},
     "TZ_OFFSET_MINUTES": ${q(brand.meta.timezoneOffsetMinutes)},
     "LOCALE": ${q(brand.meta.locale)},
     "CURRENCY_SUFFIX": ${q(brand.meta.currencySuffix)}
@@ -220,7 +221,11 @@ function dungJsThuongHieu(brand) {
     // brand.json.
     productSku: brand.product.sku,
     salesOrigin: `https://${brand.domains.funnelHost}`,
-    vipUrl: `https://${brand.domains.funnelHost}${brand.funnel.pages.oto.route}`,
+    // Khong phai thuong hieu nao cung co trang nang cap (OTO). Thieu thi tro
+    // ve trang chu chu KHONG nem loi: mot funnel hai trang van la funnel hop le,
+    // va truoc day thieu khoa "oto" la `npm run brand:apply` chet giua chung voi
+    // mot loi "Cannot read properties of undefined" chang chi ve dau ca.
+    vipUrl: `https://${brand.domains.funnelHost}${brand.funnel.pages.oto?.route || '/'}`,
   };
   return `// SINH TU brand/brand.json BOI scripts/brand/apply.mjs - DUNG SUA TAY.
 // Sua gia tri o brand/brand.json roi chay: npm run brand:apply
@@ -330,6 +335,7 @@ if (fs.existsSync(ENV_FILE)) {
     PRODUCT_NAME: brand.product.name,
     PRODUCT_SKU: brand.product.sku,
     ORDER_PREFIX: brand.product.orderPrefix,
+    FORM_BO_CAU_HOI: brand.funnel?.boCauHoi === false ? '0' : '1',
     PRICE_VIP: brand.product.price,
     PRICE_VIP_LIST: brand.product.listPrice,
     AFFILIATE_RATE: brand.product.affiliateRate,

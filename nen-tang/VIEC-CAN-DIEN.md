@@ -11,11 +11,11 @@ vẫn chạy** — chưa bỏ gì cả. Cắt sang hệ mới khi nào xong mụ
 ```
 brand:check      ✓ sạch
 npm run build    ✓ 5 trang, giá 2.000.000đ
-tests/smoke      ✓  91/91
+tests/smoke      ✓  86/86
 tests/auth       ✓  53/53
 tests/platform   ✓ 238/238
                    ─────────
-                   382/382
+                   377/377
 ```
 
 Chạy trên cơ sở dữ liệu mới tinh (xoá `.wrangler/state`, migrate lại, seed lại).
@@ -44,27 +44,58 @@ Cũng nên kiểm lại `payment.bankBin`: đang để `970407` (Techcombank).
 - `REWARD_TIERS_JSON` — chưa đặt thì trang cộng tác viên hiện "Phần thưởng sẽ
   được công bố sớm" thay cho phần thưởng thật.
 
-## 3. Trang bán hàng — VIỆC LỚN NHẤT CÒN LẠI
+## 3. Trang bán hàng — ĐÃ BÊ SANG XONG
 
-Trang bán hàng trong `apps/funnel/designs/` vẫn là **kịch bản 5 ngày** của khách
-cũ: còn 11 chỗ nói "5 ngày". `brand.json` đổi được tên, giá, màu, tên miền —
-**không đổi được lời văn bán hàng.**
+Trang bán hàng đã hoàn thiện của anh Thành giờ **là** trang bán hàng của nền tảng.
+Không phải viết lại một chữ nào.
 
-Hai đường:
+Cách làm: giữ nguyên trang, và dựng **lớp tương thích** trong Worker
+(`worker/src/routes/tuong-thich.js`) để hai đường dẫn cũ vẫn sống:
 
-**A. Bê trang bán hàng đã hoàn thiện ở thư mục gốc sang.** Giữ nguyên trang đã
-chốt lời văn và đã kiểm thử. Việc phải làm: đấu lại 2 file JS sang API mới —
-
-| Trang gốc gọi | Nền tảng mới dùng |
+| Trang gọi | Worker trả lời |
 |---|---|
-| `POST /api/register` | `POST /api/leads` |
-| `GET/POST /api/order/:mã` | `POST /api/orders`, `GET /api/orders/:mã` |
+| `POST /api/register` | tạo lead + đơn, trả về **đúng hình dạng cũ** |
+| `GET /api/order/:mã` | tra cứu đơn, **đúng hình dạng cũ** |
 
-Khác cả tên lẫn hình dạng dữ liệu (trang gốc còn gửi kèm bộ câu hỏi chấm điểm
-lead). Xong phải chạy lại trọn `tests/smoke.mjs` vì nó phủ luồng tiền.
+Nhờ vậy `dang-ky.js` và `thanh-toan.js` **không phải sửa một chữ**. Hai hàm này
+không tự làm lấy việc — chúng gọi thẳng `createLead`/`createOrder` của nền tảng
+rồi dịch lại câu trả lời, nên mọi lớp bảo vệ (chặn tốc độ, kiểm cấu hình tài
+khoản nhận tiền, chống tạo đơn trùng, sinh mã đơn) đều chạy nguyên vẹn.
 
-**B. Viết lại lời văn 21 ngày vào `.dc.html` của template.** Không phải đấu nối
-gì, nhưng là viết lại một trang bán hàng dài từ đầu.
+Bộ dựng trang nằm ở `apps/funnel-gc/` (bản chép của `build/` cũ, đã đổi đường
+dẫn để xuất thẳng vào `dist/public/`). Chạy:
+
+```bash
+node apps/funnel-gc/build.mjs
+```
+
+Sửa nội dung trang thì sửa `apps/funnel-gc/site.config.json` rồi dựng lại — y
+như trước.
+
+### Đã chạy trọn vòng tiền
+
+```
+POST /api/register        -> đơn GC8JHS2P, mã QR đúng ngân hàng
+GET  /thanh-toan/GC8JHS2P -> 200
+POST /api/webhooks/bank   -> đơn sang "paid"
+GET  /api/order/GC8JHS2P  -> paid, remaining 0
+```
+
+### Đường dẫn đã nối
+
+`/` · `/dang-ky` · `/thanh-toan` · `/thanh-toan/:mã` · `/tra-cuu` ·
+`/chinh-sach-hoan-tien` · `/chinh-sach-bao-mat` · `/dieu-khoan` · `/media/*` —
+tất cả trả 200. Khu vực thành viên `/dashboard` vẫn chạy song song.
+
+### Còn thiếu ở phần này
+
+- **`/tra-cuu` chưa nối API.** Trang mở được nhưng nút tra cứu gọi
+  `POST /api/tra-cuu` — đường dẫn đó chưa có trong nền tảng. Thêm vào
+  `tuong-thich.js` là xong, cùng kiểu hai hàm đang có.
+- Các trang cũ khác (`/hoc`, `/workshop`, `/ban-do-21-ngay`, `/ctv-dang-ky`,
+  `/dang-nhap`…) **chưa nối** — chúng thuộc hệ cũ, và nền tảng có phần thay thế
+  riêng (khu vực thành viên, cổng cộng tác viên `/dai-ly`). Quyết định giữ cái
+  nào là việc cần bàn, không phải việc kỹ thuật.
 
 ## 4. Deploy — phải chạy trên máy có token Cloudflare
 

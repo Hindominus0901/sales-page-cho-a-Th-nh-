@@ -13,6 +13,6 @@ export const BRAND = {
   "tzOffsetMinutes": 420,
   "productSku": "GC21",
   "salesOrigin": "https://manhthanh.net",
-  "vipUrl": "https://manhthanh.net/vip"
+  "vipUrl": "https://manhthanh.net/"
 };
 export default BRAND;

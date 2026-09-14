@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<script src="./image-slot.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap');
+.fc2 *{font-family:'Inter',system-ui,-apple-system,sans-serif}
+.fc2 h1,.fc2 h2,.fc2 h3{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:0;font-weight:600}
+.fc2-hl{background:rgba(139,195,74,.35);padding:0 3px;border-radius:2px;text-decoration:underline;text-decoration-color:#2f7a4d;text-underline-offset:3px}
+.fc2-shadow{box-shadow:0px 60px 80px rgba(15,15,15,.08),0px 25px 33px rgba(15,15,15,.057),0px 13px 18px rgba(15,15,15,.048),0px 7px 10px rgba(15,15,15,.04),0px 4px 5px rgba(15,15,15,.032),0px 2px 2px rgba(15,15,15,.022)}
+@keyframes fc2-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.fc2-track{display:flex;width:200%;animation:fc2-marquee 26s linear infinite;white-space:nowrap}
+.fc2-track span{padding:0 18px}
+.fc2-scroll{display:flex;overflow-x:auto;gap:16px;padding-bottom:8px;scrollbar-width:none}
+.fc2-scroll::-webkit-scrollbar{display:none}
+.fc2 details summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;font-size:17px;font-weight:600}
+.fc2 details summary::-webkit-details-marker{display:none}
+.fc2 details summary::after{content:'+';font-size:22px;color:#8a8a8f;flex-shrink:0}
+.fc2 details[open] summary::after{content:'–'}
+.fc2 details{border:1px solid rgba(25,25,25,.12);border-radius:14px;background:rgba(25,25,25,.03);margin-bottom:12px;transition:background .15s}
+.fc2 details[open]{background:rgba(25,25,25,.055)}
+.fc2 details p{padding:0 18px}
+.fc2-cardmarquee{overflow:hidden}
+.fc2-cardtrack{display:flex;gap:16px;width:max-content;animation:fc2-cardscroll 34s linear infinite}
+.fc2-cardtrack:hover{animation-play-state:paused}
+@keyframes fc2-cardscroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.fc2-cta{position:relative;overflow:hidden;isolation:isolate}
+.fc2-cta::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:fc2-glow 2.6s ease-in-out infinite}
+@keyframes fc2-glow{0%{left:-60%}100%{left:130%}}
+.fc2-priceglow{position:relative;animation:fc2-pulse 2.2s ease-in-out infinite}
+@keyframes fc2-pulse{0%,100%{box-shadow:0 0 0 0 rgba(47,122,77,.35)}50%{box-shadow:0 0 0 10px rgba(47,122,77,0)}}
+.fc2-pricebox{position:relative;overflow:hidden;isolation:isolate;border-radius:14px}
+.fc2-pricebox::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(115deg,transparent,rgba(168,217,141,.6),transparent);transform:skewX(-20deg);animation:fc2-glow 3s ease-in-out infinite}
+.fc2 a[href="#dang-ky"]{transition:transform .15s ease,box-shadow .15s ease}
+.fc2 a[href="#dang-ky"]:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(47,122,77,.35)}
+.fc2 a[href="#dang-ky"]:active{transform:translateY(0) scale(.97)}
+.fc2-hover{transition:transform .2s ease,box-shadow .2s ease}
+.fc2-hover:hover{transform:translateY(-4px)}
+.fc2-reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fc2-reveal.fc2-in{opacity:1;transform:translateY(0)}
+.fc2-stickybar{position:fixed;left:0;right:0;bottom:-100px;z-index:60;display:flex;justify-content:center;align-items:center;gap:14px;padding:14px 20px;background:rgba(243,234,217,.95);backdrop-filter:blur(6px);border-top:1px solid rgba(25,25,25,.12);transition:bottom .3s ease}
+.fc2-stickybar.fc2-show{bottom:0}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var els=document.querySelectorAll('.fc2-reveal');
+  var io=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('fc2-in');io.unobserve(e.target)}})},{threshold:.15});
+  els.forEach(function(el){io.observe(el)});
+  var hero=document.getElementById('challenge');
+  var bar=document.querySelector('.fc2-stickybar');
+  if(hero&&bar){
+    var io2=new IntersectionObserver(function(entries){entries.forEach(function(e){bar.classList.toggle('fc2-show',!e.isIntersecting)})},{threshold:0});
+    io2.observe(hero);
+  }
+});
+</script>
+</helmet>
+<div class="fc2" style="background:#f3ead9;color:#191919">
+
+<div style="overflow:hidden;background:#1a1a1a;padding:10px 0;transform:rotate(-.4deg)">
+<div class="fc2-track" style="font-size:13px;color:#a8d98d;font-weight:600">
+<span>200.000 view mà chả có ai nhắn tin · 2.000 view lại có hai người đăng ký •</span>
+<span>Thử thách 21 ngày · Mỗi ngày một bài · Thành đọc và sửa từng bài •</span>
+<span>200.000 view mà chả có ai nhắn tin · 2.000 view lại có hai người đăng ký •</span>
+<span>Thử thách 21 ngày · Mỗi ngày một bài · Thành đọc và sửa từng bài •</span>
+</div>
+</div>
+
+<div id="challenge" style="max-width:760px;margin:0 auto;padding:48px 24px 0;display:flex;flex-direction:column;gap:28px">
+<div>
+<div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:10px">CƠ HỘI MỞ KHOÁ HỌC BỔNG &amp; MỘT BUỔI COACHING RIÊNG</div>
+<h1 style="font-size:42px;font-weight:800;line-height:1.12;letter-spacing:-.02em;margin:0 0 20px">21 ngày xây dựng thương hiệu cá nhân và có nguồn thu nhập thứ hai từ chính chuyên môn của mình.</h1>
+<p style="font-size:16px;line-height:1.65;color:#454549;margin:0 0 16px">Dành cho anh chị nghiêm túc muốn có nguồn thu nhập thứ hai đều đặn 10 - 20 triệu mỗi tháng từ chính kĩ năng và chuyên môn của mình.</p>
+
+<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+<a href="#dang-ky" class="fc2-cta" style="display:inline-flex;align-items:center;height:58px;padding:0 28px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border-radius:16px;text-decoration:none">Tôi đã sẵn sàng đăng ký</a><a href="#challenge" style="display:inline-flex;align-items:center;height:58px;padding:0 26px;background:transparent;color:#191919;font-weight:600;font-size:15px;border-radius:16px;text-decoration:none;border:1.5px solid rgba(25,25,25,.25);transition:background .15s" onmouseover="this.style.background='rgba(25,25,25,.06)'" onmouseout="this.style.background='transparent'">Xem video giới thiệu ↓</a>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:16px">
+<div style="display:flex">
+<div style="width:32px;height:32px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px">✓</div>
+<div style="width:32px;height:32px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:-10px;box-shadow:0 0 0 2px #f3ead9">✓</div>
+<div style="width:32px;height:32px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:-10px;box-shadow:0 0 0 2px #f3ead9">✓</div>
+<div style="width:32px;height:32px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:-10px;box-shadow:0 0 0 2px #f3ead9">✓</div>
+</div>
+<div style="text-align:left">
+<div style="color:#f0a500;font-size:14px;letter-spacing:1px">★★★★★</div>
+<div style="font-size:12px;color:#55555c">Được tin tưởng bởi hàng trăm học viên</div>
+</div>
+</div>
+</div>
+<div class="fc2-shadow" style="position:relative;aspect-ratio:16/9;border-radius:36px;overflow:hidden">
+<image-slot id="fc2-vsl" src="./media/thanh-1.jpg" placeholder="🟡 VSL Video 7–8 phút — Thành kể chuyện 200.000 view"></image-slot>
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+<div style="background:rgba(255,255,255,.3);backdrop-filter:blur(6px);border-radius:9999px;width:92px;height:92px;display:flex;align-items:center;justify-content:center">
+<div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);box-shadow:0 6px 16px rgba(0,0,0,.25);border-radius:9999px;width:62px;height:62px;display:flex;align-items:center;justify-content:center">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="max-width:760px;margin:0 auto;padding:28px 24px 0">
+<ul style="list-style:none;padding:0;margin:0 0 20px;display:grid;gap:10px">
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span><span>Không cần vốn.</span></li>
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span><span>Không cần kinh nghiệm.</span></li>
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span><span>Không cần nhiều thời gian — chỉ cần chuyên môn anh chị đã có sẵn.</span></li>
+</ul>
+
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:48px 24px">
+<div style="font-size:13px;font-weight:600;color:#55555c;margin-bottom:14px">Học viên nói gì</div>
+<div class="fc2-scroll">
+<div style="flex-shrink:0;width:200px;aspect-ratio:9/16;border-radius:24px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw-1" src="./media/thanh-2.jpg" placeholder="🟡 Video học viên [[tên]]"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:48px;height:48px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:200px;aspect-ratio:9/16;border-radius:24px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw-2" src="./media/thanh-3.jpg" placeholder="🟡 Video học viên [[tên]]"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:48px;height:48px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:200px;aspect-ratio:9/16;border-radius:24px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw-3" src="./media/thanh-4.jpg" placeholder="🟡 Video học viên [[tên]]"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:48px;height:48px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:200px;aspect-ratio:9/16;border-radius:24px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw-4" src="./media/thanh-5.jpg" placeholder="🟡 Video học viên [[tên]]"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:48px;height:48px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:200px;aspect-ratio:9/16;border-radius:24px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw-5" src="./media/thanh-6.jpg" placeholder="🟡 Video học viên [[tên]]"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:48px;height:48px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:200px;aspect-ratio:9/16;border-radius:24px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw-6" src="./media/thanh-7.jpg" placeholder="🟡 Video học viên [[tên]]"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:48px;height:48px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:38px;font-weight:800;letter-spacing:-.02em;margin:0 0 24px">Nhìn thẳng vào thực tế đi</h2>
+<div style="max-width:720px">
+<ul style="list-style:none;padding:0;margin:0 0 22px;display:grid;gap:12px">
+<li style="font-size:16px;line-height:1.6;color:#333">Anh chị lướt mạng mỗi ngày, nghe người ta thảo luận về trend này trend đó — thấy mệt mỏi, ngộp trước lượng thông tin đó.</li>
+<li style="font-size:16px;line-height:1.6;color:#333">Lưu hàng đống "100 mẫu hook viral" share free về máy rồi để đó cho đầy bộ nhớ.</li>
+<li style="font-size:16px;line-height:1.6;color:#333">Gõ vài câu rồi tự nghĩ rằng mình đang làm nội dung, bắt kịp thời đại.</li>
+<li style="font-size:16px;line-height:1.6;color:#333">Nhưng anh chị không còn thấy phù hợp với kiểu làm như vậy nữa.</li>
+<li style="font-size:16px;line-height:1.6;color:#333">Anh chị muốn một hệ thống giúp mình xây thương hiệu cá nhân — không mất sức nghĩ ý tưởng mỗi sáng, không cần chạy theo mấy trò các Tiktoker khác đang làm.</li>
+</ul>
+<ul style="list-style:none;padding:0;margin:0 0 18px;display:grid;gap:10px">
+<li style="font-size:15px;line-height:1.6;color:#333">— Đăng bài mỏi tay mà view vẫn không đúng người, phải tự đoán lại xem ai đang thật sự xem mình.</li>
+<li style="font-size:15px;line-height:1.6;color:#333">— 200.000 view mà không có một khách nào nhắn tin, còn khách thì lại sang bên đối thủ.</li>
+<li style="font-size:15px;line-height:1.6;color:#333">— Ngồi nhìn kênh của người khác nhỏ hơn mà ra khách đều, còn kênh mình view cao mà im lặng.</li>
+</ul>
+<p style="font-size:36px;font-weight:800;color:#191919;text-align:center;line-height:1.3;margin:0 0 20px;position:relative;display:inline-block;width:100%">
+<span style="position:relative;display:inline-block">Đã đến lúc bứt ra khỏi cảnh đó.
+<svg viewBox="0 0 300 20" preserveAspectRatio="none" style="position:absolute;left:0;bottom:-10px;width:100%;height:16px" xmlns="http://www.w3.org/2000/svg"><path d="M2 12c20-8 40 8 60 2s40-14 60-6 40 12 60 4 40-10 60-2 40 8 56 2" fill="none" stroke="#2f7a4d" stroke-width="5" stroke-linecap="round"/></svg>
+</span>
+</p>
+<p style="font-size:16px;line-height:1.75;color:#333;margin:0 0 12px">Thành làm rõ mọi khái niệm còn mơ hồ, không dạy lý thuyết suông mà "ép" anh chị thực hành ngay.</p>
+<p style="font-size:16px;line-height:1.75;color:#333;margin:0">Đó là lý do Thành mở ra một Challenge 21 ngày — mọi lời đồn thổi về content sẽ bị bóc trần. Quan trọng nhất, anh chị sẽ được "ép" để thực sự ra khách, không phải chỉ biết viết.</p>
+
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:32px;font-weight:800;letter-spacing:-.02em;margin:0 0 24px">Nếu mấy dòng trên nói đúng về bạn, hãy đọc tiếp</h2>
+<div class="fc2-cardmarquee">
+<div class="fc2-cardtrack">
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Hạnh Chi</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Hơn 60 tuổi · chủ 2 trang tin</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">"Cuối cùng mình đã hoàn thành khóa học liên tục 21 ngày… lại còn nhận được học bổng Gương sáng hiếu học."</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Anh Trần Thiện</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Thiết kế &amp; thi công nội thất</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">Xuất hiện và chia sẻ cách anh tư duy, cách anh làm việc — từ đó bắt đầu nhận được đơn hàng.</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Út Nguyễn</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Chủ cửa hàng [[ngành]]</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">Đổi câu hỏi từ "làm sao để viral" sang "khách cần gì" — video đầu tiên sau khi đổi, bán được 2/3 số hàng trong cửa hàng.</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Nguyễn Thị Trang</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Học viên khoá 21 ngày</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">138.962 view cho bài về chuối luộc · 73.244 cho bài hạt mít · tổng view +220% trong một tháng.</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Nhung Tuyết</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Học viên khoá 21 ngày</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">"Tôi từng nghĩ: mình có gì đâu mà chia sẻ? Nhưng rồi tôi gặp thầy Mạnh Thành…" — hiện chị mở một câu lạc bộ riêng.</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Hạnh Chi</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Hơn 60 tuổi · chủ 2 trang tin</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">"Cuối cùng mình đã hoàn thành khóa học liên tục 21 ngày… lại còn nhận được học bổng Gương sáng hiếu học."</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Anh Trần Thiện</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Thiết kế &amp; thi công nội thất</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">Xuất hiện và chia sẻ cách anh tư duy, cách anh làm việc — từ đó bắt đầu nhận được đơn hàng.</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Út Nguyễn</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Chủ cửa hàng [[ngành]]</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">Đổi câu hỏi từ "làm sao để viral" sang "khách cần gì" — video đầu tiên sau khi đổi, bán được 2/3 số hàng trong cửa hàng.</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Nguyễn Thị Trang</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Học viên khoá 21 ngày</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">138.962 view cho bài về chuối luộc · 73.244 cho bài hạt mít · tổng view +220% trong một tháng.</p>
+</div>
+<div style="flex-shrink:0;width:300px;background:#fff;border-radius:20px;padding:22px;border:1px solid rgba(25,25,25,.1)">
+<div style="font-weight:700;font-size:15px">Chị Nhung Tuyết</div>
+<div style="font-size:12px;color:#77777d;margin-bottom:10px">Học viên khoá 21 ngày</div>
+<p style="font-size:14px;line-height:1.55;margin:0;color:#333">"Tôi từng nghĩ: mình có gì đâu mà chia sẻ? Nhưng rồi tôi gặp thầy Mạnh Thành…" — hiện chị mở một câu lạc bộ riêng.</p>
+</div>
+</div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:36px;font-weight:800;letter-spacing:-.02em;margin:0 0 16px">Anh chị sẽ học được gì trong thử thách 21 ngày</h2>
+<p style="font-size:16px;line-height:1.7;color:#333;margin:0 0 28px;max-width:700px">Không phải là mình thiếu kiến thức, mà là mình đang cố gắng <b><i>"xây nhà từ nóc"</i></b>. <br>Đây là toàn bộ những gì anh chị đi qua trong 21 ngày — từ định vị, nội dung, tới bán hàng.</p>
+<div style="display:grid;gap:14px;max-width:760px">
+
+<div style="background:#fff;border-radius:24px;padding:24px" class="fc2-shadow">
+<div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:8px">THƯƠNG HIỆU CÁ NHÂN</div>
+<div style="font-size:18px;font-weight:700;margin-bottom:10px">Định vị rõ ràng</div>
+<p style="font-size:14px;line-height:1.65;color:#55555c;margin:0">Trả lời được ba câu: mình mạnh cái gì, khách của mình là ai, và muốn được nhớ vì điều gì. Đây là nền cho mọi bài đăng sau đó, thay vì đoán mò mỗi ngày nên nói gì.</p>
+</div>
+
+<div style="background:#fff;border-radius:24px;padding:24px" class="fc2-shadow">
+<div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:8px">NỘI DUNG</div>
+<div style="font-size:18px;font-weight:700;margin-bottom:10px">Mười góc nội dung — một kiến thức ra mười bài</div>
+<p style="font-size:14px;line-height:1.65;color:#55555c;margin:0 0 12px">Không phải xào lại content. Mười góc khai thác cùng một chuyên môn cho những người đang ở trạng thái khác nhau: hướng dẫn, sai lầm, câu chuyện của chính mình, quan điểm cá nhân, checklist, case study, hỏi đáp, so sánh, trước-và-sau, phá một hiểu lầm.</p>
+<p style="font-size:14px;line-height:1.65;color:#55555c;margin:0">Kèm công thức hook, cách kể chuyện, cấu trúc bài và cách quay — để không phải ngồi nghĩ nửa ngày mới ra một bài.</p>
+</div>
+
+<div style="background:#fff;border-radius:24px;padding:24px" class="fc2-shadow">
+<div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:8px">BÁN HÀNG</div>
+<div style="font-size:18px;font-weight:700;margin-bottom:10px">Content chuyển đổi — từ người lạ thành khách hàng</div>
+<p style="font-size:14px;line-height:1.65;color:#55555c;margin:0">Cách viết CTA, dựng lead magnet, và vạch con đường người xem đi từ "biết tới mình" tới "tin và mua". Không phải chờ may rủi ai đó tự nhắn tin.</p>
+</div>
+
+<div style="background:#fff;border-radius:24px;padding:24px" class="fc2-shadow">
+<div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:8px">21 BÀI THẬT</div>
+<div style="font-size:18px;font-weight:700;margin-bottom:10px">Đăng thật, có người đọc và sửa</div>
+<p style="font-size:14px;line-height:1.65;color:#55555c;margin:0">Mỗi ngày một bài, đăng thật lên kênh thật, không phải bài tập nộp cho có rồi cất. <br>Team của Thành sẽ đọc và nhận xét từng bài, chỉ ra chỗ chưa tới hay bạn có thể cải thiện như nào.</p>
+</div>
+
+<div style="background:#1a1a1a;color:#fff;border-radius:24px;padding:24px" class="fc2-shadow fc2-pricebox">
+<div style="font-size:13px;font-weight:700;color:#a8d98d;margin-bottom:8px;position:relative;z-index:1">QUÀ TẶNG KÈM</div>
+<div style="font-size:18px;font-weight:700;margin-bottom:10px">Bonus đi cùng khoá học</div>
+<ul style="list-style:none;padding:0;margin:0;display:grid;gap:10px">
+<li style="font-size:14px;line-height:1.6;opacity:.85;position:relative;z-index:1">👉 Bộ 100 Hook — để không bao giờ phải ngồi cắn bút nghĩ câu mở đầu.</li>
+<li style="font-size:14px;line-height:1.6;opacity:.85">👉 21 kịch bản nội dung dựng sẵn — mở ra là quay được ngay, không cần nghĩ từ đầu.</li>
+<li style="font-size:14px;line-height:1.6;opacity:.85">👉 Template kế hoạch content — để không còn cảnh sáng nào cũng hỏi "hôm nay đăng gì".</li>
+<li style="font-size:14px;line-height:1.6;opacity:.85">👉 Một năm cộng đồng Rèn Thân — Tâm — Trí — đồng hành lâu dài, không chỉ 21 ngày rồi thôi.</li>
+</ul>
+</div>
+
+<div style="background:#a8d98d;color:#191919;border-radius:24px;padding:24px" class="fc2-shadow fc2-pricebox">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;position:relative;z-index:1"><span style="font-size:22px">🎖️</span><div style="font-size:13px;font-weight:700">VỀ ĐÍCH ĐÚNG HẠN</div></div>
+<div style="font-size:18px;font-weight:700;margin-bottom:10px;position:relative;z-index:1">Học bổng và một buổi coaching riêng</div>
+<p style="font-size:14px;line-height:1.65;opacity:.75;margin:0;position:relative;z-index:1">Nộp đủ 21 bài đúng hạn, quay một video chia sẻ thật cuối khoá — mở khoá học bổng <b>[[tên]]</b> và một buổi coaching riêng với Thành. Tiêu chí công khai từ đầu, không có ngoại lệ.</p>
+</div>
+
+</div>
+
+<div style="font-size:13px;font-weight:600;color:#55555c;margin:28px 0 12px">Học viên làm gì trong 21 ngày</div>
+<div class="fc2-scroll">
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw2-1" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw2-2" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw2-3" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw2-4" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:32px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px">Feedback từ học viên</h2>
+<p style="font-size:15px;color:#55555c;margin:0 0 24px">"Các anh chị low key, low tech nhất còn làm được thì bạn cũng làm được thôi, miễn nghiêm túc, đừng lười là có bài xịn hết."</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:700px">
+<div><div style="border-radius:10px;overflow:hidden"><image-slot id="fc2-web-1" src="./media/fb-hanhchi.png" placeholder="🟡 Ảnh chụp bài + số liệu"></image-slot></div><div style="padding:8px 2px;font-size:13px;font-weight:600">Chị Hạnh Chi — học viên feedback</div></div>
+<div><div style="border-radius:10px;overflow:hidden"><image-slot id="fc2-web-2" src="./media/fb-nhung.jpg" placeholder="🟡 Ảnh chụp bài + số liệu"></image-slot></div><div style="padding:8px 2px;font-size:13px;font-weight:600">Chị Nhung Tuyết — học viên feedback</div></div>
+<div><div style="border-radius:10px;overflow:hidden"><image-slot id="fc2-web-3" src="./media/fb-trang.jpg" placeholder="🟡 Ảnh chụp bài + số liệu"></image-slot></div><div style="padding:8px 2px;font-size:13px;font-weight:600">Chị Nguyễn Thị Trang — học viên feedback</div></div>
+<div><div style="border-radius:10px;overflow:hidden"><image-slot id="fc2-web-4" src="./media/fb-2.jpg" placeholder="🟡 Ảnh chụp bài + số liệu"></image-slot></div><div style="padding:8px 2px;font-size:13px;font-weight:600">Học viên feedback</div></div>
+<div><div style="border-radius:10px;overflow:hidden"><image-slot id="fc2-web-5" src="./media/fb-chichi.jpg" placeholder="🟡 Ảnh chụp bài + số liệu"></image-slot></div><div style="padding:8px 2px;font-size:13px;font-weight:600">Chị Chi — học viên feedback</div></div>
+<div><div style="border-radius:10px;overflow:hidden"><image-slot id="fc2-web-6" placeholder="🟡 Ảnh chụp bài + số liệu"></image-slot></div><div style="padding:12px 16px;font-size:13px;font-weight:600">Học viên feedback</div></div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 24px">Feedback thêm từ cộng đồng Skool</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div style="background:#fff;border-radius:28px;padding:22px" class="fc2-shadow"><p style="font-size:14px;line-height:1.55;color:#333;margin:0">"Khoe với thầy, sáng nay tập trung content vào đối tượng hơn, bài viết thu hút hơn hẳn. Có 2 HV đọc rất phê và hỏi mong muốn tham gia. Và 1 đơn sách gần 1 triệu, haha."</p></div>
+<div style="background:#1a1a1a;color:#fff;border-radius:28px;padding:22px" class="fc2-shadow"><p style="font-size:14px;line-height:1.55;opacity:.85;margin:0">"Trước đây, tôi sợ quay video, sợ nói trước camera, sợ người khác đánh giá... Từ đó tôi bắt đầu quay những điều rất đời thường của mình."</p></div>
+<div style="background:#fff;border-radius:28px;padding:22px" class="fc2-shadow"><p style="font-size:14px;line-height:1.55;color:#333;margin:0">Không đổi máy quay, không đổi công thức. Đổi đúng một thứ, đó là viết cho ai.</p></div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0 0 24px">"Thử thách" này hoạt động như thế nào?</h2>
+<div style="display:grid;gap:20px;max-width:800px">
+<div style="display:flex;gap:16px"><div style="flex-shrink:0;width:34px;height:34px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">1</div><div><div style="font-weight:700;font-size:16px;margin-bottom:4px">Đăng ký và vào nhóm khoá</div><div style="font-size:14px;color:#55555c;line-height:1.6">Chuyển khoản QR ngay trên trang. Cả nhóm bắt đầu cùng một ngày.</div></div></div>
+<div style="display:flex;gap:16px"><div style="flex-shrink:0;width:34px;height:34px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">2</div><div><div style="font-weight:700;font-size:16px;margin-bottom:4px">4 buổi học, rồi mỗi ngày một bài</div><div style="font-size:14px;color:#55555c;line-height:1.6">Đăng thật lên kênh thật, nộp vào nhóm, bí chỗ nào có người gỡ chỗ đó.</div></div></div>
+<div style="display:flex;gap:16px"><div style="flex-shrink:0;width:34px;height:34px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">3</div><div><div style="font-weight:700;font-size:16px;margin-bottom:4px">Hoàn thành đúng hạn thì mở khoá đặc quyền</div><div style="font-size:14px;color:#55555c;line-height:1.6">Nộp đủ 21 bài, quay một video chia sẻ thật → nhận học bổng <b>[[tên]]</b> và một buổi coaching riêng với Thành.</div></div></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:800px;margin-top:28px">
+<div style="aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw3-1" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw3-2" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw3-3" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+</div>
+</div>
+
+<div id="dac-quyen" style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0 0 24px">THỬ THÁCH 21 NGÀY NHƯNG BẠN SẼ LUÔN ĐƯỢC:</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+<div style="background:#fff;border-radius:36px;padding:32px" class="fc2-shadow">
+<div style="font-size:15px;font-weight:700;margin-bottom:10px">Phần 1 — Thử thách</div>
+<div style="font-size:14px;color:#55555c;line-height:1.6">21 ngày, 21 bài. Kênh có định vị, tuyến nội dung, kho chất liệu. Ai tham gia cũng có, kể cả người trễ hạn.</div>
+</div>
+<div style="background:#a8d98d;color:#191919;border-radius:36px;padding:32px" class="fc2-shadow">
+<div style="font-size:15px;font-weight:700;margin-bottom:10px">Phần 2 — Phần thưởng</div>
+<div style="font-size:14px;opacity:.75;line-height:1.6">Học bổng và một buổi coaching riêng. Nộp đủ bài đúng hạn thì được — tiêu chí công khai từ đầu, không ngoại lệ.</div>
+</div>
+</div>
+</div>
+
+<div id="hoc-phi" style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<div style="background:#fff;border-radius:36px;padding:32px;max-width:700px" class="fc2-shadow">
+<div style="font-size:13px;font-weight:700;color:#2f7a4d;margin-bottom:16px">HỌC PHÍ</div>
+
+<div style="font-weight:700;font-size:15px;margin-bottom:12px">Anh chị nhận được</div>
+<ul style="list-style:none;padding:0;margin:0 0 24px;display:grid;gap:10px">
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span>Thử thách 21 ngày: 4 buổi trực tiếp, nộp bài mỗi ngày, có Thành đọc và sửa từng bài</li>
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span>Bộ 100 Hook dùng ngay</li>
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span>21 kịch bản nội dung dựng sẵn</li>
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span>Template kế hoạch content</li>
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span>Một năm cộng đồng Rèn Thân — Tâm — Trí</li>
+<li style="display:flex;gap:10px;font-size:15px;line-height:1.6"><span>👉</span>Về đích đúng hạn: học bổng <b>[[tên]]</b> + một buổi coaching riêng với Thành</li>
+</ul>
+
+<div style="border-top:1px solid rgba(25,25,25,.1);padding-top:20px;margin-bottom:16px">
+<div style="font-size:13px;color:#77777d;margin-bottom:4px">Tổng giá trị nhận được</div>
+<div class="fc2-priceglow fc2-pricebox" style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:10px 16px;background:rgba(168,217,141,.18)">
+<span style="font-size:18px;color:#9a9aa0;text-decoration:line-through;position:relative;z-index:1">4.000.000đ</span>
+<span style="font-size:38px;font-weight:800;position:relative;z-index:1">2.000.000đ</span>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:32px;font-weight:800;letter-spacing:-.02em;margin:0 0 24px">Tại sao anh chị nên nghe Thành?</h2>
+<div style="display:grid;gap:22px;max-width:760px">
+<div style="border-top:1px solid rgba(25,25,25,.12);padding-top:18px"><div style="font-weight:700;font-size:16px;margin-bottom:6px">Ba tháng chỉ để bấm nút công bố</div><div style="font-size:14px;color:#55555c;line-height:1.6">Sợ chưa đủ tốt, sợ bị đánh giá — cho tới khi nhận ra mất nhiều tháng để sợ, mà chỉ cần vài phút để bắt đầu.</div></div>
+<div style="border-top:1px solid rgba(25,25,25,.12);padding-top:18px"><div style="font-weight:700;font-size:16px;margin-bottom:6px">Nội dung an toàn có view, khó có niềm tin</div><div style="font-size:14px;color:#55555c;line-height:1.6">Từng đạt 2-3 triệu view/tháng bằng nội dung chung chung — người xem nhớ kiến thức, không nhớ người chia sẻ.</div></div>
+<div style="border-top:1px solid rgba(25,25,25,.12);padding-top:18px"><div style="font-weight:700;font-size:16px;margin-bottom:6px">Từng dạy sai thứ tự</div><div style="font-size:14px;color:#55555c;line-height:1.6">Dạy Content thuần trước, dạy xong không ai làm. Phải bắt đầu bằng "tôi là ai" trước "hôm nay quay gì".</div></div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:32px;font-weight:800;letter-spacing:-.02em;margin:0 0 20px">Sợ bận đột xuất làm không kịp?</h2>
+<div style="display:grid;gap:20px;max-width:760px">
+<div style="display:flex;gap:16px"><div style="flex-shrink:0;width:34px;height:34px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">1</div><div><div style="font-weight:700;font-size:16px;margin-bottom:4px">Cả nhóm bắt đầu cùng một ngày</div><div style="font-size:14px;color:#55555c;line-height:1.6">Xuất phát cùng nhau, nộp bài cùng nhau — áp lực đồng hành giữ chân bạn ở ngày thứ mười một.</div></div></div>
+<div style="display:flex;gap:16px"><div style="flex-shrink:0;width:34px;height:34px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">2</div><div><div style="font-weight:700;font-size:16px;margin-bottom:4px">Bận một hôm thì nộp bù</div><div style="font-size:14px;color:#55555c;line-height:1.6">Không đứt chuỗi ngay. 🟡 [[quy tắc trễ hạn cụ thể — cần chốt]]</div></div></div>
+<div style="display:flex;gap:16px"><div style="flex-shrink:0;width:34px;height:34px;border-radius:9999px;background:#2f7a4d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">3</div><div><div style="font-weight:700;font-size:16px;margin-bottom:4px">Bí chỗ nào có người gỡ chỗ đó</div><div style="font-size:14px;color:#55555c;line-height:1.6">Nhóm khoá mở suốt 21 ngày, Thành đọc và nhận xét, chứ không phải nộp cho có.</div></div></div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<div style="background:#fff;border-radius:36px;padding:32px" class="fc2-shadow">
+<h3 style="font-size:22px;font-weight:800;margin:0 0 14px">⚠️ Thành xin phép từ chối thẳng những trường hợp sau</h3>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+<div style="display:flex;gap:10px;font-size:14px;line-height:1.6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d33" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><path d="M18 6 6 18M6 6l12 12"></path></svg><span><b>Cần tiền gấp trong tháng này.</b> Đây là chuyện đường dài.</span></div>
+<div style="display:flex;gap:10px;font-size:14px;line-height:1.6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d33" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><path d="M18 6 6 18M6 6l12 12"></path></svg><span><b>Muốn nổi tiếng, chuyện ra khách tính sau.</b></span></div>
+<div style="display:flex;gap:10px;font-size:14px;line-height:1.6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d33" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><path d="M18 6 6 18M6 6l12 12"></path></svg><span><b>Mua khoá về để đó cho yên tâm.</b></span></div>
+<div style="display:flex;gap:10px;font-size:14px;line-height:1.6"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d33" stroke-width="2.5" style="flex-shrink:0;margin-top:2px"><path d="M18 6 6 18M6 6l12 12"></path></svg><span><b>Chưa có nghề hay sản phẩm gì để nói.</b></span></div>
+</div>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<div style="font-size:13px;font-weight:600;color:#55555c;margin-bottom:12px">Thêm học viên đã đi qua 21 ngày</div>
+<div class="fc2-scroll">
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw4-1" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw4-2" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw4-3" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw4-4" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+<div style="flex-shrink:0;width:160px;aspect-ratio:9/16;border-radius:20px;overflow:hidden;position:relative" class="fc2-shadow"><image-slot id="fc2-vw4-5" placeholder="🟡 Video học viên"></image-slot><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div style="background:rgba(255,255,255,.3);backdrop-filter:blur(4px);border-radius:9999px;width:44px;height:44px;display:flex;align-items:center;justify-content:center"><div style="background:linear-gradient(180deg,#3d9962,#2f7a4d);border-radius:9999px;width:30px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="11" height="11" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"></path></svg></div></div></div></div>
+</div>
+</div>
+
+<div id="faq" style="max-width:1400px;margin:0 auto;padding:0 24px 64px">
+<h2 style="font-size:32px;font-weight:800;letter-spacing:-.02em;margin:0 0 20px">Các câu hỏi thường gặp</h2>
+<div style="max-width:760px">
+<details open=""><summary>Mỗi ngày cần bỏ ra bao nhiêu thời gian?</summary><p style="font-size:14px;line-height:1.65;color:#55555c;margin:0 0 20px">Cái ngốn thời gian nhất là lúc ngồi nghĩ hôm nay đăng gì. Buổi hai xử lý đúng chỗ đó — có kho chất liệu rồi thì ngồi xuống là viết được.</p></details>
+<details><summary>Không rành công nghệ, không biết AI thì có theo kịp không?</summary><p style="font-size:14px;line-height:1.65;color:#55555c;margin:0 0 20px">Được. Phần AI bắt đầu từ chỗ chưa biết gì, chỉ dùng công cụ miễn phí hoặc rẻ.</p></details>
+<details><summary>Tôi ngại lộ mặt, có làm được không?</summary><p style="font-size:14px;line-height:1.65;color:#55555c;margin:0 0 20px">Được — nhiều anh chị bắt đầu bằng bài viết, rồi ảnh, rồi giọng nói, rồi mới tới video.</p></details>
+<details><summary>Đóng tiền và nhận lớp thế nào?</summary><p style="font-size:14px;line-height:1.65;color:#55555c;margin:0 0 20px">Chuyển khoản QR ngay trên trang. Chuyển xong nhận link vào nhóm và lịch học.</p></details>
+</div>
+</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:0 24px 64px;text-align:center">
+<h2 style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0 0 16px">Thị trường không nhất thiết chọn người giỏi nhất</h2>
+<p style="font-size:16px;line-height:1.7;color:#333;max-width:640px;margin:0 auto 32px">Tham gia hôm nay, sau 21 ngày anh chị có: một cái kênh có định vị rõ ràng, 21 bài đã đăng thật trên kênh thật, một kho chất liệu để tự viết tiếp mà không cần Thành nữa, và nếu về đích đúng hạn — cả học bổng và một buổi coaching riêng. Anh chị không cần hết sợ để bắt đầu — chỉ cần bắt đầu, để nỗi sợ ngày càng nhỏ đi.</p>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:900px;margin:0 auto 32px">
+<div style="background:#1a1a1a;color:#fff;border-radius:28px;padding:22px" class="fc2-shadow"><div style="font-size:28px;font-weight:800">[[X]]</div><div style="font-size:12px;opacity:.7">khoá đã chạy</div></div>
+<div style="background:#a8d98d;color:#191919;border-radius:28px;padding:22px" class="fc2-shadow"><div style="font-size:28px;font-weight:800">[[X]]</div><div style="font-size:12px;opacity:.75">học viên tham gia</div></div>
+<div style="background:#1a1a1a;color:#fff;border-radius:28px;padding:22px" class="fc2-shadow"><div style="font-size:28px;font-weight:800">[[X]]</div><div style="font-size:12px;opacity:.7">người đi trọn 21 ngày</div></div>
+<div style="background:#fff;border-radius:28px;padding:22px" class="fc2-shadow"><div style="font-size:28px;font-weight:800">[[X]]</div><div style="font-size:12px;color:#77777d">bài Thành đã sửa</div></div>
+</div>
+<a href="#dang-ky" class="fc2-cta" style="display:inline-flex;align-items:center;height:58px;padding:0 28px;background:#2f7a4d;color:#fff;font-weight:700;font-size:16px;border-radius:16px;text-decoration:none">Tôi đã sẵn sàng đăng ký</a>
+<p style="font-size:14px;color:#55555c;margin-top:16px">Còn <b>[[X]]</b>/30 chỗ · Khai giảng <b>[[ngày]]</b></p>
+</div>
+
+<div class="fc2-stickybar">
+<span style="font-size:14px;font-weight:600">21 ngày · học bổng + coaching nếu về đích đúng hạn</span>
+<a href="#dang-ky" class="fc2-cta" style="display:inline-flex;align-items:center;height:44px;padding:0 22px;background:#2f7a4d;color:#fff;font-weight:700;font-size:14px;border-radius:12px;text-decoration:none">Đăng ký ngay</a>
+</div>
+
+<footer style="border-top:1px solid rgba(25,25,25,.1);padding:28px 24px">
+<div style="max-width:1400px;margin:0 auto">
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+<span style="font-size:16px;font-weight:700;color:#77777d">Góc Creator</span>
+<div style="display:flex;gap:20px;font-size:13px">
+<a href="#" style="color:#55555c;text-decoration:none">Chính sách bảo mật</a>
+<a href="#" style="color:#55555c;text-decoration:none">Điều khoản sử dụng</a>
+<a href="#" style="color:#55555c;text-decoration:none">Chính sách hoàn tiền</a>
+</div>
+</div>
+<div style="border:1.5px dashed rgba(220,150,20,.5);background:rgba(220,150,20,.06);border-radius:16px;padding:14px 18px;margin-bottom:16px">
+<div style="font-weight:700;font-size:13px;margin-bottom:4px">🟡 CHỖ ĐIỀN — bắt buộc theo quy định</div>
+<p style="font-size:13px;color:#55555c;line-height:1.6;margin:0">Tên pháp nhân · Mã số thuế · Địa chỉ · Hotline · Email hỗ trợ · Điều kiện giao dịch chung · Đã thông báo Bộ Công Thương. Trang có chức năng thanh toán là website thương mại điện tử, phải thông báo qua online.gov.vn trước khi chạy quảng cáo.</p>
+</div>
+<span style="font-size:12px;color:#9a9aa0">Trang này không hứa hẹn kết quả cụ thể. Kết quả tuỳ lĩnh vực, mức độ triển khai và thời gian mỗi người bỏ ra.</span>
+</div>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+class Component extends DCLogic {}</script>
+</body>
+</html>

@@ -135,6 +135,7 @@
     "BRAND_COLOR": "#3d9962",
     "BRAND_COLOR_DARK": "#2f7a4d",
     "ORDER_PREFIX": "GC",
+    "FORM_BO_CAU_HOI": "0",
     "TZ_OFFSET_MINUTES": "420",
     "LOCALE": "vi-VN",
     "CURRENCY_SUFFIX": "đ"

@@ -76,21 +76,21 @@
         "route": "/",
         "title": "Thử thách 21 ngày — Xây thương hiệu cá nhân | Góc Creator"
       },
-      "form": {
+      "dang-ky": {
         "route": "/dang-ky",
         "title": "Đăng ký Thử Thách 21 Ngày"
       },
-      "confirmation": {
-        "route": "/xac-nhan",
-        "title": "Đã nhận đăng ký"
-      },
-      "oto": {
-        "route": "/vip",
-        "title": "Nâng cấp"
-      },
-      "checkout": {
+      "thanh-toan": {
         "route": "/thanh-toan",
         "title": "Thanh toán"
+      },
+      "tra-cuu": {
+        "route": "/tra-cuu",
+        "title": "Tra cứu đơn"
+      },
+      "chinh-sach-hoan-tien": {
+        "route": "/chinh-sach-hoan-tien",
+        "title": "Chính sách hoàn tiền"
       }
     },
     "testimonials": {
@@ -117,7 +117,12 @@
           "name": ""
         }
       ]
-    }
+    },
+    "boCauHoi": false,
+    "_docBoCauHoi": "true = form dang ky dung bo 8 cau hoi trong worker/src/questions.js va cham diem lead theo do. false = form chi hoi ten/sdt/email (nhu trang ban hang cua Goc Creator) - khong cham diem, va /api/leads KHONG doi answers nua.",
+    "_docPages": "Trang ban hang do apps/funnel-gc/ dung ra (ban da hoan thien cua anh Thanh), khong phai apps/funnel/ cua template.",
+    "trangRieng": true,
+    "_docTrangRieng": "true = thuong hieu tu mang trang ban hang cua minh (apps/funnel-gc), khong dung ban thiet ke .dc.html cua template. Bo test se bo qua nhung bai kiem noi dung rieng cua template (funnel.js, VSL Wistia) - nhung VAN kiem trang tra ve 200, dung HTML, va co day du header bao mat."
   },
   "environment": "production",
   "cron": "0 18 * * *"
