@@ -26,7 +26,8 @@
     "funnelHost": "mau.example.com",
     "appHost": "app.mau.example.com",
     "useCustomDomains": true,
-    "publicUrl": ""
+    "publicUrl": "",
+    "_docUseCustomDomains": "false = chay tren .workers.dev. \"app\" = CHI gan ten mien cho khu vuc thanh vien (appHost), trang ban hang van o .workers.dev - dung khi ten mien ban hang dang co site khac chay. true = gan ca hai, tuc la CHIEM ten mien ban hang khoi Worker dang giu no."
   },
   "product": {
     "sku": "MAU5D",

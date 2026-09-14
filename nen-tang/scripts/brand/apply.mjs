@@ -124,6 +124,24 @@ function dungVars(brand) {
 
 function dungRoutes(brand) {
   const { domains } = brand;
+
+  // "app" = CHI gan ten mien cho khu vuc thanh vien, con trang ban hang van o
+  // dia chi .workers.dev.
+  //
+  // Vi sao can nac giua nay: ten mien ban hang thuong DA CO mot site dang chay
+  // tren do. Hai Worker khong the cung so huu mot ten mien, nen bat len la
+  // chiem cho - thay luon trang dang ban hang, giua ban ngay. Nac "app" cho
+  // phep chay thu tren mot ten mien that (co HTTPS that, cookie that, OAuth
+  // that) ma khong dung gi vao trang dang song.
+  if (domains.useCustomDomains === 'app') {
+    return `  // Chi gan ten mien cho khu vuc thanh vien. Trang ban hang con o
+  // .workers.dev - doi khi chot cat sang thi dat useCustomDomains = true.
+  "routes": [
+    { "pattern": ${q(domains.appHost)}, "custom_domain": true }
+  ],
+`;
+  }
+
   if (!domains.useCustomDomains) {
     return `  // Chua gan ten mien rieng: khai "routes" se khien Cloudflare TAT dia chi
   // .workers.dev, ma do dang la duong duy nhat vao duoc site. Them ten mien vao

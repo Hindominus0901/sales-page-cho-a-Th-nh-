@@ -17,10 +17,11 @@
   // vien dang dang nhap. Doi sang day khi chua co noi dung va chua chuyen tai
   // khoan sang la khoa cua nhot ho o ngoai.
   // <<< BRAND:ROUTES (sinh boi scripts/brand/apply.mjs - dung sua tay)
-  // Chua gan ten mien rieng: khai "routes" se khien Cloudflare TAT dia chi
-  // .workers.dev, ma do dang la duong duy nhat vao duoc site. Them ten mien vao
-  // tai khoan Cloudflare roi dat domains.useCustomDomains = true va chay lai
-  // `npm run brand:apply`.
+  // Chi gan ten mien cho khu vuc thanh vien. Trang ban hang con o
+  // .workers.dev - doi khi chot cat sang thi dat useCustomDomains = true.
+  "routes": [
+    { "pattern": "app.manhthanh.net", "custom_domain": true }
+  ],
   // >>> BRAND:ROUTES
   // Khai "routes" khien Cloudflare TAT dia chi .workers.dev - link demo dang dua
   // cho khach xem chet ngay (404). Giu lai lam duong lui khi ten mien co van de.

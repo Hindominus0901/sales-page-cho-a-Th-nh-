@@ -57,7 +57,10 @@ const LUAT = [
   ['domains.workerName', true, (v) => /^[a-z0-9][a-z0-9-]{1,53}$/.test(v), 'ten Worker tren Cloudflare: chu thuong, so, gach ngang'],
   ['domains.funnelHost', true, laTenMien, 'ten mien trang ban hang, KHONG kem https:// va KHONG co dau /'],
   ['domains.appHost', true, laTenMien, 'ten mien khu vuc thanh vien, KHONG kem https://'],
-  ['domains.useCustomDomains', true, (v) => typeof v === 'boolean', 'true hoac false'],
+  // "app" = chi gan ten mien cho khu vuc thanh vien; trang ban hang van o
+  // .workers.dev. Xem dungRoutes() trong apply.mjs.
+  ['domains.useCustomDomains', true,
+    (v) => typeof v === 'boolean' || v === 'app', 'true, false, hoac "app"'],
 
   ['product.sku', true, (v) => /^[A-Z0-9]{2,16}$/.test(v), 'ma san pham VIET HOA, vi du "VIP5N"'],
   ['product.orderPrefix', true, (v) => /^[A-Z]{2,8}$/.test(v), 'tien to ma don VIET HOA, vi du "VIP"'],

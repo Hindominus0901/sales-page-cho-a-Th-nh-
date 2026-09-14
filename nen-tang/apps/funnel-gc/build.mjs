@@ -1344,9 +1344,17 @@ if (html.includes('<image-slot')) warnings.push('Vẫn còn thẻ <image-slot> c
 
 if (emptySlots.length) {
   console.log(`
-📷 Ô CÒN TRỐNG (${emptySlots.length}) — trang đang hiện khung gạch đứt ở những chỗ này:`);
+📷 Ô CÒN TRỐNG (${emptySlots.length}) — ${SHOW_PH
+  ? 'trang đang hiện khung gạch đứt ở những chỗ này:'
+  : 'chưa có nội dung (showPlaceholders = false nên trang KHÔNG hiện khung gạch đứt):'}`);
   emptySlots.forEach((s, i) => console.log(`  ${i + 1}. ${s}`));
-  console.log('   Điền xong thì khung tự biến mất. Chạy thật thì đặt showPlaceholders = false.');
+  // Dong nay truoc day luon noi "trang dang hien khung gach dut" va "chay that
+  // thi dat showPlaceholders = false" - KE CA KHI no da la false. Nguoi doc
+  // tuong trang minh dang day khung gach dut giua luc sap chay quang cao, va
+  // hoan viec dua trang len chi vi mot cau bao sai.
+  console.log(SHOW_PH
+    ? '   Điền xong thì khung tự biến mất. Chạy thật thì đặt showPlaceholders = false.'
+    : '   Đây chỉ là bảng kiểm kê — điền thêm thì trang giàu nội dung hơn, không điền cũng không sao.');
 }
 
 if (warnings.length) {
