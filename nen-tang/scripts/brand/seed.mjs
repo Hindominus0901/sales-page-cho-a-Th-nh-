@@ -29,6 +29,34 @@ const emailAdmin = (() => {
   return i === -1 ? '' : (process.argv[i + 1] || '');
 })();
 
+/**
+ * Ban bam mat khau cho tai khoan quan tri dau tien, doc tu .env.
+ *
+ * Vi sao can: seed tao hang trong bang `users` nhung KHONG dat mat khau, va
+ * ba duong vao deu khoa:
+ *   - dang nhap bang mat khau: chua co hang nao trong bang `credentials`
+ *   - quen mat khau: tra 503 khi chua dat RESEND_API_KEY
+ *   - Google: chua cau hinh
+ * Ket qua la nguoi vua dung xong site KHONG VAO DUOC trang quan tri cua chinh
+ * minh, va khong co gi noi cho ho biet vi sao.
+ *
+ * ADMIN_PASSWORD_HASH da duoc dat san o buoc truoc (setup:cloudflare nap no
+ * lam bi mat cua Worker), nen dung lai chinh no: mot mat khau cho ca hai cong,
+ * khong bat ai nho them thu gi.
+ */
+const bamMatKhauAdmin = (() => {
+  const f = path.join(ROOT, '.env');
+  if (!fs.existsSync(f)) return '';
+  for (const dong of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
+    const t = dong.trim();
+    if (!t.startsWith('ADMIN_PASSWORD_HASH=')) continue;
+    const v = t.slice('ADMIN_PASSWORD_HASH='.length).trim();
+    // Dung dinh dang ma worker/src/lib/crypto.js doc duoc: 5 phan, mo dau 'pbkdf2'.
+    return /^pbkdf2:[^:]+:\d+:[^:]+:[^:]+$/.test(v) ? v : '';
+  }
+  return '';
+})();
+
 /** Ten co so du lieu lay tu wrangler.jsonc, khong go lai lan thu hai. */
 function tenDb() {
   const raw = fs.readFileSync(path.join(ROOT, 'wrangler.jsonc'), 'utf8')
@@ -65,6 +93,12 @@ WHERE id = 'sf-ai';`);
 VALUES (${sq(`usr-admin-${brand.meta.slug}`)}, ${sq(emailAdmin)}, ${sq(`Quản trị ${identity.name}`)}, 'admin', 'active', 1, 'seed',
         datetime('now'), datetime('now'))
 ON CONFLICT(email) DO UPDATE SET role = 'admin', status = 'active', updated_date = datetime('now');`);
+
+    if (bamMatKhauAdmin) {
+      cauLenh.push(`INSERT INTO credentials (user_id, password_hash, updated_at)
+SELECT id, ${sq(bamMatKhauAdmin)}, datetime('now') FROM users WHERE email = ${sq(emailAdmin)}
+ON CONFLICT(user_id) DO UPDATE SET password_hash = excluded.password_hash, updated_at = excluded.updated_at;`);
+    }
   }
 
   // 4. Khoa hoc mien phi + cac ban ghi buoi hoc cua no.
@@ -144,4 +178,12 @@ if (soBanGhi) {
   console.log(`  ✓ Khoa mien phi: ${soBanGhi} ban ghi (hien trong tab Khoa hoc, mo cho moi hoc vien)`);
 }
 console.log(`\n  ✓ Xong: san pham ${brand.product.sku} · ${new Intl.NumberFormat(brand.meta.locale).format(brand.product.price)}${brand.meta.currencySuffix}`
-  + (emailAdmin ? `\n  ✓ Tai khoan quan tri: ${emailAdmin}` : '\n  (chua tao tai khoan quan tri - them --admin-email de tao)'));
+  + (emailAdmin ? `\n  ✓ Tai khoan quan tri: ${emailAdmin}` : '\n  (chua tao tai khoan quan tri - them --admin-email de tao)')
+  + (emailAdmin && bamMatKhauAdmin
+    ? '\n  ✓ Da dat mat khau (lay tu ADMIN_PASSWORD_HASH trong .env) - dang nhap duoc ngay'
+    : emailAdmin
+      ? '\n  ⚠ CHUA dat mat khau: .env khong co ADMIN_PASSWORD_HASH hop le.'
+        + '\n    Tai khoan nay se KHONG dang nhap duoc chung nao chua co RESEND_API_KEY'
+        + '\n    (quen mat khau can email) hoac chua bat dang nhap Google.'
+        + '\n    Chay: npm run hash-password "<mat khau>" roi dan vao .env, seed lai.'
+      : ''));
