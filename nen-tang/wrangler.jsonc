@@ -17,9 +17,11 @@
   // vien dang dang nhap. Doi sang day khi chua co noi dung va chua chuyen tai
   // khoan sang la khoa cua nhot ho o ngoai.
   // <<< BRAND:ROUTES (sinh boi scripts/brand/apply.mjs - dung sua tay)
-  // Chi gan ten mien cho khu vuc thanh vien. Trang ban hang con o
-  // .workers.dev - doi khi chot cat sang thi dat useCustomDomains = true.
+  // Ten mien that. custom_domain=true -> Cloudflare tu tao ban ghi DNS va tu cap
+  // chung chi HTTPS. Ten mien PHAI da la mot zone trong chinh tai khoan nay,
+  // neu khong buoc deploy se hong voi mot thong bao rat kho hieu.
   "routes": [
+    { "pattern": "manhthanh.net", "custom_domain": true },
     { "pattern": "app.manhthanh.net", "custom_domain": true }
   ],
   // >>> BRAND:ROUTES
