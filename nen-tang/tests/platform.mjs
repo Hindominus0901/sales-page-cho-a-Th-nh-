@@ -155,6 +155,34 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
 
 (async () => {
   console.log(`Kiem tra tang du lieu cong dong tren ${BASE}\n`);
+
+  // Quet sach TAI KHOAN test cua lan chay truoc TRUOC KHI bat dau.
+  //
+  // Khoi don dep o cuoi file da biet lo chuyen "lan chay truoc chet giua chung"
+  // - nhung no nam o CUOI, tuc la dung cho chay khi lan do chet. Hau qua that:
+  // mot lan chay do mang (miniflare "Network connection lost") de lai nguyen
+  // mot bo alice/bob con song. Lan chay lai sau do goi /api/admin/doi-soat,
+  // ham nay quet MOI nguoi dung, va bao lech o cai alice mo coi kia - mot bai
+  // FAIL tro ve mot loi hoan toan khong phai cua lan chay hien tai, doc len
+  // thi tuong so cai cua san pham co van de.
+  //
+  // Cung mot danh sach bang, cung thu tu (bang con truoc, users sau) nhu khoi
+  // cuoi file - de day cho phep chay nhieu lan lien tiep.
+  {
+    const cu = "SELECT id FROM users WHERE email LIKE '%@smoketest.local'";
+    for (const bang of ['point_awards', 'xp_transactions', 'coin_transactions', 'notifications',
+      'post_likes', 'post_comments', 'posts', 'redemptions', 'auth_sessions', 'credentials',
+      'password_resets', 'oauth_accounts', 'activities']) {
+      sql(`DELETE FROM ${bang} WHERE user_id IN (${cu})`);
+    }
+    sql(`DELETE FROM admin_logs WHERE admin_id IN (${cu}) OR target_user_id IN (${cu})`);
+    sql("DELETE FROM kit_sync_log WHERE email LIKE '%@smoketest.local'");
+    sql("DELETE FROM otp_codes WHERE email LIKE '%@smoketest.local'");
+    sql("DELETE FROM emails_sent WHERE to_addr LIKE '%@smoketest.local'");
+    sql("DELETE FROM leads WHERE email LIKE '%@smoketest.local'");
+    sql("DELETE FROM users WHERE email LIKE '%@smoketest.local'");
+  }
+
   sql("DELETE FROM commissions WHERE affiliate_id IN (SELECT id FROM affiliates WHERE email LIKE '%@smoketest.local')");
   sql("DELETE FROM referral_clicks WHERE affiliate_id IN (SELECT id FROM affiliates WHERE email LIKE '%@smoketest.local')");
   sql("DELETE FROM affiliates WHERE email LIKE '%@smoketest.local'");
