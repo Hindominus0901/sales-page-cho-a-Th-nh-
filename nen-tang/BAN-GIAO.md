@@ -64,17 +64,37 @@ thủ công — từ đó trở đi mọi thứ tự chạy y hệt.
 Đây là phần quan trọng nhất của việc bàn giao. Thiếu một dòng là sau này anh
 Thành không tự làm chủ được hệ thống của mình.
 
-| Thứ | Đang ở đâu | Cần làm |
-|---|---|---|
-| **Tài khoản Cloudflare** | tài khoản đang dựng hệ thống | Mời email anh Thành làm **Administrator**, hoặc chuyển hẳn tên miền sang tài khoản của anh ấy |
-| **Tên miền `manhthanh.net`** | cùng tài khoản Cloudflare trên | Đi theo tài khoản Cloudflare |
-| **Mã nguồn (GitHub)** | repo `sales-page-cho-a-Th-nh-` | Mời tài khoản GitHub của anh Thành làm collaborator |
-| **Mật khẩu trang quản trị** | đã đặt lúc dựng | **Đổi ngay sau khi bàn giao** — xem Phần 5 |
-| **Tài khoản ngân hàng nhận tiền** | Techcombank `937213` | Đã là của công ty — chỉ cần anh Thành xác nhận đúng |
-| **Số Zalo** | chưa có | Phần 3.1 |
+Tài khoản Cloudflare **đã là của anh Thành** — tên miền, Worker, cơ sở dữ liệu
+đều nằm sẵn trong đó, không phải chuyển gì. Còn lại bốn thứ:
 
-> Nếu không chuyển quyền Cloudflare, anh Thành **không thể** sửa tên miền, xem
-> dữ liệu, hay khôi phục khi có sự cố — mọi việc phải nhờ lại người dựng.
+| Thứ | Cần làm |
+|---|---|
+| **Mã nguồn (GitHub)** | Mời tài khoản GitHub của anh Thành vào repo `sales-page-cho-a-Th-nh-` |
+| **Mật khẩu trang quản trị** | **Đổi ngay** — xem Phần 5. Mật khẩu hiện tại đã đi qua tay người dựng |
+| **Token Cloudflare trong `.env`** | Xem ô cảnh báo ngay bên dưới |
+| **Máy để deploy** | Anh Thành cần một máy có bản chép mã nguồn, hoặc nhờ người dựng chạy hộ mỗi lần sửa |
+
+> ### Token Cloudflare — đọc kỹ chỗ này
+>
+> Lúc dựng hệ thống, một **API token của tài khoản Cloudflare anh Thành** đã được
+> tạo và lưu vào file `.env` trên máy người dựng (`CLOUDFLARE_API_TOKEN`). Token
+> đó có quyền **ghi**: sửa Worker, sửa cơ sở dữ liệu, sửa tên miền.
+>
+> File `.env` không bao giờ lên GitHub (đã nằm trong `.gitignore`), nhưng nó vẫn
+> **nằm trên ổ cứng máy đó**. Nếu máy đó không phải máy anh Thành, thì sau khi bàn
+> giao xong nên vào Cloudflare → My Profile → API Tokens → **thu hồi token cũ**,
+> rồi anh Thành tự tạo token mới trên máy của mình.
+>
+> Cùng file `.env` đó còn giữ `ADMIN_PASSWORD_HASH` và `SESSION_SECRET`. Đổi mật
+> khẩu quản trị ở Phần 5 là xử lý được phần mật khẩu.
+
+Ngoài ra, **bản sao mã nguồn đang nằm ở**:
+
+```
+C:\Users\Administrator\Documents\sales-page-cho-a-Th-nh-\nen-tang
+```
+
+nhánh `claude/exciting-keller-n58lug`. Mọi lần deploy đều chạy từ đó.
 
 ---
 
