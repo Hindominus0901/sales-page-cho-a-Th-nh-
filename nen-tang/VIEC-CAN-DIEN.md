@@ -3,16 +3,19 @@
 Thư mục này là **nền tảng học viên + trang bán hàng** của Góc Creator, dựng từ
 template `adm-ai-funnel` (nhánh `template`) rồi đổi thương hiệu sang Góc Creator.
 
-Hệ cũ ở thư mục gốc của repo (`src/`, `admin/`, `build/`) **vẫn còn nguyên và
-vẫn chạy** — chưa bỏ gì cả. Cắt sang hệ mới khi nào xong mục 3 bên dưới.
+Hệ cũ ở thư mục gốc của repo (`src/`, `admin/`, `build/`) **vẫn còn nguyên**,
+nhưng Worker của nó (`goc-creator-challenge`) **không còn giữ `manhthanh.net`**:
+tên miền đã cắt sang hệ mới. Xem mục 4.
+
+> Người vận hành (anh Thành) đọc `BAN-GIAO.md`, không phải file này.
 
 ## Đã chạy được ở máy
 
 ```
 brand:check      ✓ sạch
-npm run build    ✓ 5 trang, giá 2.000.000đ
+npm run build    ✓ 14 trang, giá 2.000.000đ
 tests/smoke      ✓  86/86
-tests/auth       ✓  53/53
+tests/auth       ✓  49/49 + 4 bỏ qua (kho ảnh tắt)
 tests/platform   ✓ 238/238
                    ─────────
                    377/377
@@ -26,7 +29,7 @@ Sửa trong `brand/brand.json` rồi chạy `npm run brand:validate && npm run b
 
 | Trường | Hiện tại | Cần |
 |---|---|---|
-| `payment.account` | `0000000000` | **Số tài khoản Techcombank thật** |
+| ~~`payment.account`~~ | ✅ `937213` | xong — vẫn phải quét QR kiểm bằng mắt |
 | `contact.zaloPhone` | `0000000000` | Số Zalo thật |
 | `contact.zaloUrl` | `https://zalo.me/0000000000` | Link Zalo thật |
 | `contact.zaloGroupUrl` | `https://zalo.me/g/chua-co` | Link nhóm Zalo thật |
@@ -145,15 +148,29 @@ Nhưng nền tảng có phần thay thế riêng cho từng cái — khu vực t
 `/hoc`, cổng `/dai-ly` thay `/ctv-dang-ky`, đăng nhập của nền tảng thay
 `/dang-nhap`. **Giữ cái nào là việc cần bàn, không phải việc kỹ thuật.**
 
-## 4. Deploy lên Cloudflare — CHƯA LÀM, và phải là anh chạy
+## 4. Deploy lên Cloudflare — ĐÃ XONG
 
-**Trạng thái hiện tại: chưa deploy lần nào.** Bằng chứng nằm ngay trong
-`wrangler.jsonc`: `database_id` và KV id đang là **mã toàn số 0** — cố ý, để bỏ
-sót bước `setup:cloudflare` thì deploy hỏng to tiếng thay vì im lặng cắm vào cơ
-sở dữ liệu của khách khác.
+**Đã deploy và đã cắt tên miền.** Lần deploy cắt domain in ra:
 
-Máy chạy Claude không deploy được: chính sách mạng chặn `api.cloudflare.com`
-(gateway trả 403 ngay ở bước CONNECT), và không có token Cloudflare nào.
+```
+Custom Domains already exist for these domains:
+   • manhthanh.net (used as a domain for "goc-creator-challenge")
+Update them to point to this script instead? ... yes
+Deployed goc-creator-platform triggers
+  https://goc-creator-platform.nhipsongsoserenitylife.workers.dev
+  manhthanh.net (custom domain)
+  app.manhthanh.net (custom domain)
+  schedule: 0 18 * * *
+```
+
+Tức là Cloudflare đã **gỡ `manhthanh.net` khỏi Worker cũ** và trỏ sang
+`goc-creator-platform`. `workers_dev` vẫn bật nên địa chỉ `.workers.dev` còn sống
+làm đường lui.
+
+Máy chạy Claude vẫn không deploy được: chính sách mạng chặn `api.cloudflare.com`
+(gateway trả 403 ngay ở bước CONNECT). Mọi lần deploy phải chạy ở máy anh.
+
+Runbook bên dưới giữ lại cho lần dựng site kế tiếp.
 
 ### Đã kiểm được những gì trước khi giao
 
