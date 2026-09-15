@@ -1552,8 +1552,18 @@ async function sendNotification(rc, svc) {
   // bam gui, he thong bao "da gui toi 347 nguoi" - va 347 nguoi nhan mot thong
   // bao khong co nut bam. Chi chan cac lich khong phai http (javascript:,
   // data:) vi do la duong chay ma trong trinh duyet cua hoc vien.
+  //
+  // Duong dan NOI BO phai la mot dau / roi den chu - khong duoc la "//" hay
+  // "/\\". Ca hai deu qua duoc phep thu "co bat dau bang / khong", nhung trinh
+  // duyet doc chung la dia chi NGOAI: //evil.com va /\\evil.com deu dan nguoi
+  // bam ra khoi manhthanh.net. Do cung la dang ma canh bao
+  // GHSA-wrjc-x8rr-h8h6 cua react-router noi toi (navigate(tin.link) o
+  // ThongBao). Hien chi quan tri moi gui duoc thong bao, nen day la lop chan
+  // du phong chu khong phai lo hong dang mo - nhung mot phep thu dung thi re
+  // hon mot cuoc dieu tra sau nay.
   let link = String(rc.body?.link || '').trim();
-  if (link && !link.startsWith('/') && !/^https:\/\//i.test(link)) link = '';
+  const noiBoHopLe = /^\/(?![/\\])/.test(link);
+  if (link && !noiBoHopLe && !/^https:\/\//i.test(link)) link = '';
 
   // Thong bao quan trong hien thang giua man hinh thay vi nam trong chuong.
   // Dung cho nhung thu co han: link Zoom mo luc 9:00, khung diem danh 15 phut.

@@ -1175,6 +1175,29 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const linkLa = sql(`SELECT link FROM notifications WHERE user_id = '${alice.id}' AND title = 'Thu chen link la'`);
   check('lich khong phai https bi loai bo', !linkLa[0]?.link, linkLa);
 
+  // Duong dan "noi bo" bat dau bang // hoac /\\ thi KHONG noi bo: trinh duyet
+  // doc chung la dia chi ngoai, nen mot thong bao co link "//evil.com" dan hoc
+  // vien ra khoi manhthanh.net trong khi phep thu cu ("co bat dau bang / khong")
+  // van cho qua. Hien chi quan tri gui duoc thong bao nen day la lop du phong,
+  // nhung dung lop nay cung la dang ma canh bao react-router GHSA-wrjc-x8rr-h8h6
+  // noi toi - trang ThongBao goi navigate(tin.link).
+  for (const [nhan, duong] of [['hai gach cheo', '//vi-du-ngoai.test'],
+    ['gach cheo nguoc', '/\\vi-du-ngoai.test']]) {
+    const tieuDe = `Thu chuyen huong ${nhan}`;
+    await admin.call('POST', '/api/functions/sendNotification', {
+      audience: 'user', user_id: alice.id, title: tieuDe, link: duong,
+    });
+    const r = sql(`SELECT link FROM notifications WHERE user_id = '${alice.id}' AND title = '${tieuDe}'`);
+    check(`link ${nhan} bi loai bo (khong dan ra ngoai)`, !r[0]?.link, r);
+  }
+
+  // Va duong dan noi bo THAT thi van phai di qua.
+  await admin.call('POST', '/api/functions/sendNotification', {
+    audience: 'user', user_id: alice.id, title: 'Thu link noi bo', link: '/challenges',
+  });
+  const linkTrong = sql(`SELECT link FROM notifications WHERE user_id = '${alice.id}' AND title = 'Thu link noi bo'`);
+  check('link noi bo /challenges van duoc giu', linkTrong[0]?.link === '/challenges', linkTrong);
+
   // Thong bao danh dau popup phai duoc ghi type='popup' - do la thu duy nhat
   // lam no hien thang giua man hinh thay vi nam trong chuong.
   await admin.call('POST', '/api/functions/sendNotification', {

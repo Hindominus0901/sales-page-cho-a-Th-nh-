@@ -20,7 +20,14 @@ export default defineConfig({
     // rieng se thoi bay toan bo trang ban hang, va test funnel do 10 bai voi
     // ly do hoan toan khong lien quan. Vite chi don phan cua chinh no ben duoi.
     emptyOutDir: false,
-    sourcemap: true,
+    // KHONG xuat ban do nguon ra ban that. `sourcemap: true` truoc day day mot
+    // file .map 2,4 MB len Cloudflare, doc duoc cong khai tai
+    // /assets/index-*.js.map - tuc la toan bo ma nguon khu vuc thanh vien, ca
+    // chu thich, nam mo cho bat ky ai mo dia chi do. Khong co bi mat nao trong
+    // do, nhung cung khong co ly do gi de dang no.
+    //
+    // Can go loi tren ban that thi: SOURCEMAP=1 npm run build
+    sourcemap: process.env.SOURCEMAP === '1',
   },
   server: {
     port: 5173,
