@@ -70,7 +70,7 @@ Tài khoản Cloudflare **đã là của anh Thành** — tên miền, Worker, c
 | Thứ | Cần làm |
 |---|---|
 | **Mã nguồn (GitHub)** | Mời tài khoản GitHub của anh Thành vào repo `sales-page-cho-a-Th-nh-` |
-| **Mật khẩu trang quản trị** | **Đổi ngay** — xem Phần 5. Mật khẩu hiện tại đã đi qua tay người dựng |
+| **Mật khẩu trang quản trị** | **Đổi ngay** — xem Phần 5. Tài khoản quản trị (`role = 'admin'`) đã mang email của anh Thành, chỉ mật khẩu là do người dựng đặt |
 | **Token Cloudflare trong `.env`** | Đang nằm trên máy người dựng — xem ô cảnh báo ngay bên dưới |
 | **Máy để deploy** | Anh Thành cần một máy có bản chép mã nguồn, hoặc nhờ người dựng chạy hộ mỗi lần sửa — chọn kiểu A hay B bên dưới |
 
@@ -201,6 +201,19 @@ npx wrangler secret put ADMIN_PASSWORD_HASH
 
 Lệnh thứ nhất in ra một chuỗi dài. Dán chuỗi đó vào khi lệnh thứ hai hỏi.
 Không cần deploy lại.
+
+> **Lưu ý: hệ thống KHÔNG có nút "đổi mật khẩu" cho người đang đăng nhập.**
+> Trong worker chỉ có hai đường dính mật khẩu: `/api/auth/reset-request` (gửi
+> link qua email) và `/api/auth/reset` (đặt lại bằng token). Nên:
+>
+> - Đổi mật khẩu quản trị **phải làm bằng dòng lệnh** như trên, cộng thêm
+>   `npm run brand:seed -- --remote --admin-email <email admin>` để đổi cả cửa
+>   khu vực thành viên.
+> - **Học viên quên mật khẩu thì tắc**, vì đường đặt lại đi qua email mà email
+>   đang tắt (Phần 3.3).
+>
+> Cả hai chuyện này tan ngay khi bật `RESEND_API_KEY`. Đó là lý do email nên
+> lên đầu danh sách chứ không phải "làm sau cũng được".
 
 ---
 
