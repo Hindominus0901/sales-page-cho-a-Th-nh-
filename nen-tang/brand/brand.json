@@ -91,6 +91,14 @@
       "chinh-sach-hoan-tien": {
         "route": "/chinh-sach-hoan-tien",
         "title": "Chính sách hoàn tiền"
+      },
+      "workshop": {
+        "route": "/workshop",
+        "title": "Hành trình xây kênh — Xây chính mình | Góc Creator"
+      },
+      "ban-do-21-ngay": {
+        "route": "/ban-do-21-ngay",
+        "title": "Bản Đồ 21 Ngày | Góc Creator"
       }
     },
     "testimonials": {

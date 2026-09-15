@@ -11,6 +11,8 @@ export const FUNNEL_PAGES = [
   ["/thanh-toan", "/f/thanh-toan"],
   ["/tra-cuu", "/f/tra-cuu"],
   ["/chinh-sach-hoan-tien", "/f/chinh-sach-hoan-tien"],
+  ["/workshop", "/f/workshop"],
+  ["/ban-do-21-ngay", "/f/ban-do-21-ngay"],
 ];
 
 /**
