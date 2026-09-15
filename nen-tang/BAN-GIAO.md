@@ -71,22 +71,52 @@ Tài khoản Cloudflare **đã là của anh Thành** — tên miền, Worker, c
 |---|---|
 | **Mã nguồn (GitHub)** | Mời tài khoản GitHub của anh Thành vào repo `sales-page-cho-a-Th-nh-` |
 | **Mật khẩu trang quản trị** | **Đổi ngay** — xem Phần 5. Mật khẩu hiện tại đã đi qua tay người dựng |
-| **Token Cloudflare trong `.env`** | Xem ô cảnh báo ngay bên dưới |
-| **Máy để deploy** | Anh Thành cần một máy có bản chép mã nguồn, hoặc nhờ người dựng chạy hộ mỗi lần sửa |
+| **Token Cloudflare trong `.env`** | Đang nằm trên máy người dựng — xem ô cảnh báo ngay bên dưới |
+| **Máy để deploy** | Anh Thành cần một máy có bản chép mã nguồn, hoặc nhờ người dựng chạy hộ mỗi lần sửa — chọn kiểu A hay B bên dưới |
 
-> ### Token Cloudflare — đọc kỹ chỗ này
+> ### Token Cloudflare — việc phải làm, không phải "nên cân nhắc"
 >
 > Lúc dựng hệ thống, một **API token của tài khoản Cloudflare anh Thành** đã được
-> tạo và lưu vào file `.env` trên máy người dựng (`CLOUDFLARE_API_TOKEN`). Token
-> đó có quyền **ghi**: sửa Worker, sửa cơ sở dữ liệu, sửa tên miền.
+> tạo và lưu vào file `.env`. Token đó có quyền **ghi**: sửa Worker, sửa cơ sở dữ
+> liệu, sửa tên miền.
 >
-> File `.env` không bao giờ lên GitHub (đã nằm trong `.gitignore`), nhưng nó vẫn
-> **nằm trên ổ cứng máy đó**. Nếu máy đó không phải máy anh Thành, thì sau khi bàn
-> giao xong nên vào Cloudflare → My Profile → API Tokens → **thu hồi token cũ**,
-> rồi anh Thành tự tạo token mới trên máy của mình.
+> File `.env` không bao giờ lên GitHub (đã nằm trong `.gitignore`), nhưng nó
+> **nằm trên máy của người dựng, không phải máy anh Thành**. Cùng file đó còn giữ
+> `ADMIN_PASSWORD_HASH` và `SESSION_SECRET`.
 >
-> Cùng file `.env` đó còn giữ `ADMIN_PASSWORD_HASH` và `SESSION_SECRET`. Đổi mật
-> khẩu quản trị ở Phần 5 là xử lý được phần mật khẩu.
+> Nghĩa là: chừng nào token đó còn sống, người dựng còn toàn quyền ghi vào
+> Cloudflare của anh Thành. Xử lý theo đúng một trong hai kiểu bàn giao bên dưới —
+> đừng để lửng lơ.
+
+### Hai kiểu bàn giao — chọn một
+
+**Kiểu A — anh Thành tự làm chủ hoàn toàn.** Chọn kiểu này nếu anh Thành (hoặc
+người kỹ thuật của anh ấy) sẽ tự chạy deploy mỗi khi sửa gì.
+
+1. Anh Thành chép mã nguồn về máy mình: `git clone`, `npm ci`.
+2. Anh Thành **tự tạo API token mới** trên Cloudflare của mình, điền vào `.env`
+   của máy mình cùng các giá trị khác.
+3. Đổi mật khẩu quản trị (Phần 5).
+4. Người dựng vào Cloudflare → My Profile → API Tokens → **thu hồi token cũ**.
+5. Người dựng xoá thư mục mã nguồn trên máy mình (hoặc ít nhất xoá file `.env`).
+
+Sau bước 4, người dựng không còn quyền gì với hệ thống nữa — đúng như tên gọi
+"bàn giao".
+
+**Kiểu B — anh Thành vận hành, người dựng vẫn lo kỹ thuật.** Chọn kiểu này nếu
+anh Thành chỉ dùng trang quản trị và không muốn động tới dòng lệnh nào.
+
+- Token cũ **giữ nguyên**, không thu hồi — người dựng cần nó để deploy.
+- Anh Thành vẫn nên đổi mật khẩu quản trị (Phần 5) để mật khẩu đăng nhập là của
+  riêng anh ấy.
+- **Ghi rõ ra giấy** rằng mọi thay đổi cần dòng lệnh (đổi giá, đổi số tài khoản,
+  đổi số Zalo, bật email, khôi phục sự cố) đều phải qua người dựng. Đây là một
+  phụ thuộc thật, không phải chi tiết kỹ thuật vụn vặt: nếu người dựng bận hoặc
+  ngừng hợp tác, anh Thành kẹt cho tới khi tìm được người khác đọc được repo này.
+
+Không chọn kiểu nào là rơi vào trạng thái xấu nhất của cả hai: anh Thành tưởng
+mình đã làm chủ, mà thực ra vẫn phụ thuộc, và vẫn có một token quyền ghi nằm ở
+máy người khác.
 
 Ngoài ra, **bản sao mã nguồn đang nằm ở**:
 
