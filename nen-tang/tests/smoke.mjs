@@ -88,6 +88,21 @@ const ANSWERS = {
   check('GET /api/config', cfg.status === 200 && cfg.data.ok && cfg.data.product?.price > 0);
   if (cfg.data?.product?.price) PRODUCT_PRICE = cfg.data.product.price;
 
+  // KHONG duoc phat mot so Zalo giu cho ra ngoai. brand.json bat buoc
+  // contact.zaloPhone khop /^0\d{8,10}$/, nen cho giu cho "0000000000" la mot
+  // chuoi HOP LE VE DINH DANG - no di lot qua validate, ra toi /api/config, roi
+  // len giao dien duoi dang mot nut bam dan toi zalo.me/0000000000. Nut do nam
+  // ngay cho khach VUA CHUYEN TIEN gui bill. config.js quy doi cho giu cho
+  // thanh chuoi rong de cac man hinh tu an nut di; bai nay giu cho no khong
+  // quay lai.
+  const sdtZalo = String(cfg.data?.zalo?.phone || '').replace(/\D/g, '');
+  check('/api/config khong phat so Zalo giu cho',
+    !sdtZalo || !(/^0+$/.test(sdtZalo) || /^0(\d)\1+$/.test(sdtZalo)), cfg.data?.zalo);
+  check('link Zalo rong hoac tro toi dung so do',
+    !cfg.data?.zalo?.url || cfg.data.zalo.url.includes(sdtZalo), cfg.data?.zalo?.url);
+  check('link nhom Zalo khong con la cho giu cho',
+    !/\/g\/chua-co\/?$/.test(cfg.data?.zalo?.group_url || ''), cfg.data?.zalo?.group_url);
+
   // Danh sach trang lay tu brand.json chu khong viet cung: thuong hieu bo trang
   // /vip hay doi duong dan la bo test cu do ma khong lien quan gi den san pham.
   const TRANG = Object.values(BRAND_TEST.funnel?.pages || {}).map((t) => t.route);

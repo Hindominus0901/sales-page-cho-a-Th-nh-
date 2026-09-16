@@ -213,6 +213,22 @@ function dungCssThuongHieu(brand) {
  * NGAY khi trang ve lan dau, khong the doi mot vong goi API roi moi hien -
  * nguoi dung se thay logo nhay chu.
  */
+/**
+ * So dien thoai nay co phai cho giu cho khong?
+ *
+ * Chi bat nhung chuoi KHONG THE la so that: toan so 0, hoac "0" roi mot chu so
+ * lap lai. KHONG bat theo do dai hay dau so - lam the la co ngay mot khach that
+ * co so dep bi he thong am tham giau nut lien he di.
+ *
+ * Ban sao cua ham nay nam trong worker/src/config.js. Hai ban vi hai ben khong
+ * dung chung module nao (mot ben chay luc build bang Node, mot ben chay trong
+ * Worker); doi luat thi phai sua ca hai.
+ */
+function laChoGiuCho(sdt) {
+  const s = String(sdt || '').replace(/\D/g, '');
+  return !s || /^0+$/.test(s) || /^0(\d)\1+$/.test(s);
+}
+
 function dungJsThuongHieu(brand) {
   const data = {
     name: brand.identity.name,
@@ -222,8 +238,24 @@ function dungJsThuongHieu(brand) {
     logoText: brand.identity.logoText,
     colorHex: brand.theme.primaryHex,
     channelLabel: brand.contact.channelLabel || 'Zalo',
-    supportUrl: brand.contact.zaloUrl,
-    groupUrl: brand.contact.zaloGroupUrl || brand.contact.zaloUrl,
+    // Cho giu cho thi phat ra CHUOI RONG, khong phat ra link chet.
+    //
+    // validate.mjs bat buoc contact.zaloPhone khop /^0\d{8,10}$/, nen truoc khi
+    // co so that nguoi ta phai go mot cho giu cho, va cho giu cho hop le ve mat
+    // dinh dang la "0000000000". Gia tri do di thang vao day, thanh
+    // BRAND.supportUrl = "https://zalo.me/0000000000", va CuaHang.jsx chi thu
+    // `{zaloChiThanh && ...}` - chuoi khac rong nen NUT HIEN RA. Nut do la
+    // "Gui bill ve Zalo de minh xac nhan nhe", dung cho khach VUA CHUYEN TIEN.
+    //
+    // Tra ve chuoi rong thi chinh phep thu san co do se an nut di, va nut tu
+    // hien lai o lan brand:apply sau khi da dien so that. Worker cung quy doi y
+    // het trong worker/src/config.js - hai mat cua he thong doc hai nguon khac
+    // nhau (day la luc build, ben kia la bien moi truong) nen phai lam ca hai.
+    supportUrl: laChoGiuCho(brand.contact.zaloPhone) ? '' : brand.contact.zaloUrl,
+    groupUrl: laChoGiuCho(brand.contact.zaloPhone)
+      ? ''
+      : (/\/g\/chua-co\/?$/.test(brand.contact.zaloGroupUrl || '')
+        ? '' : (brand.contact.zaloGroupUrl || brand.contact.zaloUrl)),
     // Do lech mui gio cua THUONG HIEU, khong phai cua may nguoi dung. Trang
     // quan tri nhap gio buoi hoc bang o datetime-local, ma o do tra ve gio
     // theo may - laptop dat mui gio khac la moi buoi hoc lech gio, im lang.

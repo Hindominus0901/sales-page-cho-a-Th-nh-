@@ -1,4 +1,4 @@
-import BRAND from '@/brand.generated.js';
+import NutNhanAdmin from '@/components/NutNhanAdmin';
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
-const ZALO_URL = BRAND.supportUrl;
 
 const STATUS = {
   approved: { label: "✓ Đã chấm xong", className: "text-emerald-700 bg-emerald-500/10" },
@@ -41,11 +40,7 @@ function ChallengeCard({ challenge, participants, locked, joining, onOpen }) {
         {left != null && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {left} ngày còn lại</span>}
       </div>
       {locked ? (
-        <a href={ZALO_URL} target="_blank" rel="noopener noreferrer" className="block">
-          <Button className="rounded-full w-full bg-foreground text-background hover:bg-foreground/90">
-            Nhắn Admin qua Zalo để mở khoá
-          </Button>
-        </a>
+        <NutNhanAdmin full className="block" />
       ) : (
         <Button className="rounded-full w-full" onClick={onOpen} disabled={joining}>
           {joining ? <Loader2 className="w-4 h-4 animate-spin" /> : "Vào Challenge →"}

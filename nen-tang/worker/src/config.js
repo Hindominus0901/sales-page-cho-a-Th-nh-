@@ -12,6 +12,18 @@ const str = (env, key, fallback = '') => {
   const value = env[key];
   return value === undefined || value === null || value === '' ? fallback : String(value);
 };
+/**
+ * So dien thoai nay co phai cho giu cho khong?
+ *
+ * Chi bat nhung chuoi KHONG THE la so that: toan so 0, hoac "0" roi mot chu so
+ * lap lai (0111111111). KHONG bat theo do dai hay dau so - lam the la co ngay
+ * mot khach that co so dep bi he thong am tham giau nut lien he di.
+ */
+const laZaloGiuCho = (sdt) => {
+  const s = String(sdt || '').replace(/\D/g, '');
+  return !s || /^0+$/.test(s) || /^0(\d)\1+$/.test(s);
+};
+
 const num = (env, key, fallback) => {
   const value = Number(str(env, key, fallback));
   return Number.isFinite(value) ? value : fallback;
@@ -124,11 +136,27 @@ export function readConfig(env) {
       memoPrefix: str(env, 'BANK_MEMO_PREFIX').toUpperCase().replace(/[^A-Z0-9]/g, ''),
     },
 
-    zalo: {
-      supportPhone: str(env, 'ZALO_PHONE'),
-      supportUrl: str(env, 'ZALO_URL'),
-      groupUrl: str(env, 'ZALO_GROUP_URL'),
-    },
+    // Zalo CHUA DIEN thi phai tra ve RONG, khong tra ve so gia.
+    //
+    // brand.json bat buoc contact.zaloPhone khop /^0\d{8,10}$/ nen cho tay vao
+    // mot cho giu cho, va cho giu cho duoc chon la "0000000000" - mot chuoi HOP
+    // LE VE MAT DINH DANG. Hau qua: moi cho trong giao dien deu thay mot so "co
+    // that" va hien nut, trong khi zalo.me/0000000000 la link chet. Te nhat la
+    // nut "Gui bill ve Zalo de minh xac nhan nhe" o trang Cua hang - dung cho
+    // khach VUA CHUYEN TIEN xong bam vao.
+    //
+    // Cac man hinh deu da co san phep thu `{zaloChiThanh && ...}`; chung chi can
+    // gia tri RONG la tu an. Nen quy doi o DAY, mot cho, thay vi rai phep thu
+    // "co phai so gia khong" khap noi.
+    zalo: laZaloGiuCho(str(env, 'ZALO_PHONE'))
+      ? { supportPhone: '', supportUrl: '', groupUrl: '' }
+      : {
+        supportPhone: str(env, 'ZALO_PHONE'),
+        supportUrl: str(env, 'ZALO_URL'),
+        // Nhom Zalo co cho giu cho rieng, doc lap voi so dien thoai.
+        groupUrl: /\/g\/chua-co\/?$/.test(str(env, 'ZALO_GROUP_URL'))
+          ? '' : str(env, 'ZALO_GROUP_URL'),
+      },
 
     webhook: {
       // Secret cho webhook ngan hang (SePay / Casso). De trong = tu choi tat ca.

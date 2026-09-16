@@ -1,4 +1,4 @@
-import BRAND from '@/brand.generated.js';
+import NutNhanAdmin from '@/components/NutNhanAdmin';
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Loader2, Lock } from "lucide-react";
@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
-const ZALO_URL = BRAND.supportUrl;
 
 export default function Courses() {
   const me = useMe();
@@ -121,11 +120,7 @@ export default function Courses() {
               title="Khoá học này đang khoá"
               description="Bạn cần được admin mở khoá hoặc mua gói tương ứng để vào học."
               action={
-                <a href={ZALO_URL} target="_blank" rel="noopener noreferrer">
-                  <Button className="rounded-full bg-foreground text-background hover:bg-foreground/90">
-                    Nhắn Admin qua Zalo để mở khoá
-                  </Button>
-                </a>
+                <NutNhanAdmin />
               }
               className="border-0 p-6"
             />
@@ -190,11 +185,7 @@ export default function Courses() {
                     Xem khoá học →
                   </Button>
                 ) : (
-                  <a href={ZALO_URL} target="_blank" rel="noopener noreferrer" className="mt-auto">
-                    <Button className="rounded-full w-full bg-foreground text-background hover:bg-foreground/90">
-                      Nhắn Admin qua Zalo để mở khoá
-                    </Button>
-                  </a>
+                  <NutNhanAdmin full className="mt-auto" />
                 )}
               </div>
             );

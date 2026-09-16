@@ -94,6 +94,24 @@ function chayMot(duong) {
     console.log('\n  Dung may chu dev dang chay san o cong 8787.\n');
   }
 
+  // Xoa bo dem chan spam TRUOC KHI chay.
+  //
+  // /api/leads gioi han RATE_LEAD_PER_HOUR (mac dinh 10) lua dang ky moi GIO
+  // moi DIA CHI IP. Ca ba bo test - va bat cu lan thu tay nao trong cung gio -
+  // deu di ra tu mot dia chi duy nhat la 127.0.0.1, nen chung tieu chung mot
+  // han muc. Cham tran thi tests/smoke.mjs do o nhung bai KHONG LIEN QUAN GI
+  // toi gioi han (vi du "mat cookie ref -> van doc duoc ma tu dia chi trang"),
+  // kem mot thong bao noi ve spam - doc len khong ai nghi toi rate limit, va
+  // no tu khoi sau mot tieng nen cang giong mot loi chap chon.
+  //
+  // Xoa o day chu khong o trong smoke.mjs: smoke la bo DUY NHAT duoc phep chay
+  // voi ban deploy that, nen no tuyet doi khong duoc dung toi database. Con
+  // script nay thi chi chay o may - no tu bat wrangler dev len.
+  try {
+    execFileSync('npx', ['wrangler', 'd1', 'execute', 'platform', '--local',
+      '--command', 'DELETE FROM rate_limits'], { stdio: 'ignore', shell: true });
+  } catch { /* khong xoa duoc thi cung dung chan viec chay test */ }
+
   let hong = 0;
   try {
     for (const bo of BO_TEST) {
