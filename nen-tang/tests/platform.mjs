@@ -1756,6 +1756,145 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   sql(`DELETE FROM events WHERE meta_json LIKE '%${maDon}%'`);
   sql(`DELETE FROM orders WHERE code = '${maDon}'`);
 
+  // ============================================================================
+  // N. DUONG KHAI THAC DA DONG
+  //
+  // Nhung bai duoi day KHONG kiem mot tinh nang nao ca - chung kiem rang mot
+  // duong TAN CONG cu the khong con di duoc. Bo test cu da xanh trong khi ca
+  // tam lo hong nay dang mo, vi no chi di duong hop le. Moi bai o day ung voi
+  // mot lo hong that, mo ta o commit "Va tam lo hong tim duoc khi ra soat".
+  // ============================================================================
+  console.log('\nN. Duong khai thac da dong');
+
+  // --- 1. Chiem tai khoan bang so dien thoai ---------------------------------
+  // /api/tra-cuu + /vao-lop co y la hai yeu to. Neu /tra-cuu phat ma don cua
+  // don DA TRA TIEN thi hai yeu to sap thanh mot: biet so dien thoai la vao
+  // duoc tai khoan.
+  {
+    const sdtMua = `+849${String(Date.now()).slice(-8)}`;
+    const maDonThu = `GCKT${String(Date.now()).slice(-4)}`;
+    sql(`INSERT INTO leads (email,full_name,phone,phone_e164,status,created_at,updated_at)
+         VALUES ('khaithac@smoketest.local','Khai Thac','${sdtMua}','${sdtMua}','new',datetime('now'),datetime('now'))`);
+    const leadId = sql(`SELECT id FROM leads WHERE phone_e164='${sdtMua}'`)[0].id;
+    sql(`INSERT INTO orders (code,lead_id,product_sku,product_name,amount,transfer_content,status,created_at,updated_at,paid_at)
+         VALUES ('${maDonThu}',${leadId},'GC21','Kiem thu',2000000,'${maDonThu}','paid',datetime('now'),datetime('now'),datetime('now'))`);
+
+    const traCuu = await fetchLaiMotLan(`${BASE}/api/tra-cuu`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: sdtMua }),
+    });
+    const kq = await traCuu.json().catch(() => ({}));
+    const donTraVe = (kq.orders || []);
+    check('tra cuu theo so dien thoai KHONG phat ma don da thanh toan',
+      donTraVe.length > 0 && donTraVe.every((o) => !o.code), donTraVe);
+    check('van cho biet don da thanh toan (de nguoi that con dung duoc)',
+      donTraVe.some((o) => o.status === 'paid'), donTraVe);
+
+    sql(`DELETE FROM orders WHERE code='${maDonThu}'`);
+    sql(`DELETE FROM leads WHERE id=${leadId}`);
+  }
+
+  // --- 2. Farm XP/xu bang cach xoa dong dang ky ------------------------------
+  // Khoa chong trung phai la NGUOI + BUOI, khong phai id dong dang ky (xoa
+  // duoc). Va chu so huu khong duoc xoa dong dang ky nua.
+  {
+    const evFarm = `ev-farm-${Date.now()}`;
+    // Dung dung mau cua muc 15: `checkin_open_min`/`checkin_close_min` la hai cot
+    // quyet dinh cua so diem danh con mo hay khong.
+    const batDauFarm = new Date(Date.now() - 2 * 60000).toISOString();
+    sql(`INSERT INTO calendar_events (id,title,kind,starts_at,checkin_open_min,checkin_close_min,status,is_active,created_date,updated_date)
+         VALUES ('${evFarm}','Buoi kiem thu farm','live','${batDauFarm}',0,15,'scheduled',1,datetime('now'),datetime('now'))`);
+
+    // joinEvent -> diemDanh chinh la hai mat cua vong khai thac; phai di dung
+    // duong do thi bai kiem moi co nghia.
+    await alice.call('POST', '/api/functions/joinEvent', { event_id: evFarm });
+    const lan1 = await alice.call('POST', '/api/functions/diemDanh', { event_id: evFarm });
+    check('diem danh lan dau cong duoc diem', lan1.status === 200 && lan1.data?.awarded?.xp > 0, lan1.data);
+    const xpSau1 = sql(`SELECT total_xp FROM users WHERE id='${alice.id}'`)[0].total_xp;
+
+    // Dung chinh duong khai thac: xoa dong dang ky roi dang ky lai.
+    const signup = sql(`SELECT id FROM event_signups WHERE event_id='${evFarm}' AND user_id='${alice.id}'`)[0];
+    check('co dong dang ky de thu xoa', !!signup, signup);
+    if (signup) {
+      const xoa = await alice.call('DELETE', `/api/entities/EventSignup/${signup.id}`);
+      check('hoc vien KHONG xoa duoc dong diem danh cua minh',
+        xoa.status === 403 || xoa.status === 401, xoa.status);
+      // Va du co xoa duoc bang tay thi diem cung khong duoc cong lan hai.
+      sql(`DELETE FROM event_signups WHERE id='${signup.id}'`);
+    }
+    await alice.call('POST', '/api/functions/joinEvent', { event_id: evFarm });
+    await alice.call('POST', '/api/functions/diemDanh', { event_id: evFarm });
+    const xpSau2 = sql(`SELECT total_xp FROM users WHERE id='${alice.id}'`)[0].total_xp;
+    check('diem danh vong hai KHONG cong them diem',
+      xpSau2 === xpSau1, { lan1: xpSau1, lan2: xpSau2, awarded: lan1.data?.awarded });
+
+    sql(`DELETE FROM event_signups WHERE event_id='${evFarm}'`);
+    sql(`DELETE FROM calendar_events WHERE id='${evFarm}'`);
+  }
+
+  // --- 3. Lo link giao qua ---------------------------------------------------
+  {
+    const idQua = `qua-che-${Date.now()}`;
+    sql(`INSERT INTO rewards (id,name,coin_cost,quantity,is_active,delivery_url,delivery_note,created_date,updated_date)
+         VALUES ('${idQua}','Qua so kiem thu',10,5,1,'https://notion.so/bi-mat','Ghi chu bi mat',datetime('now'),datetime('now'))`);
+
+    const dsQua = await alice.call('GET', '/api/entities/Reward');
+    const quaThay = (dsQua.data || []).find((r) => r.id === idQua);
+    check('nguoi CHUA doi qua van thay ten va gia (de con doi)',
+      !!quaThay && quaThay.name === 'Qua so kiem thu', quaThay);
+    check('nguoi CHUA doi qua KHONG thay link giao qua',
+      !quaThay?.delivery_url && !quaThay?.delivery_note, quaThay);
+
+    sql(`DELETE FROM rewards WHERE id='${idQua}'`);
+  }
+
+  // --- 4. Lo noi dung thu thach tra phi --------------------------------------
+  {
+    const idTT = `tt-che-${Date.now()}`;
+    const idNgay = `ngay-che-${Date.now()}`;
+    sql(`INSERT INTO challenges (id,name,duration_days,is_active,requires_unlock,created_date,updated_date)
+         VALUES ('${idTT}','Thu thach kiem thu che',3,1,1,datetime('now'),datetime('now'))`);
+    sql(`INSERT INTO challenge_day_tasks (id,challenge_id,day,title,video_url,assignment_url,doc_url,created_date,updated_date)
+         VALUES ('${idNgay}','${idTT}',1,'Ngay 1','https://vimeo.com/bi-mat','https://docs.google.com/bai-tap','https://docs.google.com/tai-lieu',datetime('now'),datetime('now'))`);
+
+    const dsNgay = await alice.call('GET', '/api/entities/ChallengeDayTask');
+    const ngayThay = (dsNgay.data || []).find((t) => t.id === idNgay);
+    check('nguoi CHUA tham gia van thay ten nhiem vu (de con biet ma vao)',
+      !!ngayThay && ngayThay.title === 'Ngay 1', ngayThay);
+    check('nguoi CHUA tham gia KHONG thay video va bai tap',
+      !ngayThay?.video_url && !ngayThay?.assignment_url && !ngayThay?.doc_url, ngayThay);
+
+    sql(`DELETE FROM challenge_day_tasks WHERE id='${idNgay}'`);
+    sql(`DELETE FROM challenges WHERE id='${idTT}'`);
+  }
+
+  // --- 5. Vuot cong bang API entity -----------------------------------------
+  {
+    const tuTao = await alice.call('POST', '/api/entities/ChallengeMember', {
+      challenge_id: 'bia-dat', progress: 999, completed: true,
+    });
+    check('KHONG tu tao duoc ChallengeMember (phai qua joinChallenge)',
+      tuTao.status === 403, { status: tuTao.status, data: tuTao.data });
+  }
+
+  // --- 6. Chiem cong dai ly bang so dien thoai ho so -------------------------
+  // `users.phone` ai cung tu dat duoc qua PATCH /me va khong he duoc xac minh.
+  {
+    const sdtDaiLy = `0988${String(Date.now()).slice(-6)}`;
+    sql(`INSERT INTO affiliates (code,token,full_name,email,phone,status,created_at,updated_at)
+         VALUES ('KTHU1','token-kiem-thu-rat-dai','Dai Ly That','daily@smoketest.local','${sdtDaiLy}','active',datetime('now'),datetime('now'))`);
+
+    await alice.call('PATCH', '/api/auth/me', { phone: sdtDaiLy });
+    const cong = await alice.call('GET', '/api/affiliate/me');
+    const loBiMat = JSON.stringify(cong.data || {}).includes('token-kiem-thu-rat-dai');
+    check('dat so dien thoai cua dai ly KHONG chiem duoc cong cua ho',
+      !loBiMat, { status: cong.status });
+
+    await alice.call('PATCH', '/api/auth/me', { phone: '' });
+    sql("DELETE FROM affiliates WHERE code='KTHU1'");
+  }
+
   // ------------------------------------------------------------------ don dep
   sql("DELETE FROM kit_sync_log WHERE email LIKE '%@smoketest.local'");
   sql("DELETE FROM leads WHERE email LIKE '%@smoketest.local'");
