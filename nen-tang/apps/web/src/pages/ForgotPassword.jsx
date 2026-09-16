@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { useKhaNang } from "@/lib/useKhaNang";
 
 export default function ForgotPassword() {
+  const { khaNang } = useKhaNang();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -64,10 +66,14 @@ export default function ForgotPassword() {
             Nếu email tồn tại, bạn sẽ nhận được link đặt lại mật khẩu trong giây lát.
             Nhớ kiểm cả hộp thư <b>Spam</b>.
           </p>
+          {/* Chi khuyen dung Google khi Google that su dang bat - khong thi day la
+              chi duong den mot nut khong ton tai. */}
           <p className="text-[12.5px] leading-relaxed text-muted-foreground">
             Quá 5 phút chưa thấy? Nhiều khả năng bạn gõ khác địa chỉ đã dùng lúc đăng ký.
-            Nếu email đó là Gmail, hãy quay lại và bấm <b>Đăng nhập bằng Google</b> —
-            không cần mật khẩu, và hệ thống tự nhận ra tài khoản cũ của bạn.
+            {khaNang.google && (
+              <> Nếu email đó là Gmail, hãy quay lại và bấm <b>Đăng nhập bằng Google</b> —
+              không cần mật khẩu, và hệ thống tự nhận ra tài khoản cũ của bạn.</>
+            )}
           </p>
         </div>
       ) : (

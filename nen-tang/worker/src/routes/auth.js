@@ -494,14 +494,33 @@ export async function updateMe(rc) {
 // --- dang nhap bang Google --------------------------------------------------
 const redirectTo = (url) => new Response(null, { status: 302, headers: { Location: url } });
 
-/** GET /api/auth/google/start?returnTo=/duong-dan */
+/**
+ * GET /api/auth/google/start?returnTo=/duong-dan
+ *
+ * MOI loi o day deu phai CHUYEN TRANG, khong duoc tra JSON.
+ *
+ * Nut "Dang nhap bang Google" khong goi API - no lam
+ * `window.location.href = /api/auth/google/start` (xem base44Client.js), tuc la
+ * dieu huong ca trinh duyet. Tra apiError o day nghia la nguoi dung roi han
+ * khoi ung dung va nhin thay mot trang trang chi co mot dong JSON, ke ca ten
+ * bien moi truong, khong co duong quay lai ngoai nut Back.
+ *
+ * Trang /login da doc san `?error=` de hien thong bao tu te (googleCallback ben
+ * duoi dung dung co che do). Nhanh nay - nhanh THUC TE xay ra khi chua cau hinh
+ * - truoc day lai la nhanh duy nhat khong dung.
+ */
 export async function googleStart(rc) {
+  const veTrangDangNhap = (message) =>
+    redirectTo(`${rc.origin}/login?error=${encodeURIComponent(message)}`);
+
   if (!isConfigured(rc)) {
-    return apiError(503, 'google_not_configured',
-      'Chưa bật đăng nhập Google. Cần đặt GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET.');
+    return veTrangDangNhap('Đăng nhập bằng Google chưa được bật. '
+      + 'Bạn dùng email và mật khẩu giúp nhé.');
   }
   const limit = await rateLimit(rc, `oauth:${rc.ip}`, 20, HOUR);
-  if (!limit.allowed) return apiError(429, 'rate_limited', 'Bạn thử quá nhiều lần.');
+  if (!limit.allowed) {
+    return veTrangDangNhap('Bạn thử đăng nhập hơi nhiều lần. Đợi ít phút rồi thử lại nhé.');
+  }
 
   const url = await startFlow(rc, safePath(rc.url.searchParams.get('returnTo')));
   return redirectTo(url);

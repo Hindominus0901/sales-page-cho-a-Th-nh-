@@ -99,6 +99,22 @@ export async function handleApi(rc) {
         phone: cfg.zalo.supportPhone,
         group_url: cfg.zalo.groupUrl,
       },
+      // TINH NANG NAO DANG BAT - de giao dien thoi moi nguoi bam vao thu khong
+      // chay.
+      //
+      // Truoc day khong mot cho nao trong apps/web hoi may chu ve chuyen nay,
+      // nen nut "Dang nhap bang Google", nut tai anh, nut nho AI cham bai deu
+      // hien ra binh thuong du khoa chua duoc nap. Nguoi dung chi biet khi da
+      // bam.
+      //
+      // Suy tu chinh bien moi truong chu khong phai mot cong tac rieng: nap khoa
+      // xong la co tu bat, khong phai sua code hay deploy them lan nua.
+      capabilities: {
+        google: !!(rc.env.GOOGLE_CLIENT_ID && rc.env.GOOGLE_CLIENT_SECRET),
+        email: !!rc.env.RESEND_API_KEY,
+        uploads: !!rc.env.UPLOADS,
+        ai: !!rc.env.ANTHROPIC_API_KEY,
+      },
     });
   }
 

@@ -106,6 +106,16 @@ export const functions = {
   invoke: (name, payload = {}) => api.post(`/functions/${encodeURIComponent(name)}`, payload),
 };
 
+/**
+ * Cau hinh cong khai: gia, kenh lien he, va TINH NANG NAO DANG BAT.
+ *
+ * Duong nay khong can dang nhap - trang /login phai doc duoc no truoc khi co
+ * phien nao.
+ */
+export const config = {
+  get: () => api.get('/config'),
+};
+
 export const integrations = {
   Core: {
     UploadFile: async ({ file }) => {
@@ -202,5 +212,5 @@ export const adminApi = {
   kitBackfill: (body) => adminHttp.post('/kit/backfill', body),
 };
 
-export const base44 = { entities, auth, functions, integrations, agents, adminApi };
+export const base44 = { entities, auth, functions, integrations, agents, adminApi, config };
 export default base44;
