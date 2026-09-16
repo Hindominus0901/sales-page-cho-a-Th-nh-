@@ -81,7 +81,7 @@ export const templates = {
   // Gui ngay sau khi dien form o trang ban hang. Day thuong la email DAU TIEN
   // he thong gui cho ho, nen phai noi ro dang o dau va tai sao co thu nay -
   // khong thi vao spam hoac bi bao cao.
-  invite_app: ({ url, name, days, refUrl, refCode, refRate, th }) => ({
+  invite_app: ({ url, name, days, refUrl, refCode, refRate, coGoogle, th }) => ({
     subject: 'Tài khoản của bạn đã sẵn sàng — đặt mật khẩu để vào lớp',
     html: layout('Tài khoản đã sẵn sàng', `
       <h1 style="font-size:20px;margin:0 0 8px">${name ? `${escapeHtml(name)} ơi, ` : ''}tài khoản của bạn đã sẵn sàng</h1>
@@ -90,9 +90,9 @@ export const templates = {
       thử thách, cộng đồng và bảng xếp hạng.</p>
       <p style="margin:14px 0 0;color:#5a5661;font-size:15px">Chỉ còn một bước: đặt mật khẩu.</p>
       ${button(url, 'Đặt mật khẩu và vào lớp', th)}
-      <p style="margin:0;color:#8b8794;font-size:13px">Link có hiệu lực trong ${days} ngày.
+      <p style="margin:0;color:#8b8794;font-size:13px">Link có hiệu lực trong ${days} ngày.${coGoogle ? `
       Bạn cũng có thể bấm <strong>Đăng nhập bằng Google</strong> ở trang đăng nhập nếu email này là Gmail —
-      khỏi cần nhớ thêm mật khẩu nào.</p>
+      khỏi cần nhớ thêm mật khẩu nào.` : ''}</p>
       <p style="margin:12px 0 0;color:#8b8794;font-size:12px;word-break:break-all">Nút không bấm được? Dán link này vào trình duyệt:<br>${escapeHtml(url)}</p>
       ${refUrl ? `
       <div style="margin:22px 0 0;padding:16px 18px;border-radius:14px;background:#fdf4fa;border:1px dashed ${th.color}55">
@@ -130,7 +130,7 @@ Ai dang ky qua link nay duoc tinh cho ban. Nguoi mua qua link thi ban nhan ${ref
   //
   // `url` co the rong: nguoi da co mat khau thi chi can duong dang nhap, khong
   // gui them link dat lai mat khau (gui la mo mot cua khong ai xin).
-  order_paid: ({ name, code, amount, url, appUrl, th }) => ({
+  order_paid: ({ name, code, amount, url, appUrl, coGoogle, th }) => ({
     subject: `Đã nhận thanh toán — vé ${escapeHtml(th.productLine)} của bạn đã mở`,
     html: layout('Đã nhận thanh toán', `
       <h1 style="font-size:20px;margin:0 0 8px">${name ? `${escapeHtml(name)} ơi, ` : ''}đã nhận được thanh toán</h1>
@@ -138,7 +138,7 @@ Ai dang ky qua link nay duoc tinh cho ban. Nguoi mua qua link thi ban nhan ${ref
       cho đơn <strong>${escapeHtml(code)}</strong>. Vé <strong>${escapeHtml(th.productLine)}</strong> của bạn đã được mở —
       toàn bộ bài học, thử thách và quà tặng giờ đã mở khoá trong tài khoản.</p>
       ${button(url || appUrl, url ? 'Đặt mật khẩu và vào lớp' : 'Vào lớp ngay', th)}
-      ${url ? `<p style="margin:0;color:#8b8794;font-size:13px">Nếu email này là Gmail, bạn có thể bấm
+      ${url && coGoogle ? `<p style="margin:0;color:#8b8794;font-size:13px">Nếu email này là Gmail, bạn có thể bấm
       <strong>Đăng nhập bằng Google</strong> ở trang đăng nhập thay vì đặt mật khẩu.</p>` : ''}
       <p style="margin:12px 0 0;color:#8b8794;font-size:12px;word-break:break-all">Nút không bấm được? Dán link này vào trình duyệt:<br>${escapeHtml(url || appUrl)}</p>
       <p style="margin:18px 0 0;padding:12px 14px;border-radius:10px;background:#f6f5f8;color:#5a5661;font-size:13px">
@@ -215,6 +215,15 @@ ${joinUrl}`,
 };
 
 /** @returns { subject, html, text } */
+/**
+ * `coGoogle` - CO PHAI Google dang bat khong.
+ *
+ * Hai mau thu duoi day co doan khuyen "bam Dang nhap bang Google cho nhanh".
+ * Loi khuyen do chi dung khi Google that su bat; neu khong, nguoi nhan di tim
+ * mot nut khong ton tai tren trang dang nhap - va ho la nguoi VUA TRA TIEN,
+ * dang tim duong vao lop. Cac cho goi truyen co nay tu rc.env (xem
+ * worker/src/auth/invite.js).
+ */
 export function renderMail(name, vars) {
   const fn = templates[name];
   if (!fn) throw new Error(`Khong co mau email "${name}"`);

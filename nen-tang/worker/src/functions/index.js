@@ -746,6 +746,14 @@ async function scoreChallengeDay(rc, svc) {
 // --------------------------------------------------------------- cong dong
 async function togglePostLike(rc, svc) {
   const postId = rc.body?.post_id;
+
+  // Bam thich/bo thich lien tuc la mot vong lap ghi database re tien. Tran dat
+  // cao de nguoi dung that khong bao gio cham toi.
+  const tranThich = await rateLimit(rc, `like:${rc.user.id}`, 200, 60 * 60 * 1000);
+  if (!tranThich.allowed) {
+    return apiError(429, 'rate_limited', 'Bạn thao tác hơi nhanh, nghỉ chút nhé.');
+  }
+
   const post = await svc.Post.get(postId);
   if (!post || post.is_hidden) return apiError(404, 'not_found', 'Không tìm thấy bài viết');
 
@@ -769,6 +777,15 @@ async function createComment(rc, svc) {
   const { post_id: postId, body } = rc.body || {};
   const text = clean(body, 2000);
   if (!postId || !text) return apiError(400, 'missing', 'Thiếu nội dung bình luận');
+
+  // Tran giong createPost. Luat `pr-comment` da nam san trong database va cong
+  // diem cho moi binh luan; trang Cong dong truoc day khong co duong vao nen
+  // luat do chay rong. Gio trang da noi vao menu, khong co tran thi binh luan
+  // thanh duong farm diem re nhat: mot vong lap la mot chuoi diem.
+  const tranBinhLuan = await rateLimit(rc, `comment:${rc.user.id}`, 60, 60 * 60 * 1000);
+  if (!tranBinhLuan.allowed) {
+    return apiError(429, 'rate_limited', 'Bạn bình luận hơi nhanh, nghỉ chút nhé.');
+  }
 
   const post = await svc.Post.get(postId);
   if (!post || post.is_hidden) return apiError(404, 'not_found', 'Không tìm thấy bài viết');
@@ -1529,6 +1546,19 @@ async function thuMoiChuaDen(rc) {
 async function guiLaiThuMoiHangLoat(rc, svc) {
   if (!isAdmin(rc)) return apiError(403, 'forbidden', 'Chỉ admin');
   const tran = Math.min(Math.max(Number(rc.body?.limit) || 25, 1), 100);
+
+  // CHUA CAU HINH EMAIL thi dung ngay, dung chay het danh sach.
+  //
+  // Vong lap ben duoi chi dung som khi ly do khop /quota|rate|limit/. Thieu
+  // RESEND_API_KEY tra ly do 'chua_cau_hinh_email' - khong khop - nen truoc day
+  // no chay het 25 nguoi, tra `da_gui: 0`, va giao dien hien toast XANH "Da gui
+  // 0 thu moi" khong mot chu nao noi vi sao. Moi lan bam con ghi 25 dong
+  // password_resets va 25 dong emails_sent that bai.
+  if (!rc.env.RESEND_API_KEY) {
+    return apiError(503, 'email_chua_cau_hinh',
+      'Chưa bật gửi email nên không gửi được thư mời nào. '
+      + 'Cần nạp RESEND_API_KEY: npx wrangler secret put RESEND_API_KEY');
+  }
 
   const rows = await rc.store.all(SQL_CHUA_NHAN_THU);
   let daGui = 0;

@@ -96,6 +96,7 @@ export async function inviteLeadToApp(rc, lead) {
         refCode,
         refRate: Math.round((rc.cfg.affiliate?.rate || 0) * 100),
         brand: rc.cfg.brand,
+        coGoogle: !!(rc.env.GOOGLE_CLIENT_ID && rc.env.GOOGLE_CLIENT_SECRET),
       }),
     });
     return { ok: true };
@@ -156,6 +157,7 @@ export async function guiThuDaThanhToan(rc, order, userId) {
         url,
         appUrl: `${goc}/login`,
         brand: rc.cfg.brand,
+        coGoogle: !!(rc.env.GOOGLE_CLIENT_ID && rc.env.GOOGLE_CLIENT_SECRET),
       }),
     });
     return { ok: true };
@@ -211,6 +213,7 @@ export async function guiLaiThuMoi(rc, user) {
         refCode,
         refRate: Math.round((rc.cfg.affiliate?.rate || 0) * 100),
         brand: rc.cfg.brand,
+        coGoogle: !!(rc.env.GOOGLE_CLIENT_ID && rc.env.GOOGLE_CLIENT_SECRET),
       }),
     });
     return { ok: !!ket?.ok, reason: ket?.error || null };

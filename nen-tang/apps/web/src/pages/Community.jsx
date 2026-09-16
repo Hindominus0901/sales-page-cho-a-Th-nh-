@@ -2,6 +2,8 @@ import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Loader2, X, MessagesSquare } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useKhaNang } from "@/lib/useKhaNang";
+import ODanLinkAnh from "@/components/ODanLinkAnh";
 import { useMe, ME_KEY } from "@/lib/useMe";
 import PageHeader from "@/components/PageHeader";
 import PostCard from "@/components/PostCard";
@@ -66,6 +68,7 @@ function FeedPost({ post, userById, levels, liked, me }) {
 }
 
 export default function Community() {
+  const { khaNang } = useKhaNang();
   const me = useMe();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -159,15 +162,23 @@ export default function Community() {
         )}
 
         <div className="flex justify-between items-center mt-3 ml-0 sm:ml-[52px] gap-3">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
-          >
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />} Ảnh
-          </button>
-          <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} className="hidden" />
+          {khaNang.uploads ? (
+            <>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+              >
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />} Ảnh
+              </button>
+              <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} className="hidden" />
+            </>
+          ) : (
+            <div className="flex-1">
+              <ODanLinkAnh value={imageUrl} onChange={setImageUrl} nhan="Link ảnh cho bài đăng" />
+            </div>
+          )}
           <Button
             onClick={() => postMutation.mutate()}
             disabled={postMutation.isPending || (!body.trim() && !imageUrl)}

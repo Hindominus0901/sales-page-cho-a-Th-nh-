@@ -25,6 +25,7 @@ import Leaderboard from '@/pages/Leaderboard';
 import Rewards from '@/pages/Rewards';
 import Badges from '@/pages/Badges';
 import Challenges from '@/pages/Challenges';
+import Community from '@/pages/Community';
 import Calendar from '@/pages/Calendar';
 import Affiliate from '@/pages/Affiliate';
 import Profile from '@/pages/Profile';
@@ -84,6 +85,7 @@ function App() {
                 <Route path="/rewards" element={<Rewards />} />
                 <Route path="/badges" element={<Badges />} />
                 <Route path="/challenges" element={<Challenges />} />
+                <Route path="/community" element={<Community />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/affiliate" element={<Affiliate />} />
                 <Route path="/profile" element={<Profile />} />

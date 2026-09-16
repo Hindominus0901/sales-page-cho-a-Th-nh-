@@ -660,7 +660,26 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
           )}
         </div>
 
-        {/* Nop bai */}
+        {/* Nop bai.
+
+            THU THACH CHUA CO NGAY NAO thi khong hien khoi nay.
+
+            Truoc day no render vo dieu kien. Voi 0 ChallengeDayTask thi
+            `currentPick` la null, nen cot phai hien hai o "Link nop bai tap" va
+            "Link bai cam nhan" - hai viec nguoi ta tuong minh phai lam - con nut
+            thi bi tat kem nhan "Da nop het nhiem vu dang mo", mot cau SAI SU
+            THAT: ho chua nop gi, va cung khong co gi de nop. Trong khi cot trai
+            noi dung: "Challenge nay chua co nhiem vu theo ngay". Hai nua man
+            hinh noi hai chuyen trai nguoc nhau. */}
+        {currentPick == null ? (
+          <div className="bg-card rounded-2xl border border-border p-5 lg:p-6">
+            <h3 className="font-bold text-[15px]">Chưa có nhiệm vụ nào</h3>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Thử thách này chưa được xếp nhiệm vụ theo ngày. Khi ban tổ chức thêm vào,
+              phần nộp bài sẽ hiện ở đây.
+            </p>
+          </div>
+        ) : (
         <div className="bg-card rounded-2xl border border-border p-5 lg:p-6">
           <h3 className="font-bold text-[15px]">
             {chiDiemDanh ? "Điểm danh" : "Nộp bài"}{currentPick ? ` Ngày ${currentPick}` : ""}
@@ -746,6 +765,7 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );

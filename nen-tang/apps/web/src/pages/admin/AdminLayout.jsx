@@ -35,7 +35,17 @@ export const ADMIN_NAV = [
   { key: 'events', to: '/admin/events', label: 'Lịch & sự kiện', icon: CalendarDays },
   { key: 'email', to: '/admin/email', label: 'Email', icon: Mail },
   { key: 'mechanics', to: '/admin/mechanics', label: 'Cơ chế', icon: Settings2 },
-  { key: 'portalBuilder', to: '/admin/portal', label: 'Tuỳ chỉnh Portal', icon: LayoutGrid },
+  // "Tuy chinh Portal" DA BO KHOI MENU - khong xoa trang, chi khong dan toi nua.
+  //
+  // PortalBuilder.jsx ghi vao entity `PortalSection`, nhung KHONG MOT TRANG HOC
+  // VIEN NAO doc bang do (grep `PortalSection` trong apps/web chi ra dung trang
+  // quan tri va danh sach ten entity). Nghia la admin bat/tat con mat, doi ten,
+  // sap xep thu tu, bam Luu, thay toast "Da luu" - va app hoc vien khong doi mot
+  // pixel nao.
+  //
+  // De no trong menu la moi nguoi van hanh lam mot viec vo ich va tin rang minh
+  // vua thay doi duoc gi do. Route /admin/portal van con, ai co link cu van mo
+  // duoc; khi nao noi that vao cac trang hoc vien thi tra muc nay lai.
   { key: 'logs', to: '/admin/logs', label: 'Nhật ký', icon: ScrollText },
 ];
 

@@ -337,6 +337,17 @@ async function cancel(rc) {
  */
 async function resendInvites(rc) {
   const tran = Math.min(Math.max(Number(rc.body?.limit) || 25, 1), 200);
+
+  // Chua cau hinh email thi dung ngay - xem chu thich cung o
+  // guiLaiThuMoiHangLoat trong worker/src/functions/index.js. Hai duong nay lam
+  // cung mot viec nen phai tu choi giong nhau, khong thi bit mot cho ma cho kia
+  // van im lang chay het danh sach.
+  if (!rc.env.RESEND_API_KEY) {
+    return apiError(503, 'email_chua_cau_hinh',
+      'Chưa bật gửi email nên không gửi được thư mời nào. '
+      + 'Cần nạp RESEND_API_KEY: npx wrangler secret put RESEND_API_KEY');
+  }
+
   const rows = await rc.store.all(
     `SELECT u.id, u.email, u.full_name, u.legacy_lead_id
        FROM users u

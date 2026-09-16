@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { streakDangSong } from "@/lib/streak";
+import MatPhien from '@/components/MatPhien';
 import { useOutletContext } from "react-router-dom";
 import ChonNhom from "@/components/ChonNhom";
 import { base44 } from "@/api/base44Client";
+import { useKhaNang } from "@/lib/useKhaNang";
+import ODanLinkAnh from "@/components/ODanLinkAnh";
 import Avatar from "@/components/Avatar";
 import StatCard from "@/components/StatCard";
 import { computeLevel, getInitials } from "@/lib/gamification";
@@ -13,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Profile() {
+  const { khaNang } = useKhaNang();
   const { user, onUserUpdate } = useOutletContext();
   const [levels, setLevels] = useState([]);
   const [myBadges, setMyBadges] = useState([]);
@@ -38,7 +42,8 @@ export default function Profile() {
     });
   }, [user]);
 
-  if (!user) return null;
+  // Het phien giua chung thi noi that, dung tra ve man hinh trang. Xem MatPhien.
+  if (!user) return <MatPhien />;
   const level = computeLevel(user.total_xp || 0, levels);
 
   const handleSave = async () => {
@@ -102,53 +107,65 @@ export default function Profile() {
                     <span className="text-lg font-semibold text-muted-foreground">{getInitials(form.full_name || "?")}</span>
                   )}
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 5 * 1024 * 1024) {
-                      toast({ title: "Ảnh quá lớn", description: "Kích thước tối đa 5MB.", variant: "destructive" });
-                      return;
-                    }
-                    setUploading(true);
-                    try {
-                      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-                      setForm((f) => ({ ...f, avatar_url: file_url }));
-                    } catch (err) {
-                      toast({ title: "Tải lên thất bại", description: err.message, variant: "destructive" });
-                    } finally {
-                      setUploading(false);
-                      if (fileInputRef.current) fileInputRef.current.value = "";
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full"
-                  disabled={uploading}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {uploading ? "Đang tải..." : form.avatar_url ? "Đổi ảnh" : "Tải ảnh lên"}
-                </Button>
-                {form.avatar_url && (
+                {khaNang.uploads ? (
+                  <>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast({ title: "Ảnh quá lớn", description: "Kích thước tối đa 5MB.", variant: "destructive" });
+                        return;
+                      }
+                      setUploading(true);
+                      try {
+                        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                        setForm((f) => ({ ...f, avatar_url: file_url }));
+                      } catch (err) {
+                        toast({ title: "Tải lên thất bại", description: err.message, variant: "destructive" });
+                      } finally {
+                        setUploading(false);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }
+                    }}
+                  />
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="rounded-full text-muted-foreground"
-                    onClick={() => setForm((f) => ({ ...f, avatar_url: "" }))}
+                    className="rounded-full"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
                   >
-                    Xóa
+                    {uploading ? "Đang tải..." : form.avatar_url ? "Đổi ảnh" : "Tải ảnh lên"}
                   </Button>
+                  {form.avatar_url && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-full text-muted-foreground"
+                      onClick={() => setForm((f) => ({ ...f, avatar_url: "" }))}
+                    >
+                      Xóa
+                    </Button>
+                  )}
+                  </>
+                ) : (
+                  <ODanLinkAnh
+                    value={form.avatar_url}
+                    onChange={(v) => setForm((f) => ({ ...f, avatar_url: v }))}
+                    nhan="Link ảnh đại diện"
+                  />
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">JPG, PNG — tối đa 5MB</p>
+              {khaNang.uploads && (
+                <p className="text-xs text-muted-foreground mt-1">JPG, PNG — tối đa 5MB</p>
+              )}
             </div>
             <div>
               <Label className="text-xs">Bio</Label>

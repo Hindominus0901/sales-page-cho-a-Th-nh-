@@ -1,10 +1,11 @@
 import BRAND from '@/brand.generated.js';
+import MatPhien from '@/components/MatPhien';
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, NavLink, useNavigate, Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Users, TrendingUp, GraduationCap, Trophy, Gift, Award,
   Target, Share2, Bell, LogOut, Menu, X, Flame, Coins, Sparkles, Shield, CalendarDays, UserRound,
-  Crown, ShoppingBag,
+  Crown, ShoppingBag, MessagesSquare,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
@@ -31,6 +32,7 @@ const NAV = [
   { to: "/cua-hang", label: "Cửa hàng", icon: ShoppingBag },
   { to: "/badges", label: "Huy hiệu & Rank", icon: Award },
   { to: "/challenges", label: "Challenge", icon: Target },
+  { to: "/community", label: "Cộng đồng", icon: MessagesSquare },
   { to: "/calendar", label: "Lịch & sự kiện", icon: CalendarDays },
   { to: "/affiliate", label: "Affiliate", icon: Share2 },
   { to: "/profile", label: "Hồ sơ của tôi", icon: UserRound },
@@ -129,7 +131,8 @@ export default function AppLayout() {
     navigate("/login");
   };
 
-  if (!user) return null;
+  // Het phien giua chung thi noi that, dung tra ve man hinh trang. Xem MatPhien.
+  if (!user) return <MatPhien />;
 
   const isAdmin = user.role === "admin";
 

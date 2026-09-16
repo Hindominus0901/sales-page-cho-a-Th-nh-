@@ -24,6 +24,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Crown, Loader2, ImagePlus, ExternalLink, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useKhaNang } from '@/lib/useKhaNang';
+import ODanLinkAnh from '@/components/ODanLinkAnh';
 import BRAND from '@/brand.generated.js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +42,7 @@ import {
 } from './_khoahoc';
 
 export default function AdminVip() {
+  const { khaNang } = useKhaNang();
   const qc = useQueryClient();
   const { toast } = useToast();
 
@@ -300,12 +303,20 @@ export default function AdminVip() {
               className="aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted bg-contain bg-center bg-no-repeat"
               style={draft?.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined}
             />
-            <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-secondary">
-              {dangTaiAnh
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : <><ImagePlus className="h-3.5 w-3.5" /> Tải ảnh bìa</>}
-              <input type="file" accept="image/*" hidden onChange={chonAnh} disabled={dangTaiAnh} />
-            </label>
+            {khaNang.uploads ? (
+              <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-secondary">
+                {dangTaiAnh
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <><ImagePlus className="h-3.5 w-3.5" /> Tải ảnh bìa</>}
+                <input type="file" accept="image/*" hidden onChange={chonAnh} disabled={dangTaiAnh} />
+              </label>
+            ) : (
+              <ODanLinkAnh
+                value={draft?.image_url}
+                onChange={(v) => setDraft((d) => ({ ...d, image_url: v }))}
+                nhan="Link ảnh bìa"
+              />
+            )}
           </div>
 
           <div className="space-y-3">

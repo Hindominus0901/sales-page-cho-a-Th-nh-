@@ -17,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Camera, Loader2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useKhaNang } from '@/lib/useKhaNang';
+import ODanLinkAnh from '@/components/ODanLinkAnh';
 import { useAuth } from '@/lib/AuthContext';
 import Avatar from '@/components/Avatar';
 import { Button } from '@/components/ui/button';
@@ -25,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function Onboarding() {
+  const { khaNang } = useKhaNang();
   const { user, checkUserAuth } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -83,9 +86,13 @@ export default function Onboarding() {
                 {dangTai ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
               </span>
             </button>
-            <p className="text-xs text-muted-foreground">
-              {anh ? 'Bấm vào ảnh để đổi' : 'Bấm để chọn ảnh đại diện'}
-            </p>
+            {khaNang.uploads ? (
+              <p className="text-xs text-muted-foreground">
+                {anh ? 'Bấm vào ảnh để đổi' : 'Bấm để chọn ảnh đại diện'}
+              </p>
+            ) : (
+              <ODanLinkAnh value={anh} onChange={setAnh} nhan="Link ảnh đại diện" />
+            )}
             <input
               ref={oFile}
               type="file"

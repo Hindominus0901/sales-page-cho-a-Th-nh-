@@ -15,6 +15,7 @@ import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, ExternalLink, Loader2, Sparkles, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useKhaNang } from '@/lib/useKhaNang';
 import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
@@ -52,6 +53,7 @@ function readRubric(value) {
 }
 
 export default function Approval() {
+  const { khaNang } = useKhaNang();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [tab, setTab] = React.useState('pending');
@@ -323,17 +325,19 @@ export default function Approval() {
                     </StatusPill>
                   )}
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="ml-auto rounded-full"
-                    disabled={busy}
-                    onClick={() => { setBusyId(a.id); score.mutate(a.id); }}
-                  >
-                    {busy && score.isPending
-                      ? <Loader2 className="h-4 w-4 animate-spin" />
-                      : <><Sparkles className="mr-1 h-4 w-4" /> {scored ? 'AI chấm lại' : 'Nhờ AI chấm'}</>}
-                  </Button>
+                  {khaNang.ai && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="ml-auto rounded-full"
+                      disabled={busy}
+                      onClick={() => { setBusyId(a.id); score.mutate(a.id); }}
+                    >
+                      {busy && score.isPending
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <><Sparkles className="mr-1 h-4 w-4" /> {scored ? 'AI chấm lại' : 'Nhờ AI chấm'}</>}
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -373,6 +377,7 @@ export default function Approval() {
  * trong nhat khi cham mot chuong trinh 21 ngay.
  */
 function TheBaiThuThach({ bai, busy, dangCham, dangNhoAi, onDuyet, onTuChoi, onNhoAi }) {
+  const { khaNang } = useKhaNang();
   const daCham = bai.score !== null && bai.score !== undefined;
   const dat = bai.status === 'approved';
 
@@ -469,7 +474,7 @@ function TheBaiThuThach({ bai, busy, dangCham, dangNhoAi, onDuyet, onTuChoi, onN
           </StatusPill>
         )}
 
-        {bai.status === 'pending' && (
+        {bai.status === 'pending' && khaNang.ai && (
           <Button
             size="sm"
             variant="outline"
