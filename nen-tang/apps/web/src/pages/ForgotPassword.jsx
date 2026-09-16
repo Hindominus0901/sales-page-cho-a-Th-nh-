@@ -11,17 +11,35 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [loiHeThong, setLoiHeThong] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setLoiHeThong("");
     try {
       await base44.auth.resetPasswordRequest(email);
-    } catch {
-      // Always show success regardless
+      setSent(true);
+    } catch (err) {
+      // Cau tra loi mo ho chi dung cho LOI CUA NGUOI DUNG (email khong ton tai) -
+      // noi thang la cho nguoi la do tung email de biet ai co tai khoan.
+      //
+      // Nhung loi CUA HE THONG thi phai noi that. Truoc day khoi nay nuot sach
+      // moi loi roi luon hien "da gui, nho kiem ca Spam". Khi chua dat
+      // RESEND_API_KEY, may chu tra 503 kem dung cau nguoi ta can doc - "He
+      // thong gui email chua duoc cau hinh" - va giao dien vut no di. Nguoi dung
+      // ngoi cho mot buc thu khong bao gio toi, va khong co gi bao cho ho biet.
+      //
+      // 503/500 la loi ben minh, khong phai ben ho: hien ra.
+      const status = err?.status;
+      if (status >= 500) {
+        setLoiHeThong(err?.message
+          || 'Hệ thống gửi email đang có sự cố. Bạn nhắn cho ban tổ chức giúp nhé.');
+      } else {
+        setSent(true);
+      }
     } finally {
       setLoading(false);
-      setSent(true);
     }
   };
 
@@ -54,6 +72,11 @@ export default function ForgotPassword() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
+          {loiHeThong && (
+            <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+              {loiHeThong}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Địa chỉ email</Label>
             <div className="relative">
