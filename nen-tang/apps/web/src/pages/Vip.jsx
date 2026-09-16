@@ -21,6 +21,7 @@
  * khong mo khoa gi ca.
  */
 import BRAND from "@/brand.generated.js";
+import { ErrorBlock } from "@/components/QueryState";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -44,10 +45,11 @@ export default function Vip() {
   const [lessonId, setLessonId] = useState(null);
 
   // Goi VIP: de biet khoa nao thuoc VIP, va de hien gia o man hinh moi mua.
-  const { data: sanPham = [], isLoading: dangTaiGoi } = useQuery({
+  const qGoi = useQuery({
     queryKey: ["product", BRAND.productSku],
     queryFn: () => base44.entities.Product.filter({ sku: BRAND.productSku }, "sku", 1),
   });
+  const { data: sanPham = [], isLoading: dangTaiGoi } = qGoi;
   const goi = sanPham[0] || null;
 
   const idKhoaVip = React.useMemo(() => {
@@ -58,10 +60,11 @@ export default function Vip() {
       .map((g) => g.ref);
   }, [goi]);
 
-  const { data: courses = [], isLoading: dangTaiKhoa } = useQuery({
+  const qKhoa = useQuery({
     queryKey: ["courses"],
     queryFn: () => base44.entities.Course.filter({ is_active: true }, "sort_order", 100),
   });
+  const { data: courses = [], isLoading: dangTaiKhoa } = qKhoa;
 
   const { data: entitlements = [] } = useQuery({
     queryKey: ["entitlements", me?.id],
@@ -214,7 +217,14 @@ export default function Vip() {
         subtitle="Bài giảng chuyên sâu dành riêng cho thành viên VIP."
       />
 
-      {dangTai ? (
+      {/* Ca hai nguon deu la loi cua trang nay: thieu goi VIP hay thieu khoa
+          hoc thi trang deu vo nghia. Xem QueryState.jsx. */}
+      {qGoi.isError || qKhoa.isError ? (
+        <ErrorBlock
+          error={qGoi.error || qKhoa.error}
+          onRetry={() => { qGoi.refetch(); qKhoa.refetch(); }}
+        />
+      ) : dangTai ? (
         <Loading label="Đang tải khoá VIP..." />
       ) : khoaVip.length === 0 ? (
         <EmptyState

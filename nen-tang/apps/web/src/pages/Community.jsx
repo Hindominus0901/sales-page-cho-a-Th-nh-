@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Loader2, X, MessagesSquare } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ErrorBlock } from "@/components/QueryState";
 import { useKhaNang } from "@/lib/useKhaNang";
 import ODanLinkAnh from "@/components/ODanLinkAnh";
 import { useMe, ME_KEY } from "@/lib/useMe";
@@ -77,10 +78,11 @@ export default function Community() {
   const [imageUrl, setImageUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  const { data: posts = [], isLoading } = useQuery({
+  const feed = useQuery({
     queryKey: FEED_KEY,
     queryFn: () => base44.entities.Post.filter({ is_hidden: false }, "-created_date", 50),
   });
+  const { data: posts = [], isLoading } = feed;
 
   const { data: levels = [] } = useQuery({
     queryKey: ["levels"],
@@ -190,7 +192,10 @@ export default function Community() {
       </div>
 
       {/* Feed */}
-      {isLoading ? (
+      {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}
+      {feed.isError ? (
+        <ErrorBlock error={feed.error} onRetry={feed.refetch} />
+      ) : isLoading ? (
         <Loading label="Đang tải bài viết..." />
       ) : posts.length === 0 ? (
         <EmptyState

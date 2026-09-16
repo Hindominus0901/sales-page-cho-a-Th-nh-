@@ -1,4 +1,5 @@
 import NutNhanAdmin from '@/components/NutNhanAdmin';
+import { ErrorBlock } from "@/components/QueryState";
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -780,10 +781,11 @@ export default function Challenges() {
   const [params, setParams] = useSearchParams();
   const selectedId = params.get("id");
 
-  const { data: challenges = [], isLoading } = useQuery({
+  const dsThuThach = useQuery({
     queryKey: ["challenges", "active"],
     queryFn: () => base44.entities.Challenge.filter({ is_active: true }, "-created_date", 50),
   });
+  const { data: challenges = [], isLoading } = dsThuThach;
 
   // So nguoi tham gia phai dem tung thu thach: filter chi so sanh bang, khong
   // gop nhom duoc, va mot lan `list` co the bi cat theo tran 200 dong.
@@ -845,7 +847,10 @@ export default function Challenges() {
 
       <ChonNhom />
 
-      {isLoading ? (
+      {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}
+      {dsThuThach.isError ? (
+        <ErrorBlock error={dsThuThach.error} onRetry={dsThuThach.refetch} />
+      ) : isLoading ? (
         <Loading label="Đang tải Challenge..." />
       ) : challenges.length === 0 ? (
         <EmptyState icon={Target} title="Chưa có Challenge nào đang mở" description="Hãy quay lại sau nhé." />

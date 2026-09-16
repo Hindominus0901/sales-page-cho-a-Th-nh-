@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ErrorBlock } from "@/components/QueryState";
 import { useMe } from "@/lib/useMe";
 import { formatNumber } from "@/lib/gamification";
 import Avatar from "@/components/Avatar";
@@ -62,12 +63,13 @@ export default function Leaderboard() {
   const [metric, setMetric] = useState("thi_dua");
   const [phamVi, setPhamVi] = useState("ca_nhan");
 
-  const { data, isLoading } = useQuery({
+  const bangXH = useQuery({
     queryKey: ["leaderboard", period, metric, phamVi, 100],
     queryFn: () => base44.functions.invoke("getLeaderboard", {
       period, metric, scope: phamVi, limit: 100,
     }),
   });
+  const { data, isLoading } = bangXH;
 
   const ranking = data?.ranking || [];
   const unit = METRICS.find((m) => m.key === metric)?.unit || "";
@@ -103,7 +105,12 @@ export default function Leaderboard() {
         </div>
       )}
 
-      {isLoading ? (
+      {/* Loi tai trang phai KHAC "chua co ai": truoc day 500 va bang rong hien
+          y het nhau, nen khong ai biet la he thong hong hay that su chua ai ghi
+          diem. ErrorBlock co nut "Thu lai" goi refetch. */}
+      {bangXH.isError ? (
+        <ErrorBlock error={bangXH.error} onRetry={bangXH.refetch} />
+      ) : isLoading ? (
         <Loading label="Đang tải bảng xếp hạng..." />
       ) : phamVi === "nhom" ? (
         <BangNhom ranking={ranking} cuaToi={data?.team_cua_toi} />

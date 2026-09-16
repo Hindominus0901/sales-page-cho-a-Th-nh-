@@ -1,4 +1,5 @@
 import NutNhanAdmin from '@/components/NutNhanAdmin';
+import { ErrorBlock } from "@/components/QueryState";
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Loader2, Lock } from "lucide-react";
@@ -24,10 +25,11 @@ export default function Courses() {
   // Bai dang xem. Rong = dang o danh sach bai cua khoa.
   const [lessonId, setLessonId] = useState(null);
 
-  const { data: courses = [], isLoading } = useQuery({
+  const khoaHoc = useQuery({
     queryKey: ["courses"],
     queryFn: () => base44.entities.Course.filter({ is_active: true }, "sort_order", 100),
   });
+  const { data: courses = [], isLoading } = khoaHoc;
 
   const { data: entitlements = [] } = useQuery({
     queryKey: ["entitlements", me?.id],
@@ -149,7 +151,10 @@ export default function Courses() {
 
       <CanDangKy me={me} phan="Lớp học" />
 
-      {isLoading ? (
+      {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}
+      {khoaHoc.isError ? (
+        <ErrorBlock error={khoaHoc.error} onRetry={khoaHoc.refetch} />
+      ) : isLoading ? (
         <Loading label="Đang tải khoá học..." />
       ) : courses.length === 0 ? (
         <EmptyState icon={BookOpen} title="Chưa có khoá học nào" description="Khoá học sẽ xuất hiện ở đây khi được mở." />

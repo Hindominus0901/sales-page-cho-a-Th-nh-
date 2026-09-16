@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Gift, Loader2, Lock, Check } from "lucide-react";
 import { base44, affiliateApi } from "@/api/base44Client";
+import { ErrorBlock } from "@/components/QueryState";
 import { useMe, ME_KEY } from "@/lib/useMe";
 import CanDangKy from "@/components/CanDangKy";
 import { computeLevel, formatNumber } from "@/lib/gamification";
@@ -32,10 +33,11 @@ export default function Rewards() {
   const { toast } = useToast();
   const [confirm, setConfirm] = useState(null);
 
-  const { data: rewards = [], isLoading } = useQuery({
+  const quaTang = useQuery({
     queryKey: ["rewards"],
     queryFn: () => base44.entities.Reward.filter({ is_active: true }, "sort_order", 100),
   });
+  const { data: rewards = [], isLoading } = quaTang;
 
   const { data: levels = [] } = useQuery({
     queryKey: ["levels"],
@@ -101,7 +103,10 @@ export default function Rewards() {
 
       <CanDangKy me={me} phan="Đổi quà" />
 
-      {isLoading ? (
+      {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}
+      {quaTang.isError ? (
+        <ErrorBlock error={quaTang.error} onRetry={quaTang.refetch} />
+      ) : isLoading ? (
         <Loading label="Đang tải phần thưởng..." />
       ) : rewards.length === 0 ? (
         <EmptyState icon={Gift} title="Chưa có phần thưởng nào" description="Kho quà sẽ được mở sớm thôi." />

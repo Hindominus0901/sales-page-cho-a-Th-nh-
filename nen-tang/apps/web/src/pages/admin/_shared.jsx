@@ -6,7 +6,7 @@ import BRAND from '@/brand.generated.js';
  * so lieu) de moi trang chi con phan viec rieng cua no.
  */
 import React from 'react';
-import { Loader2, AlertTriangle, Inbox, KeyRound } from 'lucide-react';
+import { Loader2, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -20,18 +20,16 @@ import {
 import { cn } from '@/lib/utils';
 
 /**
- * Backend tra loi dang { ok:false, error:{ code, message } }, nhung lop
- * http-client dung nguyen doi tuong `error` lam thong diep -> err.message ra
- * "[object Object]". Boc lai o day de nguoi dung doc duoc cau tieng Viet that.
+ * Bon khoi trang thai + errText DA CHUYEN sang components/QueryState.jsx de
+ * trang hoc vien dung chung duoc (truoc day 11/12 trang ben do khong he doc
+ * `isError`, nen loi 500 va "chua co du lieu" hien y het nhau).
+ *
+ * Re-export o day de 11 trang quan tri dang import tu '_shared' khong phai sua
+ * mot dong nao.
  */
-export function errText(err) {
-  const raw = err?.data?.error;
-  if (raw && typeof raw === 'object' && raw.message) return String(raw.message);
-  if (typeof raw === 'string' && raw) return raw;
-  const msg = err?.message;
-  if (msg && msg !== '[object Object]') return String(msg);
-  return 'Có lỗi xảy ra, thử lại sau.';
-}
+export {
+  errText, LoadingBlock, ErrorBlock, EmptyBlock, QueryState,
+} from '@/components/QueryState';
 
 export const fmtNumber = (n) => Number(n || 0).toLocaleString('vi-VN');
 export const fmtMoney = (n) => `${Number(n || 0).toLocaleString('vi-VN')}đ`;
@@ -126,47 +124,6 @@ export function TableScroll({ children, className }) {
   );
 }
 
-export function LoadingBlock({ label = 'Đang tải...' }) {
-  return (
-    <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-      <Loader2 className="h-4 w-4 animate-spin" /> {label}
-    </div>
-  );
-}
-
-export function ErrorBlock({ error, onRetry }) {
-  return (
-    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-center">
-      <AlertTriangle className="mx-auto mb-2 h-5 w-5 text-destructive" />
-      <p className="text-sm font-semibold text-destructive">{errText(error)}</p>
-      {onRetry && (
-        <Button variant="outline" size="sm" className="mt-3 rounded-full" onClick={onRetry}>
-          Thử lại
-        </Button>
-      )}
-    </div>
-  );
-}
-
-export function EmptyBlock({ children = 'Chưa có dữ liệu nào.' }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground">
-      <Inbox className="h-6 w-6 opacity-60" />
-      <span>{children}</span>
-    </div>
-  );
-}
-
-/**
- * Ba trang thai cua moi danh sach o mot cho. Trang goi chi viet phan "co du
- * lieu", khong con lap lai if/else o 11 file.
- */
-export function QueryState({ query, empty, emptyText, children }) {
-  if (query.isLoading) return <LoadingBlock />;
-  if (query.isError) return <ErrorBlock error={query.error} onRetry={query.refetch} />;
-  if (empty) return <EmptyBlock>{emptyText}</EmptyBlock>;
-  return children;
-}
 
 export function Kpi({ label, value, delta, tone = 'muted' }) {
   const toneClass = {

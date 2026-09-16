@@ -11,6 +11,7 @@ import {
   Calendar as CalendarIcon, Clock, MapPin, Users, Video, Loader2, Check, Lock,
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ErrorBlock } from "@/components/QueryState";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { theoGioThuongHieu } from "@/lib/format";
@@ -210,10 +211,11 @@ export default function Calendar() {
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => base44.auth.me() });
 
-  const { data: events = [], isLoading } = useQuery({
+  const lich = useQuery({
     queryKey: ["calendar-events"],
     queryFn: () => base44.entities.CalendarEvent.filter({ is_active: true }, "starts_at", 200),
   });
+  const { data: events = [], isLoading } = lich;
 
   // Doc HET dang ky (khong loc theo minh) de dem so cho da co. Chinh sach cua
   // EventSignup chi tra ve field cong khai cho nguoi khac, khong lo gi.
@@ -309,7 +311,10 @@ export default function Calendar() {
         ))}
       </div>
 
-      {isLoading ? (
+      {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}
+      {lich.isError ? (
+        <ErrorBlock error={lich.error} onRetry={lich.refetch} />
+      ) : isLoading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : !shown.length ? (
         <div className="rounded-2xl border border-dashed border-border py-14 text-center">

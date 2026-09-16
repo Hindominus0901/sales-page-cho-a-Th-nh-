@@ -10,12 +10,21 @@ import { useAuth } from '@/lib/AuthContext';
  */
 export function useMe() {
   const { user } = useAuth();
-  const { data } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: ['me'],
     queryFn: () => base44.auth.me(),
     placeholderData: user || undefined,
     staleTime: 30_000,
   });
+
+  // HET PHIEN thi phai tra ve null, dung tra ve `user` cu.
+  //
+  // Truoc day hook nay khong doc `isError`. Khi phien het han giua chung,
+  // query ['me'] hong nhung `user` tu AuthContext van con nam do (da cu, tu lan
+  // kiem luc khoi dong), nen hook van tra ve mot nguoi dung "con song". Man
+  // hinh MatPhien trong AppLayout/Profile do do khong bao gio hien - giao dien
+  // cu ve nhu binh thuong trong khi moi loi goi API deu 401.
+  if (isError) return null;
   return data || user || null;
 }
 

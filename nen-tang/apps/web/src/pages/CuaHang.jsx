@@ -16,6 +16,7 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, ShoppingBag, Copy, Check, MessageCircle, ExternalLink } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ErrorBlock } from "@/components/QueryState";
 import BRAND from "@/brand.generated.js";
 import { useMe } from "@/lib/useMe";
 import ChonNguoiGioiThieu from "@/components/ChonNguoiGioiThieu";
@@ -216,10 +217,11 @@ export default function CuaHang() {
   // Den man hinh chuyen khoan tu nut "da chuyen khoan roi" - nhac ho gui bill.
   const [guiBill, setGuiBill] = React.useState(false);
 
-  const { data: sanPham = [], isLoading } = useQuery({
+  const gianHang = useQuery({
     queryKey: ["san-pham"],
     queryFn: () => base44.entities.Product.filter({ is_active: true }, "sort_order", 100),
   });
+  const { data: sanPham = [], isLoading } = gianHang;
 
   const { data: entitlements = [] } = useQuery({
     queryKey: ["entitlements", me?.id],
@@ -290,7 +292,10 @@ export default function CuaHang() {
         subtitle="Khoá học và gói nâng cấp — chuyển khoản ngay tại đây, quyền mở tự động."
       />
 
-      {isLoading ? (
+      {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}
+      {gianHang.isError ? (
+        <ErrorBlock error={gianHang.error} onRetry={gianHang.refetch} />
+      ) : isLoading ? (
         <Loading label="Đang tải sản phẩm..." />
       ) : sanPham.length === 0 ? (
         <EmptyState

@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Award, Check, Lock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { ErrorBlock } from "@/components/QueryState";
 import { useMe } from "@/lib/useMe";
 import { computeLevel } from "@/lib/gamification";
 import LevelLadder from "@/components/LevelLadder";
@@ -17,10 +18,11 @@ export default function Badges() {
     queryFn: () => base44.entities.Level.list("level_number", 50),
   });
 
-  const { data: badges = [], isLoading: loadingBadges } = useQuery({
+  const huyHieu = useQuery({
     queryKey: ["badges"],
     queryFn: () => base44.entities.Badge.filter({ is_active: true }, "sort_order", 100),
   });
+  const { data: badges = [], isLoading: loadingBadges } = huyHieu;
 
   const { data: myBadges = [] } = useQuery({
     queryKey: ["user-badges", me?.id],
@@ -50,7 +52,10 @@ export default function Badges() {
 
       <div>
         <h3 className="font-bold text-[15px] mb-3.5">Bộ sưu tập huy hiệu</h3>
-        {loadingBadges ? (
+        {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}
+        {huyHieu.isError ? (
+          <ErrorBlock error={huyHieu.error} onRetry={huyHieu.refetch} />
+        ) : loadingBadges ? (
           <Loading label="Đang tải huy hiệu..." />
         ) : badges.length === 0 ? (
           <EmptyState icon={Award} title="Chưa có huy hiệu nào" description="Huy hiệu sẽ xuất hiện khi được mở." />

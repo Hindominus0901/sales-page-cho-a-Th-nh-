@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Copy, Users, Wallet } from "lucide-react";
 import { affiliateApi } from "@/api/base44Client";
+import { ErrorBlock } from "@/components/QueryState";
 import { formatNumber, getInitials, avatarColors } from "@/lib/gamification";
 import { formatDate } from "@/lib/format";
 import PageHeader from "@/components/PageHeader";
@@ -14,24 +15,39 @@ export default function Affiliate() {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
+  const qAffiliate = useQuery({
     queryKey: ["affiliate", "me"],
     queryFn: () => affiliateApi.me(),
     // 404 = chua dang ky qua funnel, khong phai su co - dung thu lai.
     retry: false,
   });
+  const { data, isLoading, error } = qAffiliate;
 
   if (isLoading) return <Loading label="Đang tải dữ liệu affiliate..." />;
 
+  // 404 va SU CO la hai chuyen khac nhau, phai hien khac nhau.
+  //
+  // 404 nghia la nguoi nay chua dang ky qua funnel - binh thuong, khong co gi
+  // hong, nen giu tong xam cua EmptyState va khong moi ho bam "Thu lai" (thu
+  // lai van 404). Con 500 hay mat mang thi la su co: tong do, kem nut thu lai,
+  // va dung errText de ra cau tieng Viet thay vi `error.message` tho.
   if (error) {
+    if (error.status === 404) {
+      return (
+        <div className="space-y-5">
+          <PageHeader title="Affiliate" subtitle="Mời người tham gia, nhận hoa hồng và lên rank nhanh hơn." />
+          <EmptyState
+            icon={Users}
+            title="Bạn chưa có link giới thiệu"
+            description="Điền form ở trang bán hàng để nhận link giới thiệu của riêng bạn."
+          />
+        </div>
+      );
+    }
     return (
       <div className="space-y-5">
         <PageHeader title="Affiliate" subtitle="Mời người tham gia, nhận hoa hồng và lên rank nhanh hơn." />
-        <EmptyState
-          icon={Users}
-          title={error.status === 404 ? "Bạn chưa có link giới thiệu" : "Chưa tải được dữ liệu affiliate"}
-          description={error.message}
-        />
+        <ErrorBlock error={error} onRetry={qAffiliate.refetch} />
       </div>
     );
   }
