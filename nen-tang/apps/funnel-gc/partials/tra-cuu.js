@@ -58,9 +58,14 @@
       /* Đơn chưa trả xong thì nút dẫn thẳng sang trang thanh toán — ở đó đã có
          sẵn QR cho đúng phần còn thiếu. Đơn đã xong thì vẫn cho mở lại để xem. */
       var chuaXong = o.status === 'pending' || o.status === 'partially_paid';
+      /* Don DA tra tien khong con kem ma don (may chu co y giau di - xem chu
+         thich trong worker/src/routes/tuong-thich.js). Khong co ma thi khong co
+         gi de bam tiep, nen chi hien trang thai va so tien. */
+      var coMa = !!o.code;
       return '<div class="fc2-shadow" style="background:#fff;border-radius:20px;padding:20px 22px">'
         + '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">'
-        +   '<span style="font-size:22px;font-weight:800;letter-spacing:.05em">' + o.code + '</span>'
+        +   '<span style="font-size:22px;font-weight:800;letter-spacing:.05em">'
+        +     (coMa ? o.code : 'Đơn của bạn') + '</span>'
         +   '<span style="font-size:13px;font-weight:700;padding:5px 12px;border-radius:999px;color:'
         +     s.color + ';background:' + s.bg + '">' + s.text + '</span>'
         + '</div>'
@@ -70,12 +75,16 @@
               ? ' · đã nhận ' + vndFmt(o.amountPaid) + ', còn thiếu <b style="color:#8a5a00">' + vndFmt(o.remaining) + '</b>'
               : '')
         + '</div>'
-        + '<a href="/thanh-toan/' + encodeURIComponent(o.code) + '" class="fc2-cta" style="display:inline-flex;'
-        +   'align-items:center;height:46px;padding:0 20px;margin-top:14px;background:'
-        +   (chuaXong ? '#2f7a4d' : 'transparent') + ';color:' + (chuaXong ? '#fff' : '#26643f')
-        +   ';border:' + (chuaXong ? '0' : '1px solid rgba(47,122,77,.4)')
-        +   ';font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">'
-        +   (chuaXong ? 'Chuyển khoản nốt' : 'Xem đơn') + '</a>'
+        + (coMa
+            ? '<a href="/thanh-toan/' + encodeURIComponent(o.code) + '" class="fc2-cta" style="display:inline-flex;'
+              + 'align-items:center;height:46px;padding:0 20px;margin-top:14px;background:'
+              + (chuaXong ? '#2f7a4d' : 'transparent') + ';color:' + (chuaXong ? '#fff' : '#26643f')
+              + ';border:' + (chuaXong ? '0' : '1px solid rgba(47,122,77,.4)')
+              + ';font-weight:700;font-size:15px;border-radius:14px;text-decoration:none">'
+              + (chuaXong ? 'Chuyển khoản nốt' : 'Xem đơn') + '</a>'
+            : '<div style="font-size:14px;color:#55555c;margin-top:14px">'
+              + 'Đơn này đã thanh toán xong. Mở đường dẫn trang thanh toán đã lưu để vào lớp, '
+              + 'hoặc nhắn cho ban tổ chức nếu bạn không còn giữ.</div>')
         + '</div>';
     }).join('');
   }

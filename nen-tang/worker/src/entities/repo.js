@@ -184,6 +184,8 @@ function project(def, user, row) {
  *   gateBy 'course' (mac dinh) - mo khi da mua khoa, hoac khoa do mo tu do
  *   gateBy 'event'            - mo khi da dang ky buoi do
  *   gateBy 'package'          - mo khi da mua goi do (khop theo `sku`)
+ *   gateBy 'redemption'       - mo khi da doi qua do (khop theo `id`)
+ *   gateBy 'challenge'        - mo khi da tham gia thu thach (khop `challenge_id`)
  *   gateBy 'course_self'      - dong do chinh la khoa hoc (id nam o `id`)
  */
 
@@ -307,12 +309,64 @@ async function gateByPackage(hide, user, rows, store) {
   return rows.map((row) => (owned.has(row?.sku) ? row : maskRow(row, hide)));
 }
 
+/**
+ * Mo khi DA DOI qua do (bang `redemptions`).
+ *
+ * Dung cho `rewards.delivery_url`: qua so duoc GIAO NGAY luc doi
+ * (functions/index.js -> redeemReward), nen chinh cai link do LA mon hang.
+ * Bang `rewards` phai doc cong khai vi cua hang can hien ten, anh, gia xu cho
+ * moi nguoi xem truoc khi doi - nhung neu khong che cot link thi mot lenh GET
+ * /api/entities/Reward la lay het qua ma khong mat mot xu nao. Dung lo hong ma
+ * `products.delivery_url` da duoc va, chi bang `rewards` bi bo sot.
+ *
+ * Tinh ca don dang cho duyet: nguoi ta da bi tru xu roi.
+ */
+async function gateByRedemption(hide, user, rows, store) {
+  const ids = [...new Set(rows.map((r) => r?.id).filter(Boolean))];
+  if (!ids.length) return rows;
+  const holes = ids.map(() => '?').join(',');
+
+  const daDoi = await store.all(
+    `SELECT reward_id FROM redemptions
+      WHERE user_id = ? AND status <> 'cancelled' AND reward_id IN (${holes})`,
+    [user.id, ...ids]);
+  const cua = new Set(daDoi.map((r) => r.reward_id));
+
+  return rows.map((row) => (cua.has(row.id) ? row : maskRow(row, hide)));
+}
+
+/**
+ * Mo khi DA THAM GIA thu thach do (bang `challenge_members`).
+ *
+ * Dung cho `challenge_day_tasks`: video va bai tap cua tung ngay la noi dung
+ * nguoi ta tra tien de co. Bang nay doc cong khai de trang thu thach hien duoc
+ * lich va ten nhiem vu truoc khi tham gia - nhung khong che link thi mot lenh
+ * GET /api/entities/ChallengeDayTask lay duoc video + bai tap cua MOI NGAY
+ * trong MOI thu thach, ke ca thu thach doi mo khoa. `Lesson` da che dung kieu
+ * nay (xem gatedFields cua no trong schema.js).
+ */
+async function gateByChallenge(hide, user, rows, store) {
+  const ids = [...new Set(rows.map((r) => r?.challenge_id).filter(Boolean))];
+  if (!ids.length) return rows;
+  const holes = ids.map(() => '?').join(',');
+
+  const thamGia = await store.all(
+    `SELECT challenge_id FROM challenge_members
+      WHERE user_id = ? AND challenge_id IN (${holes})`,
+    [user.id, ...ids]);
+  const cua = new Set(thamGia.map((r) => r.challenge_id));
+
+  return rows.map((row) => (cua.has(row?.challenge_id) ? row : maskRow(row, hide)));
+}
+
 async function applyAccess(def, user, rows, store) {
   const hide = def.gatedFields;
   if (!hide || !rows.length) return rows;
   if (isStaff(user)) return rows;
   if (def.gateBy === 'event') return gateByEvent(hide, user, rows, store);
   if (def.gateBy === 'package') return gateByPackage(hide, user, rows, store);
+  if (def.gateBy === 'redemption') return gateByRedemption(hide, user, rows, store);
+  if (def.gateBy === 'challenge') return gateByChallenge(hide, user, rows, store);
   // 'course_self': chinh dong do LA khoa hoc, nen id khoa nam o `id`.
   if (def.gateBy === 'course_self') return gateByCourse(hide, user, rows, store, 'id');
   return gateByCourse(hide, user, rows, store);

@@ -698,6 +698,27 @@ async function scoreChallengeDay(rc, svc) {
   // Nguoi hoc duoc tu nho AI cham bai CUA MINH; admin cham duoc moi bai.
   if (submission.user_id !== rc.user.id && !isStaff(rc)) return apiError(403, 'forbidden', 'Không có quyền');
 
+  // CHI CHAM BAI DANG CHO. Da cham roi thi thoi - giong reviewChallengeDay.
+  //
+  // Thieu phep thu nay thi cham lai bao nhieu lan cung duoc tren cung mot bai:
+  // moi lan la mot lan goi API Anthropic that (tien that), va la mot lan quay
+  // lai xem diem co khac khong. Noi dung bai nop di thang vao prompt
+  // (functions/ai.js), nen quay du lan se ra lan model tra rubric toan `pass`.
+  if (submission.status !== 'pending' && !isStaff(rc)) {
+    return apiError(409, 'da_cham', 'Bài này đã chấm rồi. Nhắn admin nếu bạn muốn chấm lại.');
+  }
+
+  // Tran goi AI. Day la duong DUY NHAT nguoi dung thuong kich hoat duoc mot lan
+  // goi API tinh tien, nen khong co tran la de ngo cho bat ky ai dang nhap duoc
+  // dot het han muc API bang mot vong lap.
+  if (!isStaff(rc)) {
+    const tran = await rateLimit(rc, `ai-cham:${rc.user.id}`, 20, 60 * 60 * 1000);
+    if (!tran.allowed) {
+      return apiError(429, 'rate_limited',
+        'Bạn nhờ AI chấm hơi nhiều lần trong một giờ. Nghỉ chút rồi quay lại nhé.');
+    }
+  }
+
   const task = (await svc.ChallengeDayTask.filter({
     challenge_id: submission.challenge_id, day: submission.day,
   }))[0];
@@ -1399,10 +1420,23 @@ async function diemDanh(rc, svc) {
 
   await svc.EventSignup.update(signup.id, { status: 'attended', attended_at: nowIso() });
 
+  // source_id la NGUOI + BUOI, khong phai id dong dang ky.
+  //
+  // awardPoints chong trung theo (user_id, event_key, source_id). Lay id dong
+  // dang ky lam source_id thi chong trung do gan vao mot ban ghi ma chinh nguoi
+  // dung XOA DUOC (EventSignup.delete cho phep chu so huu). Vong lap
+  // joinEvent -> diemDanh -> xoa dong dang ky -> joinEvent lai sinh id moi moi
+  // lan, nen moi vong lai duoc cong tiep - ma luat `event_attended` khong dat
+  // daily_cap lan lifetime_cap. Tuc la XP va XU khong gioi han, va xu doi duoc
+  // qua that.
+  //
+  // Ghep tu event_id va user_id thi khoa chong trung khong con phu thuoc vao
+  // ban ghi nao ca: mot nguoi, mot buoi, cong diem dung mot lan, xoa gi cung
+  // khong lam moi duoc no.
   const award = await awardPoints(rc, {
     user_id: rc.user.id,
     event_key: 'event_attended',
-    source_id: signup.id,
+    source_id: `${event.id}:${rc.user.id}`,
     reason: `Điểm danh: ${event.title}`,
   });
 
@@ -2067,7 +2101,9 @@ async function markEventAttendance(rc, svc) {
       award = await awardPoints(rc, {
         user_id: userId,
         event_key: 'event_attended',
-        source_id: signup.id,
+        // Cung khoa voi diemDanh() - neu khac thi admin diem danh cho mot nguoi
+        // da tu diem danh se cong diem LAN HAI.
+        source_id: `${signup.event_id}:${signup.user_id}`,
         reason: `Điểm danh: ${event.title}`,
       });
     }

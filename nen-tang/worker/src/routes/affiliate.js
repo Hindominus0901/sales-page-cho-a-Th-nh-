@@ -206,7 +206,21 @@ export async function affiliateOfUser(rc, user) {
     if (row) return row;
   }
   // 3. Theo 8 chu so cuoi cua so dien thoai (hai ben luu khac dinh dang)
-  const tail = last8(user.phone_e164 || user.phone);
+  //
+  // CHI `phone_e164`, TUYET DOI KHONG `phone`.
+  //
+  // `users.phone` la o ho so, ai cung tu sua duoc qua PATCH /api/auth/me va
+  // KHONG he duoc xac minh. Truoc day ham nay nhan ca hai, nen mot tai khoan
+  // moi bat ky chi can dat `phone` bang so cua mot dai ly la
+  // GET /api/affiliate/me tra ve nguyen cong cua nguoi ta: danh sach nguoi da
+  // gioi thieu, doanh thu, hoa hong, va `affiliate.token` - token dung duoc
+  // mai qua /api/affiliate/:token. Cung ham nay con dem `min_referrals` khi doi
+  // qua, nen con mo khoa duoc qua bang luot moi cua nguoi khac.
+  //
+  // `phone_e164` thi khac: no chi duoc ghi mot lan trong auth/invite.js luc tao
+  // tai khoan tu don hang that, khong nam trong danh sach `writable` cua entity
+  // User, va khong duong nao cho nguoi dung dat lai. Nen no van dung de khop.
+  const tail = last8(user.phone_e164);
   if (tail.length === 8) {
     const row = await rc.store.get(
       "SELECT * FROM affiliates WHERE phone IS NOT NULL"

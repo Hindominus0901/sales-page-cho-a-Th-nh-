@@ -255,15 +255,29 @@ export async function traCuuTuongThich(rc) {
       WHERE l.phone_e164 = ?
       ORDER BY o.id DESC LIMIT 10`, [sdt.value.e164]);
 
+  // MA DON CUA DON DA TRA TIEN KHONG DUOC PHAT RA THEO SO DIEN THOAI.
+  //
+  // /api/order/:ma/vao-lop co y hoi HAI yeu to - ma don VA so dien thoai - roi
+  // moi cap link dat mat khau. Nhung neu duong nay tra ve ma don khi chi biet so
+  // dien thoai, thi hai yeu to sap thanh MOT: ai biet so cua mot nguoi vua mua
+  // la lay duoc ma, roi doi ma lay link dat mat khau, roi vao tai khoan ho.
+  //
+  // Don CHUA tra tien thi van tra ma: /vao-lop tu choi thang nhung don do
+  // (no doi status 'paid' hoac 'overpaid'), nen khong co gi de chiem; va trang
+  // tra cuu can ma do de dan nguoi ta sang /thanh-toan/<ma> chuyen khoan not.
+  // Do la ca ly do khong bo han truong nay di.
   return json({
     ok: true,
-    orders: (rows || []).map((o) => ({
-      code: o.code,
-      status: o.status,
-      amount: o.amount,
-      amount_text: rc.cfg.formatPrice(o.amount),
-      paidAt: o.paid_at,
-      createdAt: o.created_at,
-    })),
+    orders: (rows || []).map((o) => {
+      const daTraTien = o.status === 'paid' || o.status === 'overpaid';
+      return {
+        ...(daTraTien ? {} : { code: o.code }),
+        status: o.status,
+        amount: o.amount,
+        amount_text: rc.cfg.formatPrice(o.amount),
+        paidAt: o.paid_at,
+        createdAt: o.created_at,
+      };
+    }),
   });
 }

@@ -144,7 +144,7 @@ export async function spendCoin(rc, { user_id: userId, amount, source, source_id
   if (user.total_coin < amount) return { ok: false, reason: 'khong du xu' };
 
   const t = nowIso();
-  await store.batch([
+  const ketQua = await store.batch([
     store.prepare(
       `INSERT INTO coin_transactions (id, user_id, user_name, amount, type, source, source_id,
          description, created_date, updated_date) VALUES (?,?,?,?, 'spend', ?,?,?,?,?)`,
@@ -154,6 +154,30 @@ export async function spendCoin(rc, { user_id: userId, amount, source, source_id
       'UPDATE users SET total_coin = total_coin - ?, updated_date = ? WHERE id = ? AND total_coin >= ?',
       [Math.abs(amount), t, userId, Math.abs(amount)]),
   ]);
+
+  // PHAI DOC xem lenh UPDATE co doi duoc dong nao khong.
+  //
+  // Dieu kien "AND total_coin >= ?" o tren chan tieu am - nhung no chan bang
+  // cach KHOP 0 DONG, va batch khong nem loi vi chuyen do. Truoc day ham nay
+  // tra thang `{ ok: true }` ma khong nhin ket qua, nen khi khong tru duoc xu no
+  // van bao thanh cong.
+  //
+  // Hau qua that: hai request redeemReward chay song song khi so du vua du MOT
+  // lan. Ca hai doc `user.total_coin` trong luc chua ai bi tru nen deu qua phep
+  // thu "du xu"; lan tru thu hai khop 0 dong; nhung ca hai deu nhan `ok: true`
+  // nen nguoi do lay HAI phan qua ma chi tra tien MOT lan. Dong so cai am van
+  // duoc ghi, nen doi soat se bao lech - sau khi qua da giao xong.
+  const doiDuoc = Number(ketQua?.[1]?.meta?.changes ?? 0);
+  if (!doiDuoc) {
+    // Don lai dong so cai vua ghi: tru khong thanh thi khong duoc de lai vet
+    // tieu tien, neu khong bang doi soat se bao lech vi mot giao dich chua bao
+    // gio xay ra.
+    await store.run(
+      `DELETE FROM coin_transactions
+        WHERE user_id = ? AND source = ? AND source_id = ? AND created_date = ?`,
+      [userId, source, sourceId, t]).catch(() => {});
+    return { ok: false, reason: 'khong du xu' };
+  }
   return { ok: true };
 }
 

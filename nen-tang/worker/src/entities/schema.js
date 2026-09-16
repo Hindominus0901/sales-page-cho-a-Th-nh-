@@ -140,6 +140,13 @@ export const ENTITIES = {
       // Qua co delivery_url duoc giao ngay khi doi, khong qua hang doi duyet.
       delivery_url: 'string', delivery_note: 'string',
     },
+    // Chinh cai link do LA mon hang. Cua hang phai hien ten/anh/gia xu cho moi
+    // nguoi xem truoc khi doi, nen bang nay doc cong khai - va neu khong che hai
+    // cot nay thi mot lenh GET /api/entities/Reward lay het qua ma khong mat mot
+    // xu nao, ke ca qua khoa theo min_referrals. Dung lo hong ma
+    // `products.delivery_url` ben duoi da duoc va; bang nay bi bo sot.
+    gatedFields: ['delivery_url', 'delivery_note'],
+    gateBy: 'redemption',
   }),
 
   AppSetting: def({
@@ -291,19 +298,35 @@ export const ENTITIES = {
       // diem danh; de trong thi khong. Xem migration 0010.
       event_id: 'string',
     },
+    // Ten nhiem vu va lich thi cho xem (de con biet ma tham gia), nhung video va
+    // bai tap thi chi nguoi DA THAM GIA moi thay. Khong che thi mot lenh GET la
+    // lay duoc noi dung cua moi ngay trong moi thu thach - ke ca thu thach doi
+    // mo khoa, vi `requires_unlock` chi chan joinChallenge chu khong chan doc
+    // bang nay. `Lesson` ben duoi da che dung kieu nay.
+    gatedFields: ['video_url', 'assignment_url', 'doc_url'],
+    gateBy: 'challenge',
   }),
 
   ChallengeMember: def({
     table: 'challenge_members',
     ownerField: 'user_id',
     read: 'all',                // de hien so nguoi tham gia va bang xep hang
-    create: 'self',
+    // THAM GIA PHAI QUA joinChallenge, khong tu tao duoc o day.
+    //
+    // Truoc day la `create: 'self'` ma KHONG khai `writable`, nen repo.js cho
+    // ghi moi cot. Mot lenh POST /api/entities/ChallengeMember voi
+    // {challenge_id, progress: 999, completed: true} vua bo qua toan bo kiem tra
+    // cua joinChallenge (`requires_unlock` + entitlement), vua ghi thang tien do
+    // gia len bang xep hang. Giao dien khong he goi duong nay - no luon di qua
+    // joinChallenge - nen dong lai khong mat gi.
+    create: 'never',
     update: 'admin',            // tien do do he thong tinh, khong tu khai
     delete: 'own_or_admin',
     fields: {
       challenge_id: 'string', challenge_name: 'string', user_id: 'string',
       user_name: 'string', progress: 'number', completed: 'bool', joined_at: 'string',
     },
+    writable: { admin: ['progress', 'completed'] },
     readable: { public: ['id', 'challenge_id', 'user_id', 'user_name', 'progress', 'completed', 'created_date'] },
   }),
 
@@ -482,7 +505,11 @@ export const ENTITIES = {
     read: 'all',                // de hien "12 nguoi da dang ky"
     create: 'never',            // phai qua ham joinEvent (co kiem so cho)
     update: 'admin',            // diem danh la viec cua admin, khong tu khai
-    delete: 'own_or_admin',     // tu huy cho cua minh duoc
+    // XOA la viec cua admin. Tu bo cho thi dung leaveEvent - no set
+    // status='cancelled' chu khong xoa dong. Cho chu so huu XOA HAN dong dang
+    // ky la mo duong farm diem: xoa xong dang ky lai la co mot dong moi, va moi
+    // thu chong trung nao gan vao id cua dong do deu bi lam moi theo.
+    delete: 'admin',
     fields: {
       event_id: 'string', event_title: 'string', user_id: 'string', user_name: 'string',
       status: 'string', registered_at: 'string', attended_at: 'string',
@@ -560,6 +587,14 @@ export const ENTITIES = {
     fields: {
       user_id: 'string', title: 'string', duration: 'string', file_url: 'string',
       challenge_id: 'string', day: 'number',
+    },
+    // Khong khai `writable` thi repo.js cho ghi MOI cot - ke ca `user_id`, tuc
+    // la tao ban ghi mang ten nguoi khac. Bang nay hien chua co trang nao dung
+    // (khong noi nao trong worker lan SPA cham toi), nen day la chan truoc cho
+    // luc no duoc dung toi, chu khong sua hanh vi nao dang chay.
+    writable: {
+      self: ['title', 'duration', 'file_url', 'challenge_id', 'day'],
+      admin: ['title', 'duration', 'file_url', 'challenge_id', 'day'],
     },
   }),
 };
