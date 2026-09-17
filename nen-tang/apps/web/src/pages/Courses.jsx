@@ -5,7 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Loader2, Lock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useMe, ME_KEY } from "@/lib/useMe";
-import { daMoKhoa, khoaMoQuaGoi } from "@/lib/moKhoa";
+import { daMoKhoa, khoaMoQuaGoi, lyDoKhoa } from "@/lib/moKhoa";
+import { computeLevel } from "@/lib/gamification";
 import CanDangKy from "@/components/CanDangKy";
 import LessonRow from "@/components/LessonRow";
 import XemBaiGiang from "@/components/XemBaiGiang";
@@ -30,6 +31,13 @@ export default function Courses() {
     queryFn: () => base44.entities.Course.filter({ is_active: true }, "sort_order", 100),
   });
   const { data: courses = [], isLoading } = khoaHoc;
+
+  // Can cap bac de biet khoa co min_level da mo chua - dung cung luat voi
+  // gateByCourse ben may chu. Xem chu thich trong lib/moKhoa.js.
+  const { data: levels = [] } = useQuery({
+    queryKey: ["levels"],
+    queryFn: () => base44.entities.Level.list("level_number", 50),
+  });
 
   const { data: entitlements = [] } = useQuery({
     queryKey: ["entitlements", me?.id],
@@ -73,7 +81,8 @@ export default function Courses() {
   // Phai tinh CA khoa mo qua goi, khong chi quyen `course` - xem lib/moKhoa.js.
   // Thieu ve nay thi may chu mo video con giao dien van ve man hinh khoa.
   const quaGoi = khoaMoQuaGoi(entitlements, sanPham);
-  const unlocked = (course) => daMoKhoa(course, entitlements, quaGoi);
+  const capDo = computeLevel(me.total_xp || 0, levels).levelNumber;
+  const unlocked = (course) => daMoKhoa(course, entitlements, quaGoi, capDo);
 
   const lessonsOf = (courseId) => allLessons.filter((l) => l.course_id === courseId);
   const selected = courses.find((c) => c.id === selectedId) || null;
@@ -120,7 +129,7 @@ export default function Courses() {
             <EmptyState
               icon={Lock}
               title="Khoá học này đang khoá"
-              description="Bạn cần được admin mở khoá hoặc mua gói tương ứng để vào học."
+              description={lyDoKhoa(selected, capDo)}
               action={
                 <NutNhanAdmin />
               }

@@ -190,7 +190,11 @@ function project(def, user, row) {
  */
 
 /** Cap do hien tai cua nguoi dung, tinh tu tong XP. */
-async function levelOf(store, userId) {
+// Export de completeLesson (functions/index.js) dung CHUNG mot cong thuc voi
+// cong chan video. Hai noi tu tinh cap bac la som muon lech nhau, va lech
+// theo huong nao cung te: hoac chan nguoi du dieu kien, hoac cong diem cho
+// bai ma may chu tu choi phat video.
+export async function levelOf(store, userId) {
   const [me, levels] = await Promise.all([
     store.get('SELECT total_xp FROM users WHERE id = ?', [userId]),
     store.all('SELECT level_number, threshold_xp FROM levels ORDER BY threshold_xp').catch(() => []),

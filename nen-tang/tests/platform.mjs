@@ -772,6 +772,49 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
     `/api/entities/Lesson?filter=${encodeURIComponent(JSON.stringify({ course_id: courseId }))}`);
   check('admin luon thay day du', (lessonAsAdmin.data || [])[0]?.video_id === 'bi-mat-123');
 
+  // --- Cap bac cung la mot cong khoa ----------------------------------------
+  //
+  // gateByCourse coi mot khoa la mo khi  !requires_unlock VA myLevel >= min_level
+  // (entities/repo.js:260-263). Nhung KHONG MOT BAI NAO tung phu ve `min_level`:
+  // moi khoa trong bo test deu dat min_level = 0.
+  //
+  // Va da co luc hai phia lech nhau theo huong te nhat: giao dien bo qua han
+  // min_level nen ve khoa nhu DA MO, con completeLesson cung chi nhin
+  // requires_unlock - tuc la hoc vien bam "Da hoc xong" tren mot bai ma may chu
+  // tu choi phat video, VAN duoc cong 15 XP / 5 xu, va den bai cuoi con an them
+  // 200 XP / 100 xu thuong hoan thanh khoa. Diem sai con te hon khong co diem.
+  const capId = `c-cap-${Date.now()}`;
+  const baiCapId = `l-cap-${Date.now()}`;
+  sql(`INSERT INTO courses (id,name,description,min_level,requires_unlock,is_active,sort_order,created_date,updated_date) VALUES ('${capId}','Khoa can cap 3','',3,0,1,0,datetime('now'),datetime('now'))`);
+  sql(`INSERT INTO lessons (id,course_id,title,video_provider,video_id,xp,coin,sort_order,created_date,updated_date) VALUES ('${baiCapId}','${capId}','Bai can cap 3','wistia','video-cap-3',0,0,0,datetime('now'),datetime('now'))`);
+
+  const baiChuaDuCap = await alice.call('GET', `/api/entities/Lesson/${baiCapId}`);
+  check('khoa co min_level: chua du cap thi KHONG thay ma video',
+    baiChuaDuCap.data?.video_id === undefined && baiChuaDuCap.data?.locked === true,
+    baiChuaDuCap.data);
+
+  const hocChuaDuCap = await alice.call('POST', '/api/functions/completeLesson', { lesson_id: baiCapId });
+  check('khoa co min_level: chua du cap thi KHONG cong diem duoc',
+    hocChuaDuCap.status === 403 && hocChuaDuCap.data?.error?.code === 'chua_du_cap',
+    hocChuaDuCap.data);
+
+  // Du cap roi thi phai vao duoc - chan qua tay cung sai nhu cho lot.
+  const xpCu = (await alice.call('GET', '/api/auth/me')).data?.total_xp ?? 0;
+  sql(`UPDATE users SET total_xp = 999999 WHERE id = '${alice.id}'`);
+
+  const baiDuCap = await alice.call('GET', `/api/entities/Lesson/${baiCapId}`);
+  check('khoa co min_level: du cap thi thay ma video',
+    baiDuCap.data?.video_id === 'video-cap-3', baiDuCap.data);
+
+  const hocDuCap = await alice.call('POST', '/api/functions/completeLesson', { lesson_id: baiCapId });
+  check('khoa co min_level: du cap thi hoc duoc binh thuong',
+    hocDuCap.status === 200 && hocDuCap.data?.ok === true, hocDuCap.data);
+
+  sql(`UPDATE users SET total_xp = ${Number(xpCu) || 0} WHERE id = '${alice.id}'`);
+  sql(`DELETE FROM lesson_progress WHERE lesson_id='${baiCapId}'`);
+  sql(`DELETE FROM lessons WHERE id='${baiCapId}'`);
+  sql(`DELETE FROM courses WHERE id='${capId}'`);
+
   sql(`DELETE FROM entitlements WHERE ref='${courseId}'`);
   sql(`DELETE FROM lessons WHERE id='${lessonId}'`);
   sql(`DELETE FROM courses WHERE id='${courseId}'`);

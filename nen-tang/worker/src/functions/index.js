@@ -10,7 +10,7 @@
  */
 import { json, apiError } from '../lib/respond.js';
 import { requireUser } from '../auth/guard.js';
-import { createServiceRepo, PolicyError, khoaMoQuaGoi } from '../entities/repo.js';
+import { createServiceRepo, PolicyError, khoaMoQuaGoi, levelOf } from '../entities/repo.js';
 import {
   awardPoints, spendCoin, refundCoin, touchStreak, levelFor, reconcile, checkLevelAfterChange,
 } from '../points/award.js';
@@ -858,6 +858,27 @@ async function completeLesson(rc, svc) {
   if (!lesson) return apiError(404, 'not_found', 'Không tìm thấy bài học');
 
   const course = await svc.Course.get(lesson.course_id);
+
+  // CAP BAC cung la mot cong khoa, khong chi `requires_unlock`.
+  //
+  // gateByCourse (entities/repo.js) coi mot khoa la mo khi
+  //     !requires_unlock VA myLevel >= min_level
+  // nhung cho nay truoc day chi nhin `requires_unlock`. Nen mot khoa
+  // requires_unlock = 0, min_level = 2 se: bi may chu che mat video_id, ma van
+  // cho bam "Da hoc xong" va van cong du 15 XP / 5 xu - roi den bai cuoi cung
+  // con cong tiep 200 XP / 100 xu thuong hoan thanh khoa.
+  //
+  // Tuc la hoc vien "hoc het" mot khoa ma may chu tu choi phat video, va bang
+  // xep hang ghi nhan dieu do. Diem sai con te hon khong duoc diem.
+  const canCap = Number(course?.min_level || 0);
+  if (canCap > 0) {
+    const capHienTai = await levelOf(rc.store, rc.user.id);
+    if (capHienTai < canCap) {
+      return apiError(403, 'chua_du_cap',
+        `Bài này thuộc khoá cần cấp ${canCap}. Bạn tích thêm XP rồi quay lại nhé.`);
+    }
+  }
+
   if (course?.requires_unlock) {
     // PHAI tinh ca khoa mo qua GOI, dung cung mot luat voi cong che video
     // (khoaMoQuaGoi trong entities/repo.js). Neu chi nhin quyen `course` thi
