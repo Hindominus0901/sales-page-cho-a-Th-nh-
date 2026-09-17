@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, Flame } from 'lucide-react';
 import { base44, adminApi } from '@/api/base44Client';
+import { useKhaNang } from '@/lib/useKhaNang';
 import {
   BarChart, EmptyBlock, ErrorBlock, Heatmap, InitialAvatar, Kpi, LoadingBlock,
   PageHeader, Panel, StatusPill, fmtMoney, fmtNumber,
@@ -55,6 +56,7 @@ function buildWeekBars(activities) {
 }
 
 export default function AdminDashboard() {
+  const { khaNang } = useKhaNang();
   // Khoa cache mang theo ca THU TU va TRAN, vi hai thu do quyet dinh noi dung
   // tra ve. Truoc day trang nay va trang Hoc vien dung chung khoa
   // ['admin','users'] nhung xin hai tran khac nhau (500 va 2000) - react-query
@@ -165,11 +167,16 @@ export default function AdminDashboard() {
             ? `${Math.round((activeToday / userList.length) * 1000) / 10}% học viên có mặt`
             : '—'}
         />
+        {/* Chua nap ANTHROPIC_API_KEY thi o nay VINH VIEN bang 0, va khong noi
+            vi sao - nhin nhu AI dang hong. Approval.jsx da an nut AI theo dung
+            co nay roi; o day phai nhat quan voi no. */}
         <Kpi
           label="AI đã xử lý hôm nay"
-          value={fmtNumber(aiToday)}
-          delta={todayActs.length ? `${Math.round((aiToday / todayActs.length) * 100)}% bài nộp hôm nay` : '—'}
-          tone="good"
+          value={khaNang.ai ? fmtNumber(aiToday) : '—'}
+          delta={!khaNang.ai
+            ? 'Chưa bật chấm bài bằng AI'
+            : todayActs.length ? `${Math.round((aiToday / todayActs.length) * 100)}% bài nộp hôm nay` : '—'}
+          tone={khaNang.ai ? 'good' : undefined}
         />
         <Kpi
           label="Doanh thu affiliate"
@@ -216,7 +223,7 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Panel
-          title="Heatmap hoạt động toàn hệ thống"
+          title="Mật độ hoạt động toàn hệ thống"
           description="Tổng số lượt nộp bài, gọi khách, đăng content của toàn bộ học viên theo từng ngày."
           className="lg:col-span-2"
         >

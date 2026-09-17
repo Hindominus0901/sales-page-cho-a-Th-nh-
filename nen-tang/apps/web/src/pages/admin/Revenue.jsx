@@ -90,7 +90,7 @@ export default function Revenue() {
   if (stats.isError) {
     return (
       <div className="space-y-5">
-        <PageHeader title="Doanh thu & Metrics" />
+        <PageHeader title="Doanh thu & chỉ số" />
         {isFunnelAuthError(stats.error)
           ? <FunnelAuthNotice error={stats.error} />
           : <ErrorBlock error={stats.error} onRetry={stats.refetch} />}
@@ -104,9 +104,9 @@ export default function Revenue() {
   const affiliate = d.affiliate || {};
 
   const steps = [
-    { label: 'Xem Landing Page', value: fmtNumber(funnel.sessions), sub: '100%', tone: 'muted' },
+    { label: 'Xem trang bán hàng', value: fmtNumber(funnel.sessions), sub: '100%', tone: 'muted' },
     { label: 'Điền form đăng ký', value: fmtNumber(funnel.leads), sub: `${funnel.cr_session_to_lead ?? 0}% chuyển đổi`, tone: 'warn' },
-    { label: 'Vào trang Checkout', value: fmtNumber(funnel.orders), sub: `${funnel.cr_lead_to_order ?? 0}% từ form`, tone: 'warn' },
+    { label: 'Vào trang thanh toán', value: fmtNumber(funnel.orders), sub: `${funnel.cr_lead_to_order ?? 0}% từ form`, tone: 'warn' },
     { label: 'Thanh toán thành công', value: fmtNumber(funnel.paid), sub: `${funnel.cr_order_to_paid ?? 0}% chốt đơn`, tone: 'good' },
   ];
 
@@ -117,7 +117,7 @@ export default function Revenue() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Doanh thu & Metrics"
+        title="Doanh thu & chỉ số"
         description="Số liệu bán hàng lấy trực tiếp từ hệ thống funnel: phiên truy cập, đơn hàng, hoa hồng."
       >
         <ExportMenu />
