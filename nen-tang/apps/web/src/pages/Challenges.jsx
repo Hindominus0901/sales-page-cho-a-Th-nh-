@@ -494,6 +494,23 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
 
   const taskByDay = Object.fromEntries(tasks.map((t) => [t.day, t]));
   const todayTask = taskByDay[currentPick];
+
+  // BA LY DO KHAC HAN NHAU khien `currentPick` la null - truoc day ca ba deu
+  // hien chung mot cau "Thu thach nay chua duoc xep nhiem vu theo ngay":
+  //
+  //   1. Thu thach that su chua co ngay nao   -> cau do DUNG
+  //   2. Ngay hom nay DA NOP VA DA DUOC DUYET -> cau do SAI, va day la duong
+  //      chay binh thuong nhat: nop du hai link la he thong tu duyet ngay
+  //      (chotBaiThuThach), nen moi hoc vien gap no MOI NGAY sau khi nop
+  //   3. Hom nay khong co dong nhiem vu nao (Ngay 0 truoc khai giang, hay mot
+  //      ngay trong giua chuong trinh)      -> cau do SAI
+  //
+  // Truong hop 2 con te hon binh thuong: cot trai dang liet ke day du nhiem vu
+  // trong khi cot phai bao "chua co nhiem vu nao". Hai nua man hinh noi hai
+  // chuyen trai nguoc nhau - dung cai loi ma chu thich ben duoi noi la da sua.
+  const chuaCoNgayNao = tasks.length === 0;
+  const daXongHomNay = !chuaCoNgayNao && statusByDay[currentDay] === "approved";
+  const buoiHomNay = buoiTheoNgay[currentDay];
   // Ngay dang chon co phai ngay chi can diem danh khong (xem ngayMienNop).
   const chiDiemDanh = !!currentPick && ngayMienNop.includes(Number(currentPick));
   const khongBaiTap = !!currentPick && ngayKhongBaiTap.includes(Number(currentPick));
@@ -663,7 +680,8 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
 
         {/* Nop bai.
 
-            THU THACH CHUA CO NGAY NAO thi khong hien khoi nay.
+            KHOI NAY LUON RENDER. Ben trong moi chia ba nhanh - xem `chuaCoNgayNao`
+            / `daXongHomNay` o tren.
 
             Truoc day no render vo dieu kien. Voi 0 ChallengeDayTask thi
             `currentPick` la null, nen cot phai hien hai o "Link nop bai tap" va
@@ -672,16 +690,39 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
             THAT: ho chua nop gi, va cung khong co gi de nop. Trong khi cot trai
             noi dung: "Challenge nay chua co nhiem vu theo ngay". Hai nua man
             hinh noi hai chuyen trai nguoc nhau. */}
-        {currentPick == null ? (
-          <div className="bg-card rounded-2xl border border-border p-5 lg:p-6">
-            <h3 className="font-bold text-[15px]">Chưa có nhiệm vụ nào</h3>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              Thử thách này chưa được xếp nhiệm vụ theo ngày. Khi ban tổ chức thêm vào,
-              phần nộp bài sẽ hiện ở đây.
-            </p>
-          </div>
-        ) : (
         <div className="bg-card rounded-2xl border border-border p-5 lg:p-6">
+        {currentPick == null ? (
+          <>
+            <h3 className="font-bold text-[15px]">
+              {chuaCoNgayNao ? "Chưa có nhiệm vụ nào"
+                : daXongHomNay ? `Xong Ngày ${currentDay} rồi 🎉`
+                  : `Ngày ${currentDay} không có nhiệm vụ`}
+            </h3>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {chuaCoNgayNao
+                ? "Thử thách này chưa được xếp nhiệm vụ theo ngày. Khi ban tổ chức thêm vào, phần nộp bài sẽ hiện ở đây."
+                : daXongHomNay
+                  ? "Bài của hôm nay đã được ghi nhận. Mai quay lại là có nhiệm vụ mới."
+                  : "Hôm nay ban tổ chức không xếp nhiệm vụ. Xem lại các ngày đã qua ở cột bên trái nhé."}
+            </p>
+
+            {/* O DIEM DANH PHAI O LAI.
+                Truoc day ca khoi nay bien mat khi currentPick la null, nen sau
+                khi nop bai xong hoc vien mat luon duong diem danh - ma diem danh
+                gio la NGUON DIEM DUY NHAT cua mot ngay (nop bai cong 0 diem). */}
+            {buoiHomNay && (
+              <div className="mt-4">
+                <TichDiemDanh
+                  buoi={buoiHomNay}
+                  nowMs={nowMs}
+                  busy={diemDanh.isPending}
+                  onCheckIn={() => diemDanh.mutate(buoiHomNay.event_id)}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <>
           <h3 className="font-bold text-[15px]">
             {chiDiemDanh ? "Điểm danh" : "Nộp bài"}{currentPick ? ` Ngày ${currentPick}` : ""}
           </h3>
@@ -752,7 +793,13 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
           )}
           </>
           )}
+          </>
+        )}
 
+          {/* LICH SU NOP BAI O NGOAI ca hai nhanh, co y.
+              Truoc day no nam ben trong nhanh "co viec hom nay", nen ngay sau
+              khi nop bai xong - dung luc nguoi ta muon xem lai minh vua nop gi -
+              thi ca danh sach bien mat. */}
           <h4 className="mt-6 mb-2.5 text-[13px] font-extrabold uppercase tracking-wide text-muted-foreground">
             Lịch sử nộp bài
           </h4>
@@ -766,7 +813,6 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
             </div>
           )}
         </div>
-        )}
       </div>
     </div>
   );
