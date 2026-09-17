@@ -1963,6 +1963,147 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const maDonTay = `${TIEN_TO_DON_TEST}TEST23`;
   sql(`DELETE FROM entitlements WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonTay}')`);
   sql(`DELETE FROM orders WHERE code = '${maDonTay}'`);
+
+  // --- TIEN PHAI VAO DUNG TAI KHOAN --------------------------------------------
+  //
+  // Mot tai khoan SePay thuong noi NHIEU tai khoan ngan hang. Truoc day webhook
+  // doc `accountNumber` roi luu vao bank_txns ma khong bao gio so sanh voi
+  // BANK_ACCOUNT - tien vao bat ky tai khoan nao cung xac nhan don, tuc la giao
+  // khoa hoc va tra hoa hong cho mot khoan tien khong he ve tui chu he thong.
+  if (tkNhan) {
+    const maDonSaiTk = `${TIEN_TO_DON_TEST}TEST24`;
+    sql(`DELETE FROM bank_txns WHERE matched_order = '${maDonSaiTk}'`);
+    sql(`DELETE FROM orders WHERE code = '${maDonSaiTk}'`);
+    sql(`INSERT INTO orders (code,product_sku,product_name,amount,currency,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDonSaiTk}','${SKU_TEST}','Test',399000,'VND','pending','${maDonSaiTk}','Alice Test','${alice.email}','',datetime('now'),datetime('now'))`);
+
+    const hookSaiTk = await fetchLaiMotLan(`${BASE}/api/webhooks/bank`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Apikey ${process.env.BANK_WEBHOOK_SECRET || ''}`,
+      },
+      body: JSON.stringify({
+        id: `tx-saitk-${Date.now()}`, transferType: 'in', transferAmount: 399000,
+        accountNumber: '9999999999', content: `CT DEN:X ${maDonSaiTk} ALICE TEST`,
+        gateway: 'NganHangGiaLap', transactionDate: new Date().toISOString(),
+      }),
+    });
+    const dlSaiTk = await hookSaiTk.json().catch(() => ({}));
+    check('tien vao SAI tai khoan -> KHONG xac nhan don',
+      dlSaiTk?.results?.[0]?.status === 'wrong_account', dlSaiTk);
+
+    const donSaiTk = sql(`SELECT status FROM orders WHERE code='${maDonSaiTk}'`);
+    check('don do van nam o trang thai cho, khong bi danh dau da tra',
+      donSaiTk[0]?.status === 'pending', donSaiTk[0]);
+
+    // Van phai GHI LAI giao dich do - khong duoc vut di. Admin can nhin thay no
+    // de biet co tien that da vao dau do ma khong khop tai khoan.
+    const ghiSaiTk = sql(`SELECT status FROM bank_txns WHERE matched_order='${maDonSaiTk}'`);
+    check('giao dich sai tai khoan van duoc ghi lai de doi soat',
+      ghiSaiTk[0]?.status === 'wrong_account', ghiSaiTk[0]);
+
+    sql(`DELETE FROM bank_txns WHERE matched_order = '${maDonSaiTk}'`);
+    sql(`DELETE FROM orders WHERE code = '${maDonSaiTk}'`);
+  }
+
+  // --- CHUYEN THUA: don van paid, nhung phai BAO, va hoa hong KHONG an theo ---
+  //
+  // webhook chi chan chuyen THIEU (duoi 98%), khong chan chuyen THUA. Khach go
+  // nham mot so 0 thi dai ly duoc 20% cua con so nham. Trang chinh sach cua
+  // chinh he thong liet ke "chuyen khoan trung hoac chuyen thua" la truong hop
+  // DUOC HOAN TIEN - tuc la tien thua se tra lai khach, nhung hoa hong da tra
+  // tren phan thua thi khong doi ve duoc.
+  {
+    const maDonThua = `${TIEN_TO_DON_TEST}TEST25`;
+    const GIA = 399000;
+    const CHUYEN = GIA * 10;                      // go nham mot so 0
+    sql(`DELETE FROM commissions WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonThua}')`);
+    sql(`DELETE FROM bank_txns WHERE matched_order = '${maDonThua}'`);
+    sql(`DELETE FROM entitlements WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonThua}')`);
+    sql(`DELETE FROM orders WHERE code = '${maDonThua}'`);
+    sql(`INSERT INTO orders (code,lead_id,product_sku,product_name,amount,currency,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDonThua}',NULL,'${SKU_TEST}','Test',${GIA},'VND','pending','${maDonThua}','Alice Test','${alice.email}','',datetime('now'),datetime('now'))`);
+
+    const hookThua = await fetchLaiMotLan(`${BASE}/api/webhooks/bank`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Apikey ${process.env.BANK_WEBHOOK_SECRET || ''}`,
+      },
+      body: JSON.stringify({
+        id: `tx-thua-${Date.now()}`, transferType: 'in', transferAmount: CHUYEN,
+        accountNumber: tkNhan, content: `CT DEN:X ${maDonThua} ALICE TEST`,
+        gateway: 'NganHangGiaLap', transactionDate: new Date().toISOString(),
+      }),
+    });
+    const dlThua = await hookThua.json().catch(() => ({}));
+    check('chuyen thua -> don VAN duoc xac nhan (khach da tra that)',
+      dlThua?.results?.[0]?.status === 'paid', dlThua);
+
+    const ghiThua = sql(`SELECT status FROM bank_txns WHERE matched_order='${maDonThua}'`);
+    check('chuyen thua duoc danh dau rieng de admin biet ma hoan lai',
+      ghiThua[0]?.status === 'overpaid', ghiThua[0]);
+
+    // BAI QUAN TRONG NHAT CUA KHOI NAY: hoa hong KHONG duoc an theo tien thua.
+    //
+    // Dung mot lead + mot dai ly rieng de con so doan truoc duoc, khong phu
+    // thuoc vao nhung gi cac bai truoc da lam.
+    const soRieng = `+8490${String(Date.now()).slice(-7)}`;
+    sql(`DELETE FROM leads WHERE phone_e164='${soRieng}'`);
+    sql(`INSERT INTO leads (full_name,email,phone,phone_e164,created_at,updated_at) VALUES ('Nguoi Duoc Gioi Thieu','nguoi-${Date.now()}@smoketest.local','0901234567','${soRieng}',datetime('now'),datetime('now'))`);
+    const leadMoi = sql(`SELECT id FROM leads WHERE phone_e164='${soRieng}'`)[0];
+
+    const soDaiLy = `+8491${String(Date.now()).slice(-7)}`;
+    sql(`DELETE FROM leads WHERE phone_e164='${soDaiLy}'`);
+    sql(`INSERT INTO leads (full_name,email,phone,phone_e164,created_at,updated_at) VALUES ('Dai Ly Test','dai-ly-${Date.now()}@smoketest.local','0911234567','${soDaiLy}',datetime('now'),datetime('now'))`);
+    const leadDaiLy = sql(`SELECT id FROM leads WHERE phone_e164='${soDaiLy}'`)[0];
+
+    const maDaiLy = `TESTTHUA${String(Date.now()).slice(-4)}`;
+    sql(`INSERT INTO affiliates (lead_id,code,token,full_name,email,phone,status,commission_rate,created_at,updated_at) VALUES (${leadDaiLy.id},'${maDaiLy}','tk${Date.now()}','Dai Ly Test','dai-ly@smoketest.local','0911234567','active',0.2,datetime('now'),datetime('now'))`);
+    const daiLy = sql(`SELECT id FROM affiliates WHERE code='${maDaiLy}'`)[0];
+    sql(`UPDATE leads SET referred_by=${daiLy.id}, referral_valid=1 WHERE id=${leadMoi.id}`);
+
+    const maDonHH = `${TIEN_TO_DON_TEST}TEST26`;
+    sql(`DELETE FROM commissions WHERE order_code='${maDonHH}'`);
+    sql(`DELETE FROM bank_txns WHERE matched_order='${maDonHH}'`);
+    sql(`DELETE FROM orders WHERE code='${maDonHH}'`);
+    sql(`INSERT INTO orders (code,lead_id,product_sku,product_name,amount,currency,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDonHH}',${leadMoi.id},'${SKU_TEST}','Test',${GIA},'VND','pending','${maDonHH}','Nguoi Duoc Gioi Thieu','','',datetime('now'),datetime('now'))`);
+
+    const hookHH = await fetchLaiMotLan(`${BASE}/api/webhooks/bank`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Apikey ${process.env.BANK_WEBHOOK_SECRET || ''}`,
+      },
+      body: JSON.stringify({
+        id: `tx-hh-${Date.now()}`, transferType: 'in', transferAmount: CHUYEN,
+        accountNumber: tkNhan, content: `CT DEN:X ${maDonHH} NGUOI DUOC GIOI THIEU`,
+        gateway: 'NganHangGiaLap', transactionDate: new Date().toISOString(),
+      }),
+    });
+    const dlHH = await hookHH.json().catch(() => ({}));
+    check('don cua nguoi duoc gioi thieu -> paid du chuyen thua',
+      dlHH?.results?.[0]?.status === 'paid', dlHH);
+
+    const hh = sql(`SELECT amount, order_amount FROM commissions WHERE order_code='${maDonHH}'`);
+    check('hoa hong tinh tren GIA NIEM YET, khong tren so tien chuyen thua',
+      Number(hh[0]?.amount) === Math.round(GIA * 0.2),
+      { hoa_hong: Number(hh[0]?.amount), dung_phai_la: Math.round(GIA * 0.2),
+        neu_an_theo_tien_thua: Math.round(CHUYEN * 0.2) });
+
+    sql(`DELETE FROM commissions WHERE order_code='${maDonHH}'`);
+    sql(`DELETE FROM bank_txns WHERE matched_order='${maDonHH}'`);
+    sql(`DELETE FROM entitlements WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonHH}')`);
+    sql(`DELETE FROM events WHERE meta_json LIKE '%${maDonHH}%'`);
+    sql(`DELETE FROM orders WHERE code='${maDonHH}'`);
+    sql(`DELETE FROM affiliates WHERE code='${maDaiLy}'`);
+    sql(`DELETE FROM leads WHERE id IN (${leadMoi.id}, ${leadDaiLy.id})`);
+
+    sql(`DELETE FROM commissions WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonThua}')`);
+    sql(`DELETE FROM bank_txns WHERE matched_order = '${maDonThua}'`);
+    sql(`DELETE FROM entitlements WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonThua}')`);
+    sql(`DELETE FROM events WHERE meta_json LIKE '%${maDonThua}%'`);
+    sql(`DELETE FROM orders WHERE code = '${maDonThua}'`);
+  }
   sql(`INSERT INTO orders (code,product_sku,product_name,amount,currency,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDonTay}','${SKU_TEST}','Test',399000,'VND','pending','${maDonTay}','Alice Test','${alice.email}','',datetime('now'),datetime('now'))`);
 
   const thuTruoc = sql(`SELECT COUNT(*) AS n FROM emails_sent WHERE to_addr='${alice.email}' AND template='order_paid'`);

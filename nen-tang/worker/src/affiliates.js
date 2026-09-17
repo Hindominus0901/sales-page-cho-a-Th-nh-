@@ -225,7 +225,26 @@ export function createAffiliates({ store, cfg, rewards }) {
     if (affiliate.lead_id === lead.id) return null; // chan tu gioi thieu chinh minh
 
     const rate = await tyLeCua(order.product_sku, affiliate);
-    const orderAmount = num(order.paid_amount || order.amount);
+
+    // GOC TINH HOA HONG KHONG DUOC VUOT GIA NIEM YET CUA DON.
+    //
+    // webhook.js:176 chi chan chuyen THIEU (duoi 98%), khong chan chuyen THUA -
+    // don van thanh 'paid' va `paid_amount` mang dung so khach da chuyen. Khach
+    // go nham mot so 0 (20.000.000 thay vi 2.000.000) thi dai ly duoc 20% cua
+    // con so nham: 4.000.000, nhieu hon ca gia san pham.
+    //
+    // Day khong phai tinh huong tuong tuong: trang chinh sach cua chinh he
+    // thong (apps/funnel-gc/site.config.json:446) liet ke "Chuyen khoan trung
+    // hoac chuyen thua" la MOT TRONG BA truong hop duoc hoan tien. Tuc la tien
+    // thua se duoc tra lai khach - nhung hoa hong da tra tren phan thua do thi
+    // khong doi ve duoc.
+    //
+    // Van giu duong "tinh tren so THUC NHAN" cho truong hop nguoc lai: chuyen
+    // thieu trong nguong 2% (phi, lam tron) thi hoa hong tinh tren so thuc
+    // nhan, khong phai gia niem yet.
+    const daTra = num(order.paid_amount);
+    const niemYet = num(order.amount);
+    const orderAmount = daTra && niemYet ? Math.min(daTra, niemYet) : (daTra || niemYet);
     return store.get(
       `INSERT INTO commissions (affiliate_id, order_id, order_code, lead_id, order_amount,
          rate, amount, status, created_at, product_sku)

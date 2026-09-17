@@ -22,12 +22,12 @@ import { openSync, closeSync } from 'node:fs';
 
 const CONG = 8787;
 const GOC = `http://127.0.0.1:${CONG}`;
-// video.mjs va ngay.mjs chay DAU TIEN va co y: hai bo do khong can may chu nen
-// chung cho ket qua trong mot phan giay. Ba bo sau phai cho wrangler dev khoi
+// Ba bo thuan tuy (video, ngay, tien) chay DAU TIEN va co y: chung khong can
+// may chu nen cho ket qua trong mot phan giay. Ba bo sau phai cho wrangler dev khoi
 // dong (co khi 30 giay). Mot loi cu phap trong lib/video.js hay lib/ngay.js thi
 // bat duoc ngay thay vi sau nua phut cho mot thu khong lien quan.
 const BO_TEST = [
-  'tests/video.mjs', 'tests/ngay.mjs',
+  'tests/video.mjs', 'tests/ngay.mjs', 'tests/tien.mjs',
   'tests/smoke.mjs', 'tests/auth.mjs', 'tests/platform.mjs',
 ];
 const CHO_KHOI_DONG_MS = 120_000;

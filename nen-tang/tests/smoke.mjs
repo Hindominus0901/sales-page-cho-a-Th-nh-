@@ -7,10 +7,21 @@ import fs from 'node:fs';
 // Gia san pham lay tu chinh server dang chay, khong doc lai file cau hinh -
 // nho vay bo test chay duoc ca voi ban da deploy tren Cloudflare.
 let PRODUCT_PRICE = 399000;
-// So tai khoan gia lap cho webhook ngan hang. Truoc day o day ghi so tai khoan
-// THAT cua mot khach - bo test la thu duoc chep di chep lai nhieu nhat, nen mot
-// so that nam trong do se theo ma nguon di khap noi.
-const SO_TK_GIA = '999999999999';
+// So tai khoan nhan tien, DOC TU BIEN MOI TRUONG.
+//
+// Truoc day o day la mot so bia ('999999999999'), va truoc do nua la so tai
+// khoan THAT cua mot khach - bo test la thu duoc chep di chep lai nhieu nhat,
+// nen mot so that nam trong do se theo ma nguon di khap noi. Y do giau so that
+// van giu nguyen: doc tu bien moi truong thi khong co con so nao nam trong
+// repo.
+//
+// Nhung so BIA thi khong dung duoc nua: webhook gio kiem tien co vao dung tai
+// khoan da cau hinh khong (khopTaiKhoan trong worker/src/routes/webhook.js), va
+// mot so bia se bi tu choi - dung nhu no phai lam voi tien vao mot tai khoan
+// la. Duong tu choi do duoc kiem rieng trong tests/platform.mjs.
+//
+// Khong dat bien -> chuoi rong -> phep kiem tu bo qua, bo test van chay duoc.
+const SO_TK_NHAN = process.env.BANK_ACCOUNT || '';
 const BASE = (process.argv[2] || process.env.BASE_URL || 'http://localhost:8787').replace(/\/$/, '');
 // Mat khau goc CHI dung cho bo test - Worker khong bao gio doc bien nay.
 const SMOKE_PASSWORD = process.env.SMOKE_ADMIN_PASSWORD || '';
@@ -262,7 +273,7 @@ const ANSWERS = {
     id: 'tx-' + Date.now(),
     gateway: 'NganHangGiaLap',
     transactionDate: new Date().toISOString(),
-    accountNumber: SO_TK_GIA,
+    accountNumber: SO_TK_NHAN,
     content: `CT DEN:${code.replace(TIEN_TO_DON, TIEN_TO_DON + ' ')} NGUYEN THI THU NGHIEM`,
     transferType: 'in',
     transferAmount: PRODUCT_PRICE,
@@ -276,7 +287,7 @@ const ANSWERS = {
 
   const replay = await call('POST', '/api/webhooks/bank', {
     id: 'tx-unmatched-' + Date.now(), transferAmount: 500000, transferType: 'in',
-    content: 'CHUYEN TIEN LINH TINH', accountNumber: SO_TK_GIA,
+    content: 'CHUYEN TIEN LINH TINH', accountNumber: SO_TK_NHAN,
   }, { 'X-Webhook-Secret': HOOK });
   check('giao dich khong khop -> unmatched', replay.data?.results?.[0]?.status === 'unmatched', replay.data);
 
@@ -341,7 +352,7 @@ const ANSWERS = {
 
   const refPaid = await call('POST', '/api/webhooks/bank', {
     id: 'tx-ref-' + Date.now(), transferType: 'in', transferAmount: PRODUCT_PRICE,
-    accountNumber: SO_TK_GIA,
+    accountNumber: SO_TK_NHAN,
     // Gui DUNG hinh dang ngan hang that gui ve: co tien to cua nha cung cap o
     // dau. Neu extractCode chi tim ma don o dau chuoi thi dong nay bat duoc.
     content: `CT DEN:384T269099R1S6VK ${(process.env.BANK_MEMO_PREFIX || '').toUpperCase()} ${refCodeOrder} NGUOI DUOC GIOI THIEU`,
@@ -574,7 +585,7 @@ const ANSWERS = {
   if (maDonRegister) {
     const traTien = await call('POST', '/api/webhooks/bank', {
       id: 'tx-reg-' + Date.now(), transferType: 'in', transferAmount: PRODUCT_PRICE,
-      accountNumber: SO_TK_GIA,
+      accountNumber: SO_TK_NHAN,
       content: `${(process.env.BANK_MEMO_PREFIX || '').toUpperCase()} ${maDonRegister} KHACH QUA TRANG THAT`,
     }, { Authorization: `Apikey ${HOOK}` });
     check('don do -> paid', traTien.data?.results?.[0]?.status === 'paid', traTien.data);

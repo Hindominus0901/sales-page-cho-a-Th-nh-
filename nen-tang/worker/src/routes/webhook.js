@@ -33,6 +33,32 @@ export function extractCode(content, tienTo = 'DH') {
   return m ? `${tt}${m[1].toUpperCase()}` : null;
 }
 
+/**
+ * Tien co vao DUNG TAI KHOAN da cau hinh khong.
+ *
+ * VI SAO PHAI KIEM: webhook truoc day doc `accountNumber` roi luu vao
+ * bank_txns ma khong bao gio so sanh voi BANK_ACCOUNT. Mot tai khoan SePay
+ * thuong noi NHIEU tai khoan ngan hang (tai khoan ca nhan, tai khoan cong ty,
+ * tai khoan cua nguoi khac trong cung mot cau hinh). Tien vao bat ky tai khoan
+ * nao trong so do deu xac nhan don: giao khoa hoc va tra hoa hong cho mot khoan
+ * tien khong he ve tui chu he thong.
+ *
+ * SO SANH THEO DUOI: ngan hang va cac cong trung gian hay tra ve so da che
+ * (xxxx1234), co tien to chi nhanh, hoac them ky tu ngan cach. Lay phan chu so
+ * chung ngan hon lam moc so sanh.
+ *
+ * TRA VE `null` NGHIA LA KHONG DU CO SO DE PHAN XU - khong duoc coi la sai.
+ * Thieu cau hinh, hoac so gui ve qua ngan (duoi 4 chu so), thi bo qua phep kiem
+ * chu khong chan oan mot khoan tien that.
+ */
+export function khopTaiKhoan(nhanDuoc, caiDat) {
+  const a = String(nhanDuoc || '').replace(/\D/g, '');
+  const b = String(caiDat || '').replace(/\D/g, '');
+  const n = Math.min(a.length, b.length);
+  if (n < 4) return null;
+  return a.slice(-n) === b.slice(-n);
+}
+
 /** Chuan hoa payload cua SePay / Casso / generic ve cung mot dang. */
 export function parseTxns(body) {
   // SePay: { id, gateway, transactionDate, accountNumber, content, transferType, transferAmount, referenceCode }
@@ -189,6 +215,27 @@ export async function bankWebhook(rc) {
       continue;
     }
 
+    // TIEN PHAI VAO DUNG TAI KHOAN thi moi xac nhan don.
+    //
+    // Chon CHAN thay vi cho qua, vi hai huong sai khong can nhau:
+    //   - chan nham (SePay gui so la dang la): khach da tra ma don chua xac
+    //     nhan. Admin nhan thong bao, mo trang Doanh thu, bam xac nhan tay -
+    //     KHAC PHUC DUOC trong mot phut.
+    //   - cho qua nham (tien that su vao tai khoan khac): giao khoa hoc mien
+    //     phi va tra hoa hong 20% tren mot khoan tien khong he nhan duoc -
+    //     KHONG khac phuc duoc.
+    const khop = khopTaiKhoan(txn.account, cfg.bank.account);
+    if (khop === false) {
+      await store.insertBankTxn({
+        ...txn, matched_order: order.code, status: 'wrong_account',
+      });
+      notifyAsync(rc, 'bank.wrong_account',
+        `Đơn ${order.code}: tiền vào tài khoản ${txn.account} — KHÔNG phải tài khoản đã cấu hình.`
+        + ' Đơn chưa được xác nhận, kiểm tra rồi xác nhận tay nếu đúng.', txn);
+      results.push({ external_id: txn.external_id, status: 'wrong_account', code: order.code });
+      continue;
+    }
+
     // THU TU O DAY RAT QUAN TRONG: danh dau don da tra tien TRUOC, ghi giao dich
     // SAU. Neu lam nguoc lai (nhu ban dau), mot su co giua hai buoc se khien lan
     // ngan hang gui lai bi coi la "trung" va bo qua - khach da chuyen tien ma
@@ -202,7 +249,24 @@ export async function bankWebhook(rc) {
       note: `auto: ${txn.provider}`,
     });
 
-    await store.insertBankTxn({ ...txn, matched_order: order.code, status: 'matched' });
+    // CHUYEN THUA PHAI DUOC NOI RA, khong nuot im lang.
+    //
+    // Truoc day moi giao dich du tien deu ghi 'matched' nhu nhau, nen mot cu
+    // chuyen 20.000.000 cho don 2.000.000 trong y het mot cu chuyen dung. Don
+    // thanh 'paid', khach im lang cho duoc hoan phan thua - ma trang chinh sach
+    // CO HUA hoan (site.config.json:446) - va khong ai o phia minh biet de hoan.
+    //
+    // Nguong 2%: giong nguong chan chuyen thieu o tren, de khong bao dong vi
+    // vai nghin dong le.
+    const chuyenThua = txn.amount > Math.ceil(order.amount * 1.02);
+    await store.insertBankTxn({
+      ...txn, matched_order: order.code, status: chuyenThua ? 'overpaid' : 'matched',
+    });
+    if (chuyenThua) {
+      notifyAsync(rc, 'bank.overpaid',
+        `Đơn ${order.code} chuyển THỪA: nhận ${txn.amount}/${order.amount}`
+        + ` — cần hoàn lại ${txn.amount - order.amount} cho khách`, txn);
+    }
 
     if (!changed) {
       // Don da huy (markOrderPaid khong dong toi don huy) hoac vua duoc mot lan
