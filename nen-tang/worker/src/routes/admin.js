@@ -137,9 +137,13 @@ async function stats(rc) {
 
   const [affRow2, commRow, unlockedRow, sharerRow] = await Promise.all([
     store.get("SELECT COUNT(*) AS n FROM affiliates WHERE status = 'active'"),
-    store.get(`SELECT COALESCE(SUM(amount),0) AS total,
-                 COALESCE(SUM(CASE WHEN status <> 'paid' THEN amount ELSE 0 END),0) AS pending,
-                 COUNT(*) AS n FROM commissions`),
+    // Bo khoan da huy ra khoi ca hai o - xem chu thich trong affiliates.js:
+    // `status <> 'paid'` gom luon `void`, nen o quan tri va o cua dai ly deu
+    // dem tien se khong bao gio duoc tra.
+    store.get(`SELECT COALESCE(SUM(CASE WHEN status <> 'void' THEN amount ELSE 0 END),0) AS total,
+                 COALESCE(SUM(CASE WHEN status NOT IN ('paid','void') THEN amount ELSE 0 END),0)
+                   AS pending,
+                 COUNT(*) AS n FROM commissions WHERE status <> 'void'`),
     store.get('SELECT COUNT(*) AS n FROM affiliates WHERE unlocked_level > 1'),
     store.get(`SELECT COUNT(DISTINCT referred_by) AS n FROM leads
                WHERE referred_by IS NOT NULL AND referral_valid = 1`),

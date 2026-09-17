@@ -608,6 +608,57 @@ const ANSWERS = {
 
   cookieJar = jarTruocRegister;
 
+  // ---------------------------------------------- hoa hong da huy thi bien mat
+  //
+  // `voidCommission` sinh ra de dap mot khoan nghi gian lan. Nhung o "Dang cho
+  // chi tra" cua dai ly (Affiliate.jsx:95) doc tu mot cau SUM(status <> 'paid')
+  // - va `void` khong phai `paid`, nen khoan vua bi huy van nam nguyen trong
+  // do. Nguoi bi huy doc con so ay la tien sap nhan ve.
+  //
+  // Bai nay do THEO HIEU SO chu khong theo con so tuyet doi: cac bai truoc da
+  // huy/khoi phuc luot va da danh dau mot khoan la da tra, nen so goc khong
+  // doan truoc duoc.
+  {
+    // Can mot khoan DANG CHO. Don o khoi 7b co the da bi maxPerIp danh dau cho
+    // duyet tay (xem chu thich dai o tren) - neu the thi cong nhan no, va chinh
+    // buoc cong nhan ay se sinh hoa hong qua buHoaHong.
+    const dsCho = await call('GET', '/api/admin/referrals/pending', undefined,
+      { 'X-Admin-Token': ADMIN });
+    const cuaMinh = (dsCho.data?.items || []).find((r) => r.affiliate_code === refCode);
+    if (cuaMinh) {
+      await call('POST', `/api/admin/referrals/${cuaMinh.id}/valid`, {},
+        { 'X-Admin-Token': ADMIN });
+    }
+
+    const dsHoaHong = await call('GET', '/api/admin/commissions?status=pending', undefined,
+      { 'X-Admin-Token': ADMIN });
+    const khoan = (dsHoaHong.data?.items || []).find((c) => c.affiliate_code === refCode);
+    check('co mot khoan hoa hong dang cho de thu huy', !!khoan,
+      { so_khoan_cho: (dsHoaHong.data?.items || []).length });
+
+    if (khoan) {
+      cookieJar = jarTruocRegister;
+      const truoc = (await call('GET', '/api/affiliate/me')).data?.stats || {};
+
+      const huy = await call('POST', `/api/admin/commissions/${khoan.id}/void`,
+        { reason: 'thu bai test' }, { 'X-Admin-Token': ADMIN });
+      check('admin huy duoc khoan hoa hong dang cho',
+        huy.status === 200 && huy.data?.commission?.status === 'void', huy.data);
+
+      const sau = (await call('GET', '/api/affiliate/me')).data?.stats || {};
+      check('huy hoa hong -> tut khoi o "dang cho chi tra"',
+        (truoc.commission_pending || 0) - (sau.commission_pending || 0) === khoan.amount,
+        { truoc: truoc.commission_pending, sau: sau.commission_pending, khoan: khoan.amount });
+      check('huy hoa hong -> tut khoi ca tong da kiem duoc',
+        (truoc.commission_total || 0) - (sau.commission_total || 0) === khoan.amount,
+        { truoc: truoc.commission_total, sau: sau.commission_total, khoan: khoan.amount });
+      check('khoan da huy van tra duoc rieng ra de doi soat',
+        sau.commission_void >= khoan.amount, sau.commission_void);
+    }
+  }
+
+  cookieJar = jarTruocRegister;
+
   const orderPublic = await call('GET', `/api/orders/${code}`);
   check('API cong khai khong lo ten/sdt/email khach',
     orderPublic.status === 200 && !JSON.stringify(orderPublic.data).match(/customer_phone|"phone"|"email"/),

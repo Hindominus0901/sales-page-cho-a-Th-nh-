@@ -448,9 +448,20 @@ export function createAffiliates({ store, cfg, rewards }) {
                  FROM orders o JOIN leads l ON l.id = o.lead_id
                  WHERE l.referred_by = ? AND l.referral_valid = 1 AND o.status = 'paid'`,
       [affiliateId]),
-      store.get(`SELECT COALESCE(SUM(amount),0) AS total,
+      // KHOAN DA HUY (`void`) KHONG DUOC NAM TRONG BAT KY O NAO.
+      //
+      // `status <> 'paid'` gom luon `void`, nen mot khoan admin vua huy vi nghi
+      // gian lan van hien trong o "Dang cho chi tra" cua CHINH nguoi bi huy
+      // (Affiliate.jsx:95) - ho doc con so do la tien sap nhan, va se hoi. Do
+      // dung la thu voidCommission (routes/admin.js) duoc viet ra de dap.
+      //
+      // `total` cung phai tru: no la "da kiem duoc", ma khoan bi huy thi khong
+      // kiem duoc. Huy roi ma tong khong doi thi khong ai tin duoc con so nao.
+      store.get(`SELECT COALESCE(SUM(CASE WHEN status <> 'void' THEN amount ELSE 0 END),0) AS total,
                    COALESCE(SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END),0) AS paid,
-                   COALESCE(SUM(CASE WHEN status <> 'paid' THEN amount ELSE 0 END),0) AS pending
+                   COALESCE(SUM(CASE WHEN status NOT IN ('paid','void') THEN amount ELSE 0 END),0)
+                     AS pending,
+                   COALESCE(SUM(CASE WHEN status = 'void' THEN amount ELSE 0 END),0) AS voided
                  FROM commissions WHERE affiliate_id = ?`, [affiliateId]),
     ]);
 
@@ -464,6 +475,7 @@ export function createAffiliates({ store, cfg, rewards }) {
       commission_total: num(commission?.total),
       commission_paid: num(commission?.paid),
       commission_pending: num(commission?.pending),
+      commission_void: num(commission?.voided),
       conversion_rate: clickCount ? Math.round((referralCount / clickCount) * 1000) / 10 : 0,
     };
   }
@@ -494,9 +506,10 @@ export function createAffiliates({ store, cfg, rewards }) {
         (SELECT COALESCE(SUM(COALESCE(o2.paid_amount, o2.amount)),0) FROM orders o2
           JOIN leads l3 ON l3.id = o2.lead_id
           WHERE l3.referred_by = a.id AND l3.referral_valid = 1 AND o2.status = 'paid') AS revenue,
-        (SELECT COALESCE(SUM(cm.amount),0) FROM commissions cm WHERE cm.affiliate_id = a.id) AS commission_total,
+        (SELECT COALESCE(SUM(cm.amount),0) FROM commissions cm
+          WHERE cm.affiliate_id = a.id AND cm.status <> 'void') AS commission_total,
         (SELECT COALESCE(SUM(cm2.amount),0) FROM commissions cm2
-          WHERE cm2.affiliate_id = a.id AND cm2.status <> 'paid') AS commission_pending
+          WHERE cm2.affiliate_id = a.id AND cm2.status NOT IN ('paid','void')) AS commission_pending
       FROM affiliates a
       ${clause}
       ORDER BY commission_total DESC, referrals DESC, a.id DESC
