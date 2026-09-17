@@ -4,6 +4,16 @@
  */
 
 /**
+ * Nhung nha cung cap videoEmbedUrl() ghep duoc link.
+ *
+ * Danh sach nay la nguon su that cho ca dropdown trong trang quan tri
+ * (_khoahoc.jsx) lan buoc doan nha cung cap tu ma tran trong nhanDangVideo().
+ * Truoc day hai cho tu giu danh sach rieng nen them mot nha cung cap la phai
+ * nho sua ca hai, va quen mot cho thi hong lang le.
+ */
+export const NHA_CUNG_CAP = ['wistia', 'youtube', 'vimeo', 'stream'];
+
+/**
  * URL de NHUNG vao iframe ngay trong trang. Khac videoUrl(): cai kia la link
  * mo o tab moi.
  *
@@ -44,13 +54,30 @@ export function videoUrl(lesson) {
   }
 }
 
-/** Chi YouTube cho san anh dai dien theo ma video; con lai tra ve null. */
+/**
+ * Anh dai dien suy tu ma video.
+ *
+ * YouTube co i.ytimg.com doan duoc tu ma. Wistia co mot anh cong khai tuong tu
+ * o fast.wistia.com/embed/medias/<id>/swatch - no nho va hoi mo, nhung van hon
+ * han mot o den tuyet doi, vi truoc day videoThumb() tra null cho MOI nha cung
+ * cap tru YouTube, ma Wistia lai chinh la nha cung cap mac dinh cua bang
+ * lessons. Nghia la mac dinh moi the bai giang deu la mot o den.
+ *
+ * Vimeo va Stream can goi API moi lay duoc anh nen van tra null - noi goi dung
+ * anh nay (LessonRow) da co khung giu cho tu ve, xem onError o do.
+ */
 export function videoThumb(lesson) {
   if (!lesson || !lesson.video_id) return null;
-  if (lesson.video_provider === 'youtube') {
-    return `https://i.ytimg.com/vi/${encodeURIComponent(lesson.video_id)}/hqdefault.jpg`;
+  const id = encodeURIComponent(lesson.video_id);
+  switch (lesson.video_provider) {
+    case 'youtube': return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+    case 'wistia':
+    case '':
+    case undefined:
+    case null:
+      return `https://fast.wistia.com/embed/medias/${id}/swatch`;
+    default: return null;
   }
-  return null;
 }
 
 /** Anh dai dien cho mot duong dan YouTube day du (challenge.hero_video_url). */
@@ -72,40 +99,73 @@ export function youtubeThumbFromUrl(url) {
  * kieu "tenkhach.wistia.com/medias/abc" nhung thang vao iframe se bi chan IM
  * LANG - khung den, khong loi, khong ai hieu vi sao.
  */
-export function embedFromUrl(url) {
-  const raw = String(url || '').trim();
-  if (!raw) return null;
+export function embedFromUrl(url, nhaCungCapGoiY) {
+  const ra = nhanDangVideo(url, nhaCungCapGoiY);
+  return ra.ok ? videoEmbedUrl({ video_provider: ra.provider, video_id: ra.id }) : null;
+}
 
-  // Chi dan moi ma video (nguoi dung hay copy dung phan nay) -> mac dinh Wistia.
+/**
+ * NHAN DANG mot thu nguoi dung dan vao: link day du HAY ma video tran.
+ *
+ * Tra ve { ok: true, provider, id } hoac { ok: false, loi: '<cau tieng Viet>' }.
+ *
+ * VI SAO PHAI CO HAM NAY, TACH KHOI embedFromUrl
+ *
+ * Form them bai giang (_khoahoc.jsx) truoc day chi nhan MA TRAN, va khong kiem
+ * gi ca. Dan mot link YouTube vao do thi videoEmbedUrl() encodeURIComponent ca
+ * cai link thanh "ma", cho ra
+ *   youtube.com/embed/https%3A%2F%2Fyoutu.be%2FAbC123
+ * YouTube tra 404 BEN TRONG iframe: mot o den, khong loi, khong ai doan duoc vi
+ * sao. Ma dan link chinh la dong tac tu nhien nhat - nguoi ta bam "Chia se" o
+ * YouTube thi duoc mot cai link, khong phai mot cai ma.
+ *
+ * Logic boc ma thi da co san trong embedFromUrl tu lau; no chi chua bao gio
+ * duoc noi vao form. Ham nay tra ve CAP (provider, id) thay vi mot chuoi URL de
+ * form con dien duoc vao dropdown va bao loi tai cho.
+ *
+ * `nhaCungCapGoiY` la lua chon dang hien trong dropdown. No CHI dung cho ma
+ * tran - truoc day ma tran luon bi doan la Wistia, nen dan mot ma YouTube tran
+ * (dQw4w9WgXcQ) la nhan mot embed Wistia, lai mot o den nua. Co link thi ten
+ * mien quyet dinh, goi y bi bo qua.
+ */
+export function nhanDangVideo(url, nhaCungCapGoiY) {
+  const raw = String(url || '').trim();
+  if (!raw) return { ok: false, loi: '' };
+
+  // Ma tran: khong co dau cham va khong co dau gach cheo.
   if (/^[A-Za-z0-9_-]{6,}$/.test(raw) && !raw.includes('.')) {
-    return videoEmbedUrl({ video_provider: 'wistia', video_id: raw });
+    const provider = NHA_CUNG_CAP.includes(nhaCungCapGoiY) ? nhaCungCapGoiY : 'wistia';
+    return { ok: true, provider, id: raw };
   }
 
   let u;
-  try { u = new URL(raw.startsWith('http') ? raw : `https://${raw}`); } catch { return null; }
+  try { u = new URL(raw.startsWith('http') ? raw : `https://${raw}`); } catch {
+    return { ok: false, loi: 'Không đọc được link này. Kiểm tra lại giúp em nhé.' };
+  }
   const host = u.hostname.replace(/^www\./, '');
   const lay = (re) => (re.exec(u.pathname) || [])[1] || '';
+  const tra = (provider, id) => (id
+    ? { ok: true, provider, id }
+    : { ok: false, loi: 'Link đúng trang nhưng không tìm thấy mã video trong đó.' });
 
-  if (host === 'youtu.be') {
-    const id = lay(/^\/([\w-]{6,})/);
-    return id ? videoEmbedUrl({ video_provider: 'youtube', video_id: id }) : null;
-  }
+  if (host === 'youtu.be') return tra('youtube', lay(/^\/([\w-]{6,})/));
   if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
-    const id = u.searchParams.get('v') || lay(/\/(?:embed|shorts|live)\/([\w-]{6,})/);
-    return id ? videoEmbedUrl({ video_provider: 'youtube', video_id: id }) : null;
+    return tra('youtube', u.searchParams.get('v') || lay(/\/(?:embed|shorts|live)\/([\w-]{6,})/));
   }
-  if (host.endsWith('vimeo.com')) {
-    const id = lay(/\/(\d{6,})/);
-    return id ? videoEmbedUrl({ video_provider: 'vimeo', video_id: id }) : null;
-  }
+  if (host.endsWith('vimeo.com')) return tra('vimeo', lay(/\/(\d{6,})/));
   if (host.endsWith('wistia.com') || host.endsWith('wistia.net')) {
-    // .../medias/ID  .../embed/iframe/ID  .../embed/medias/ID.jsonp  .../ID
+    // Link chia se .../s/... mang mot ma DA LAM ROI, khong suy nguoc ra ma video
+    // duoc bang bat ky cach nao o phia trinh duyet. Noi thang ra thay vi tra
+    // null chung chung roi de nguoi ta ngoi doan minh dan sai cho nao.
+    if (/^\/s\//.test(u.pathname)) {
+      return { ok: false, loi: 'Link dạng .../s/... của Wistia không nhúng được. '
+        + 'Vào video trong Wistia, lấy link dạng .../medias/... hoặc mã video.' };
+    }
     const id = lay(/(?:medias|iframe)\/([\w-]+)/) || lay(/^\/([\w-]+)$/);
-    return id ? videoEmbedUrl({ video_provider: 'wistia', video_id: id.replace(/\.\w+$/, '') }) : null;
+    return tra('wistia', id ? id.replace(/\.\w+$/, '') : '');
   }
   if (host.endsWith('videodelivery.net') || host.endsWith('cloudflarestream.com')) {
-    const id = lay(/^\/([\w-]+)/);
-    return id ? videoEmbedUrl({ video_provider: 'stream', video_id: id }) : null;
+    return tra('stream', lay(/^\/([\w-]+)/));
   }
-  return null;
+  return { ok: false, loi: `Chưa hỗ trợ "${host}". Dùng YouTube, Wistia, Vimeo hoặc Cloudflare Stream.` };
 }

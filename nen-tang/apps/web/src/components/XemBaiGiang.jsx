@@ -12,7 +12,7 @@
  * gi ve dinh tuyen - va cung khong can biet.
  */
 import React from "react";
-import { ArrowLeft, Check, ChevronLeft, ChevronRight, ExternalLink, FileText, Loader2, NotebookPen } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, ExternalLink, FileText, Loader2, Lock, NotebookPen } from "lucide-react";
 import { videoEmbedUrl } from "@/lib/video";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -68,6 +68,26 @@ export default function XemBaiGiang({
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
             />
+          ) : lesson.locked ? (
+            /* HAI TRANG THAI NAY TRUOC DAY HIEN Y HET NHAU.
+             *
+             * May chu che `video_id` cua bai giang nguoi nay chua duoc mo, va
+             * no danh dau dong do bang `locked: true` (maskRow trong
+             * worker/src/entities/repo.js) - chi la giao dien chua bao gio doc
+             * co do. Nen nguoi CHUA MUA doc duoc cau "bai nay chua co video",
+             * tuc la he thong noi doi ho ve ly do, va ho di nhan admin hoi ve
+             * mot bai giang von van dang o day. Nguoi DA MUA ma gap loi that
+             * cung doc dung cau ay.
+             *
+             * Hai chuyen nay dan toi hai hanh dong khac han nhau, nen phai noi
+             * that ra tung cai. */
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-6 text-center">
+              <Lock className="h-6 w-6 text-white/60" />
+              <p className="text-sm font-semibold text-white/90">Bài giảng này chưa mở với bạn</p>
+              <p className="text-[12.5px] leading-relaxed text-white/60">
+                Cần mua gói tương ứng, hoặc nhờ admin mở khoá học này.
+              </p>
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-white/70">
               Bài này chưa có video. Nhắn admin để được bổ sung nhé.

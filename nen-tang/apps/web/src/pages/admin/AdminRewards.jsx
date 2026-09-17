@@ -5,6 +5,7 @@
  * huy don thi backend hoan xu lai cho hoc vien, sua tay se lam mat so xu do.
  */
 import React from 'react';
+import { useKhaNang } from '@/lib/useKhaNang';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { base44, adminApi } from '@/api/base44Client';
@@ -327,6 +328,7 @@ function RewardRow({ reward, levels, onSave, onDelete, pending }) {
   const [draft, setDraft] = React.useState(reward);
   const { toast } = useToast();
   const [dangTaiAnh, setDangTaiAnh] = React.useState(false);
+  const { khaNang } = useKhaNang();
 
   /** Tai anh tu may len R2 roi dien duong dan vao o. Giong Community.jsx. */
   const chonAnh = async (e) => {
@@ -370,16 +372,23 @@ function RewardRow({ reward, levels, onSave, onDelete, pending }) {
                 value={draft.image_url || ''}
                 onChange={set('image_url')}
                 className="text-xs"
-                placeholder="Ảnh quà — dán link hoặc bấm Tải ảnh"
+                placeholder={khaNang.uploads
+                  ? 'Ảnh quà — dán link hoặc bấm Tải ảnh'
+                  : 'Ảnh quà — dán link ảnh vào đây'}
               />
-              <label className={cn(
-                'shrink-0 cursor-pointer rounded-lg border border-border px-2.5 py-1.5 text-xs font-bold',
-                'hover:bg-secondary',
-                dangTaiAnh && 'pointer-events-none opacity-60',
-              )}>
-                {dangTaiAnh ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Tải ảnh'}
-                <input type="file" accept="image/*" className="hidden" onChange={chonAnh} />
-              </label>
+              {/* Nut nay phai theo co kha nang. Khi R2 chua bat, POST /api/files
+                  tra 503 - nut van hien, van bam duoc, va lan nao cung ket thuc
+                  bang mot toast do. O dan link ben canh moi la duong chay duoc. */}
+              {khaNang.uploads && (
+                <label className={cn(
+                  'shrink-0 cursor-pointer rounded-lg border border-border px-2.5 py-1.5 text-xs font-bold',
+                  'hover:bg-secondary',
+                  dangTaiAnh && 'pointer-events-none opacity-60',
+                )}>
+                  {dangTaiAnh ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Tải ảnh'}
+                  <input type="file" accept="image/*" className="hidden" onChange={chonAnh} />
+                </label>
+              )}
             </div>
 
             <CellInput

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { khiAnhHong } from "@/lib/anhGiuCho";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Loader2, X, MessagesSquare } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -151,7 +152,7 @@ export default function Community() {
 
         {imageUrl && (
           <div className="relative mt-3 ml-[52px] w-fit">
-            <img src={imageUrl} alt="" className="w-52 h-40 object-cover rounded-xl border border-border" />
+            <img src={imageUrl} alt="" onError={khiAnhHong} className="w-52 h-40 object-cover rounded-xl border border-border" />
             <button
               type="button"
               onClick={() => setImageUrl(null)}
@@ -164,7 +165,8 @@ export default function Community() {
         )}
 
         <div className="flex justify-between items-center mt-3 ml-0 sm:ml-[52px] gap-3">
-          {khaNang.uploads ? (
+          {/* CA HAI duong - xem ODanLinkAnh.jsx. */}
+          {khaNang.uploads && (
             <>
               <button
                 type="button"
@@ -176,11 +178,15 @@ export default function Community() {
               </button>
               <input ref={fileRef} type="file" accept="image/*" onChange={pickImage} className="hidden" />
             </>
-          ) : (
-            <div className="flex-1">
-              <ODanLinkAnh value={imageUrl} onChange={setImageUrl} nhan="Link ảnh cho bài đăng" />
-            </div>
           )}
+          <div className="flex-1">
+            <ODanLinkAnh
+              value={imageUrl}
+              onChange={setImageUrl}
+              nhan="Link ảnh cho bài đăng"
+              khoAnhTat={!khaNang.uploads}
+            />
+          </div>
           <Button
             onClick={() => postMutation.mutate()}
             disabled={postMutation.isPending || (!body.trim() && !imageUrl)}

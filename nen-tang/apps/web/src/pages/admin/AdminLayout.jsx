@@ -1,10 +1,12 @@
 /**
  * Khung chung cua khu vuc quan tri: chan nguoi khong phai admin, va dung thanh
- * dieu huong 11 muc theo ban thiet ke.
+ * dieu huong. So muc doc thang tu ADMIN_NAV ben duoi - KHONG go con so vao day,
+ * vi chu thich cu ghi "11 muc" trong khi mang da len 17 tu lau, va mot con so
+ * sai trong chu thich la thu nguoi sua sau tin ngay ma khong kiem lai.
  *
  * Thanh ben cua ban thiet ke nam o cot trai man hinh, nhung o day AppLayout da
  * chiem cot do roi. Nen tren man hinh rong thi day la cot phu ben trong noi
- * dung, con hep hon thi cuon ngang thanh mot hang the - van du 11 muc.
+ * dung, con hep hon thi cuon ngang thanh mot hang the.
  */
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
@@ -68,13 +70,30 @@ export default function AdminLayout() {
 
   // So bai cho duyet hien ngay tren muc "Duyet bai" - de admin khong phai mo
   // trang do moi biet co viec ton dong.
+  //
+  // PHAI DEM CA HAI HANG CHO. Trang Duyet bai (Approval.jsx) co hai tab:
+  // hoat dong (Activity) va bai nop challenge (ChallengeSubmission). Truoc day
+  // huy hieu nay chi dem tab dau, nen mot hang doi bai nop challenge dang ton
+  // dong van hien so 0 - chi Thanh nhin vao tin la da duyet het roi va khong mo
+  // trang do ra nua. Mot con so SAI con te hon khong co con so nao.
+  const CHAN = 200;
   const pending = useQuery({
     queryKey: ['admin', 'pendingCount'],
-    queryFn: () => base44.entities.Activity.filter({ status: 'pending' }, '-created_date', 200),
+    queryFn: async () => {
+      const [hoatDong, baiNop] = await Promise.all([
+        base44.entities.Activity.filter({ status: 'pending' }, '-created_date', CHAN),
+        base44.entities.ChallengeSubmission.filter({ status: 'pending' }, '-created_date', CHAN),
+      ]);
+      return { so: (hoatDong?.length || 0) + (baiNop?.length || 0),
+        chamTran: (hoatDong?.length || 0) >= CHAN || (baiNop?.length || 0) >= CHAN };
+    },
     enabled: isAdmin,
     staleTime: 60_000,
   });
-  const pendingCount = pending.data?.length || 0;
+  // Cham tran thi noi ro la "200+" chu khong in mot con so tron nhu the do la
+  // tong that - mau lay tu AdminVip.jsx.
+  const pendingCount = pending.data?.so || 0;
+  const pendingLabel = pending.data?.chamTran ? `${pendingCount}+` : String(pendingCount);
 
   if (isLoadingAuth) return null;
   if (!isAdmin) return <NoAccess />;
@@ -95,7 +114,7 @@ export default function AdminLayout() {
       <span className="whitespace-nowrap">{label}</span>
       {badge === 'pending' && pendingCount > 0 && (
         <span className="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground">
-          {pendingCount}
+          {pendingLabel}
         </span>
       )}
     </NavLink>

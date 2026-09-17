@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { khiAnhHong } from "@/lib/anhGiuCho";
 import { Heart, MessageCircle, Loader2 } from "lucide-react";
 import Avatar from "@/components/Avatar";
 import Linkify from "@/components/Linkify";
@@ -64,6 +65,7 @@ export default function PostCard({
           src={post.image_url}
           alt=""
           loading="lazy"
+          onError={khiAnhHong}
           className="w-full max-w-md max-h-80 object-cover rounded-xl border border-border mb-3"
         />
       )}
@@ -77,7 +79,7 @@ export default function PostCard({
             liked ? "text-primary" : "text-muted-foreground hover:text-foreground",
           )}
         >
-          <Heart className={cn("w-4 h-4", liked && "fill-current")} /> {likeCount}
+          <Heart className={cn("w-4 h-4", liked && "fill-current")} aria-hidden="true" /> {likeCount}
         </button>
         <button
           type="button"

@@ -44,13 +44,31 @@ const STEPS = [
   },
 ];
 
+// StatusPill chi hieu good/warn/bad/brand/muted (xem _shared.jsx). Truoc day o
+// day tra ve 'success'/'warning'/'danger' - khong ten nao khop, nen toneClass
+// la undefined va the hien ra KHONG CO MAU. Ca cot tro thanh vo nghia dung o
+// cho nguoi ta liec mot cai de biet co gi hong khong.
+const TONE = { ok: 'good', partial: 'warn' };
+// Va in thang gia tri may ('ok'/'partial'/'error', 'kit_tag_customer') cho mot
+// nguoi khong ranh ky thuat doc thi cung bang khong noi gi.
+const TRANG_THAI = { ok: 'Xong', partial: 'Xong một phần', error: 'Lỗi' };
+const VIEC = {
+  kit_tag_lead: 'Gắn nhãn khách tiềm năng',
+  kit_tag_customer: 'Gắn nhãn khách đã mua',
+  kit_sequence_lead: 'Thêm vào chuỗi email khách tiềm năng',
+  kit_sequence_customer: 'Thêm vào chuỗi email khách đã mua',
+};
+
 function SyncRow({ row }) {
-  const tone = row.status === 'ok' ? 'success' : row.status === 'partial' ? 'warning' : 'danger';
   return (
     <tr className="border-b last:border-0">
       <td className="py-2 pr-4 font-medium">{row.email}</td>
-      <td className="py-2 pr-4 text-muted-foreground">{row.action}</td>
-      <td className="py-2 pr-4"><StatusPill tone={tone}>{row.status}</StatusPill></td>
+      <td className="py-2 pr-4 text-muted-foreground">{VIEC[row.action] || row.action}</td>
+      <td className="py-2 pr-4">
+        <StatusPill tone={TONE[row.status] || 'bad'}>
+          {TRANG_THAI[row.status] || row.status}
+        </StatusPill>
+      </td>
       <td className="py-2 pr-4 text-muted-foreground max-w-[280px] truncate" title={row.error || ''}>
         {row.error || '—'}
       </td>

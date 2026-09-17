@@ -132,7 +132,7 @@ function Attendance({ event, onClose }) {
   return (
     <Panel
       title={`Điểm danh — ${event.title}`}
-      description="Cộng XP và xu theo luật event_attended. Điểm danh lại không cộng thêm lần nữa."
+      description="Đánh dấu có mặt sẽ cộng XP và xu cho học viên. Điểm danh lại không cộng thêm lần nữa."
       action={<Button variant="ghost" size="sm" onClick={onClose}>Đóng</Button>}
     >
       {signups.isLoading ? <LoadingBlock /> : !rows.length ? (
@@ -170,20 +170,28 @@ function Attendance({ event, onClose }) {
                       </StatusPill>
                     </td>
                     <td className="py-2">
+                      {/* CO CHU, khong chi bieu tuong.
+                          Truoc day o day la mot dau V va mot dau X tran, khong
+                          nhan, khong aria-label, va ca hai deu bi lam mo khi
+                          dong da o dung trang thai do - ma khong noi vi sao.
+                          Diem danh mot buoi hoc dang dien ra bang cach doan xem
+                          dau xam nao nghia la gi la chuyen khong nen bat ai lam. */}
                       <div className="flex gap-1.5">
                         <Button
-                          size="sm" variant="outline" className="h-7 px-2"
+                          size="sm" variant="outline" className="h-7 px-2 text-[11.5px] font-bold"
                           disabled={mark.isPending || r.status === 'attended'}
+                          title={r.status === 'attended' ? 'Đã đánh dấu có mặt rồi' : 'Đánh dấu người này có mặt'}
                           onClick={() => mark.mutate({ userIds: [r.user_id], present: true })}
                         >
-                          <Check className="h-3.5 w-3.5" />
+                          <Check className="mr-1 h-3.5 w-3.5" /> Có mặt
                         </Button>
                         <Button
-                          size="sm" variant="ghost" className="h-7 px-2"
+                          size="sm" variant="ghost" className="h-7 px-2 text-[11.5px] font-bold"
                           disabled={mark.isPending || r.status === 'absent'}
+                          title={r.status === 'absent' ? 'Đã đánh dấu vắng rồi' : 'Đánh dấu người này vắng'}
                           onClick={() => mark.mutate({ userIds: [r.user_id], present: false })}
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X className="mr-1 h-3.5 w-3.5" /> Vắng
                         </Button>
                       </div>
                     </td>
@@ -432,7 +440,7 @@ export default function AdminEvents() {
                           <Users className="mr-1 h-3.5 w-3.5" />Điểm danh
                         </Button>
                         <Button size="sm" variant="ghost" className="h-7" onClick={() => setDraft({ ...e })}>Sửa</Button>
-                        <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive" onClick={() => setRemoving(e)}>
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive" onClick={() => setRemoving(e)} aria-label={`Xoá buổi ${e.title || ''}`} title="Xoá buổi này">
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>

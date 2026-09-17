@@ -182,7 +182,7 @@ export default function AdminNotify() {
 
           <div>
             <Label htmlFor="nt-title" className="mb-1.5 block text-xs font-semibold text-muted-foreground">
-              Tiêu đề
+              Tiêu đề <span className="text-destructive">*</span>
             </Label>
             <Input
               id="nt-title"
@@ -260,9 +260,14 @@ export default function AdminNotify() {
               Gửi thông báo
             </Button>
             <span className="text-sm text-muted-foreground">
-              {soNguoi > 0
-                ? `Sẽ tới ${fmtNumber(soNguoi)} người đang hoạt động`
-                : 'Chưa có ai khớp nhóm đã chọn'}
+              {/* Nut xam thi PHAI noi ro dang thieu gi. Thieu tieu de va thieu
+                  nguoi nhan la hai ly do khac han nhau, dan toi hai thao tac
+                  khac han nhau. */}
+              {!tieuDe.trim()
+                ? 'Nhập tiêu đề trước đã — đó là dòng học viên nhìn thấy.'
+                : soNguoi > 0
+                  ? `Sẽ tới ${fmtNumber(soNguoi)} người đang hoạt động`
+                  : 'Chưa có ai khớp nhóm đã chọn'}
             </span>
           </div>
         </div>

@@ -39,21 +39,30 @@ export async function uploadFile(rc) {
   // day kho anh va sinh hoa don R2, khong cham vao gioi han nao ca.
   // 40 anh mot gio du rong cho nguoi dung that (doi anh dai dien, nop bai kem
   // anh), va chan duoc viec bom hang loat.
-  const soLan = await rateLimit(rc, `upload:${user.id}`, 40, 60 * 60 * 1000);
-  if (!soLan.allowed) {
-    return apiError(429, 'qua_nhieu_anh',
-      'Bạn tải ảnh hơi nhiều trong một giờ. Thử lại sau ít phút nhé.',
-      { retry_after: soLan.retryAfter });
-  }
-
+  // KIEM KHO ANH TRUOC, DEM SO LAN SAU - thu tu nay quan trong.
+  //
+  // Truoc day nguoc lai. Khi R2 chua bat thi moi cu bam deu that bai voi 503,
+  // NHUNG van tru mot luot trong 40 luot/gio. Bam thu 40 lan vao mot nut khong
+  // bao gio chay - chuyen rat de xay ra khi nguoi ta tuong minh lam sai - la bi
+  // khoa them mot tieng, va thong bao luc do doi thanh "ban tai anh hoi nhieu",
+  // mot cau vo nghia voi nguoi chua tai len duoc buc anh nao.
+  //
+  // Doi lai khong mat gi: nhanh 503 khong cham vao R2 nen khong ton tien, va
+  // tran so lan van chan dung cho no can chan (khi kho anh THAT SU dang mo).
   if (!rc.env.UPLOADS) {
     // Nguoi doc cau nay la HOC VIEN, khong phai quan tri vien. Cau huong dan
     // "vao Cloudflare Dashboard bat R2" chi ho ich cho mot nguoi duy nhat va
     // lam kho hoac tat ca nhung nguoi con lai - de no o log may chu thoi.
     console.warn('[files] chua noi kho anh: thieu binding UPLOADS (R2 chua bat)');
     return apiError(503, 'kho_anh_chua_bat',
-      'Tính năng tải ảnh đang tạm tắt. Bạn dán link ảnh vào ô bên cạnh, '
-      + 'hoặc nhắn admin qua Zalo giúp nhé.');
+      'Tính năng tải ảnh đang tạm tắt. Bạn dán link ảnh vào ô bên cạnh giúp nhé.');
+  }
+
+  const soLan = await rateLimit(rc, `upload:${user.id}`, 40, 60 * 60 * 1000);
+  if (!soLan.allowed) {
+    return apiError(429, 'qua_nhieu_anh',
+      'Bạn tải ảnh hơi nhiều trong một giờ. Thử lại sau ít phút nhé.',
+      { retry_after: soLan.retryAfter });
   }
 
   let form;
@@ -99,6 +108,38 @@ export async function uploadFile(rc) {
 }
 
 /**
+ * Anh giu cho: mot khung xam co bieu tuong anh va mot dong chu.
+ *
+ * Tu ve bang SVG chu khong tai tu dau ca. Truoc day duong hong duy nhat trong
+ * app tro toi mot anh tren CDN cua Wix (di tich tu ban goc Base44) - mot app tu
+ * host ma duong du phong lai phu thuoc mot ben thu ba khong lien quan, va se
+ * chet lang le neu ben do doi duong dan.
+ *
+ * `status` giu dung y nghia HTTP that (503 / 404) de cong cu doi soat con doc
+ * duoc, nhung than tra ve van la anh nen trinh duyet ve duoc.
+ */
+function anhGiuCho(loiNhan, status = 503) {
+  const chu = String(loiNhan).replace(/[<>&]/g, '');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">`
+    + `<rect width="400" height="300" fill="#e7e5e4"/>`
+    + `<g fill="none" stroke="#a8a29e" stroke-width="8" stroke-linejoin="round">`
+    + `<rect x="150" y="110" width="100" height="76" rx="8"/>`
+    + `<path d="M150 168l28-26 22 20 24-30 26 36"/></g>`
+    + `<circle cx="222" cy="132" r="7" fill="#a8a29e"/>`
+    + `<text x="200" y="222" text-anchor="middle" font-family="system-ui,sans-serif"`
+    + ` font-size="17" fill="#78716c">${chu}</text></svg>`;
+  return new Response(svg, {
+    status,
+    headers: {
+      'Content-Type': 'image/svg+xml; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+    },
+  });
+}
+
+/**
  * GET /api/files/u/<id>/<ten>
  *
  * Anh la cong khai voi bat ky ai co duong dan (ten sinh ngau nhien 128 bit nen
@@ -106,16 +147,26 @@ export async function uploadFile(rc) {
  * khong phai ky lai tung duong dan.
  */
 export async function readFile(rc) {
-  if (!rc.env.UPLOADS) return apiError(503, 'kho_anh_chua_bat', 'Kho ảnh đang tạm tắt.');
+  // Duong nay LUON duoc goi tu mot the <img>, khong bao gio tu ma JavaScript.
+  // Nen khi khong tra duoc anh that, tra mot ANH giu cho - dung mot cuc JSON.
+  //
+  // Truoc day o day tra apiError(...) tuc la JSON. Trinh duyet nhan JSON o cho
+  // no doi mot buc anh thi chi lam duoc mot viec: ve bieu tuong anh vo. Nen moi
+  // duong dan /api/files/... da luu trong D1 tu truoc bien thanh mot o vo tren
+  // khap ca app cung luc - trang ca nhan, bang xep hang, feed, bai da nop - va
+  // khong cho nao noi duoc vi sao.
+  //
+  // Tra SVG thi moi cho tu degrade dep cung mot luc, khong phai sua tung trang.
+  if (!rc.env.UPLOADS) return anhGiuCho('Kho ảnh đang tạm tắt');
 
   const key = rc.params.key;
   // Chan di nguoc thu muc truoc khi cham toi kho.
   if (!key || key.includes('..') || !/^u\/[\w-]+\/[\w-]+\.(jpg|png|webp|gif)$/.test(key)) {
-    return apiError(404, 'not_found', 'Không tìm thấy ảnh');
+    return anhGiuCho('Không tìm thấy ảnh', 404);
   }
 
   const obj = await rc.env.UPLOADS.get(key).catch(() => null);
-  if (!obj) return apiError(404, 'not_found', 'Không tìm thấy ảnh');
+  if (!obj) return anhGiuCho('Không tìm thấy ảnh', 404);
 
   const headers = new Headers();
   obj.writeHttpMetadata(headers);

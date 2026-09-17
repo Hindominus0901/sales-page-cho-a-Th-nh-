@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { nhanDangVideo, videoEmbedUrl, NHA_CUNG_CAP } from '@/lib/video';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -38,12 +39,14 @@ export const EMPTY_COURSE = {
 // Chi liet ke nhung noi ma lib/video.js dung duoc link nhung. Truoc day o day
 // co 'drive' va 'other' nhung khong cho nao dung duoc chung -> chon vao la bai
 // hoc khong phat duoc, ma nguoi nhap khong he biet.
-export const VIDEO_PROVIDERS = [
-  { value: 'wistia', label: 'Wistia' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'vimeo', label: 'Vimeo' },
-  { value: 'stream', label: 'Cloudflare Stream' },
-];
+//
+// Danh sach GIA TRI lay tu NHA_CUNG_CAP trong lib/video.js chu khong go lai o
+// day - day la hop dong ngam giua dropdown nay va ham ghep link nhung, hai ben
+// phai biet cung mot bo. O day chi con giu TEN HIEN THI cho nguoi doc.
+const TEN_HIEN = {
+  wistia: 'Wistia', youtube: 'YouTube', vimeo: 'Vimeo', stream: 'Cloudflare Stream',
+};
+export const VIDEO_PROVIDERS = NHA_CUNG_CAP.map((value) => ({ value, label: TEN_HIEN[value] || value }));
 
 /** Doc danh sach id khoa hoc trong `grants_json` cua mot san pham. */
 export function idKhoaTrongGoi(sanPham) {
@@ -165,6 +168,35 @@ export function LessonRow({ lesson, onSave, onDelete, pending }) {
   const [draft, setDraft] = React.useState(lesson);
   const set = (key) => (e) => setDraft({ ...draft, [key]: e.target.value });
 
+  /**
+   * O video nhan CA LINK LAN MA.
+   *
+   * Cho nay tung la bay lon nhat cua trang quan tri. O chi ghi "Ma video (khong
+   * phai link)" va khong kiem gi ca, nen ai dan link YouTube vao - dong tac tu
+   * nhien nhat, vi bam "Chia se" tren YouTube thi duoc mot cai link - se luu
+   * thanh cong, khong loi, roi hoc vien mo bai giang ra thay mot o den. Khong
+   * mot dau hieu nao chi ve day.
+   *
+   * Ham boc ma da co san trong lib/video.js tu lau (embedFromUrl), chi la chua
+   * ai noi no vao form. Gio noi vao: dan gi cung duoc, tu dien lai dropdown cho
+   * dung, va sai thi bao ngay tai cho.
+   */
+  const doiVideo = (e) => {
+    const raw = e.target.value;
+    const ra = nhanDangVideo(raw, draft.video_provider);
+    if (ra.ok) {
+      setDraft({ ...draft, video_id: ra.id, video_provider: ra.provider });
+    } else {
+      setDraft({ ...draft, video_id: raw });
+    }
+  };
+
+  const nhanDang = nhanDangVideo(draft.video_id || '', draft.video_provider);
+  const loiVideo = (draft.video_id || '').trim() && !nhanDang.ok ? nhanDang.loi : '';
+  const xemThu = nhanDang.ok
+    ? videoEmbedUrl({ video_provider: nhanDang.provider, video_id: nhanDang.id })
+    : null;
+
   return (
     <div className="rounded-2xl border border-border p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -184,7 +216,11 @@ export function LessonRow({ lesson, onSave, onDelete, pending }) {
         <Button
           size="sm"
           className="rounded-full"
-          disabled={pending}
+          // Chan luu mot ma video hong. De luu duoc thi bai giang trong danh
+          // sach van "co video", chi la khong phat - va loi do chi lo ra khi
+          // mot hoc vien mo bai ra xem.
+          disabled={pending || !!loiVideo}
+          title={loiVideo || undefined}
           onClick={() => onSave({
             title: draft.title || '',
             guide: draft.guide || '',
@@ -216,7 +252,16 @@ export function LessonRow({ lesson, onSave, onDelete, pending }) {
           <CellSelect value={draft.video_provider || 'wistia'} onChange={set('video_provider')}>
             {VIDEO_PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </CellSelect>
-          <CellInput value={draft.video_id || ''} onChange={set('video_id')} placeholder="Mã video (không phải link)" />
+          <div className="space-y-1">
+            <CellInput
+              value={draft.video_id || ''}
+              onChange={doiVideo}
+              placeholder="Dán link video hoặc mã video"
+              aria-label="Link hoặc mã video"
+              className={loiVideo ? 'border-destructive' : undefined}
+            />
+            {loiVideo && <p className="text-[11.5px] leading-snug text-destructive">{loiVideo}</p>}
+          </div>
           <CellInput value={draft.duration || ''} onChange={set('duration')} placeholder="Thời lượng, VD 12:40" />
           <CellInput value={draft.assignment_url || ''} onChange={set('assignment_url')} placeholder="Link bài tập" />
           <CellInput value={draft.doc_url || ''} onChange={set('doc_url')} placeholder="Link tài liệu" />
@@ -226,6 +271,28 @@ export function LessonRow({ lesson, onSave, onDelete, pending }) {
           </div>
         </div>
       </div>
+
+      {/* XEM THU NGAY TAI DAY.
+          Mot ma video dung cu phap van co the tro toi mot video da xoa, dat che
+          do rieng tu, hoac chan nhung. Khong cach nao biet duoc tu phia trinh
+          duyet ngoai viec phat thu. Chi Thanh nhin thay no chay o day thi biet
+          chac hoc vien cung se thay no chay. */}
+      {xemThu && (
+        <div className="mt-2.5">
+          <p className="mb-1 text-[11.5px] font-semibold text-muted-foreground">
+            Xem thử — {VIDEO_PROVIDERS.find((p) => p.value === nhanDang.provider)?.label || nhanDang.provider}
+            {' · mã '}<code>{nhanDang.id}</code>
+          </p>
+          <iframe
+            key={xemThu}
+            src={xemThu}
+            title="Xem thử video bài giảng"
+            className="aspect-video w-full max-w-md rounded-xl border border-border bg-black"
+            allow="fullscreen; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      )}
     </div>
   );
 }

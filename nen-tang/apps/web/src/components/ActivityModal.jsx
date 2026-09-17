@@ -7,6 +7,8 @@ import { FileText, Phone, BookCheck, Sparkles, X, Loader2, Check, ImagePlus, Tra
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { Image } from "@/components/ui/image";
+import { useKhaNang } from "@/lib/useKhaNang";
+import ODanLinkAnh from "@/components/ODanLinkAnh";
 
 // Biểu tượng và màu cho những loại quen thuộc. Danh sách loại THẬT lấy từ
 // máy chủ, không viết cứng ở đây: trước đây ba mục này cố định trong mã, nên khi
@@ -28,6 +30,7 @@ export default function ActivityModal({ open, onOpenChange, onLogged }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(null);
   const { toast } = useToast();
+  const { khaNang } = useKhaNang();
 
   const reset = () => {
     setSelected(null); setTypeDetail(null); setSuccess(null);
@@ -208,17 +211,37 @@ export default function ActivityModal({ open, onOpenChange, onLogged }) {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center gap-1.5 h-28 rounded-xl border-2 border-dashed border-border cursor-pointer hover:border-primary hover:bg-accent/40 transition-color">
-                    {uploading ? (
-                      <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
-                    ) : (
-                      <>
-                        <ImagePlus className="w-5 h-5 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Tải ảnh lên từ máy</span>
-                      </>
+                  /* HAI duong vao, khong phai mot.
+                   *
+                   * Truoc day o day CHI co o keo tha tep. Khi kho anh tat (R2
+                   * chua bat) thi POST /api/files tra 503, va may chu bao nguoi
+                   * dung "dan link anh vao o ben canh" - mot o KHONG TON TAI o
+                   * day. Ma bang chung lai la BAT BUOC (xem logActivity trong
+                   * worker/src/functions/index.js), nen hoc vien chi co anh
+                   * trong may la het duong nop bai. Day la ngo cut kin nhat
+                   * trong ca san pham: khong bao loi nao noi ra rang khong con
+                   * cach nao khac. */
+                  <div className="space-y-2">
+                    {khaNang.uploads && (
+                      <label className="flex flex-col items-center justify-center gap-1.5 h-28 rounded-xl border-2 border-dashed border-border cursor-pointer hover:border-primary hover:bg-accent/40 transition-color">
+                        {uploading ? (
+                          <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                        ) : (
+                          <>
+                            <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Tải ảnh lên từ máy</span>
+                          </>
+                        )}
+                        <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+                      </label>
                     )}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
-                  </label>
+                    <ODanLinkAnh
+                      value={form.screenshot_url}
+                      onChange={(v) => setForm((f) => ({ ...f, screenshot_url: v }))}
+                      nhan="Link ảnh minh chứng"
+                      khoAnhTat={!khaNang.uploads}
+                    />
+                  </div>
                 )}
               </div>
 

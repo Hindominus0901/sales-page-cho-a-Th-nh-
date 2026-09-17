@@ -17,6 +17,7 @@
  *    de tam ngung ban chu khong phai de an khoi danh sach.
  */
 import React from 'react';
+import { useKhaNang } from '@/lib/useKhaNang';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Trash2, ImagePlus } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -153,7 +154,9 @@ export default function AdminProducts() {
           </TableScroll>
           {khoaHoc.isLoading && <LoadingBlock />}
           {!khoaHoc.isLoading && (khoaHoc.data || []).length === 0 && (
-            <EmptyBlock text="Chưa có khoá học nào để gắn vào sản phẩm." />
+            <EmptyBlock>
+              Chưa có khoá học nào để gắn vào sản phẩm. Vào trang “Khoá học” tạo một khoá trước đã.
+            </EmptyBlock>
           )}
         </QueryState>
       </Panel>
@@ -166,6 +169,7 @@ function DongSanPham({ sp, khoaHoc, onSave, onDelete, dangLuu }) {
   const [draft, setDraft] = React.useState(sp);
   const [hoiXoa, setHoiXoa] = React.useState(false);
   const [dangTaiAnh, setDangTaiAnh] = React.useState(false);
+  const { khaNang } = useKhaNang();
 
   React.useEffect(() => setDraft(sp), [sp]);
   const set = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.value }));
@@ -224,15 +228,19 @@ function DongSanPham({ sp, khoaHoc, onSave, onDelete, dangLuu }) {
               <CellInput
                 value={draft.image_url || ''}
                 onChange={set('image_url')}
-                placeholder="Link ảnh, hoặc bấm Tải ảnh"
+                placeholder={khaNang.uploads ? 'Link ảnh, hoặc bấm Tải ảnh' : 'Dán link ảnh vào đây'}
                 className="flex-1"
               />
-              <label className="cursor-pointer rounded-lg border border-border px-2.5 py-1.5 text-xs font-bold hover:bg-secondary">
-                {dangTaiAnh
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <span className="flex items-center gap-1"><ImagePlus className="h-3.5 w-3.5" /> Tải ảnh</span>}
-                <input type="file" accept="image/*" hidden onChange={chonAnh} disabled={dangTaiAnh} />
-              </label>
+              {/* Xem chu thich cung loai o AdminRewards: nut tai anh chi co
+                  nghia khi kho anh dang bat. */}
+              {khaNang.uploads && (
+                <label className="cursor-pointer rounded-lg border border-border px-2.5 py-1.5 text-xs font-bold hover:bg-secondary">
+                  {dangTaiAnh
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <span className="flex items-center gap-1"><ImagePlus className="h-3.5 w-3.5" /> Tải ảnh</span>}
+                  <input type="file" accept="image/*" hidden onChange={chonAnh} disabled={dangTaiAnh} />
+                </label>
+              )}
             </div>
             <CellInput
               value={draft.description || ''}
@@ -387,7 +395,7 @@ function DongSanPham({ sp, khoaHoc, onSave, onDelete, dangLuu }) {
           >
             Lưu
           </Button>
-          <Button size="sm" variant="ghost" className="rounded-full text-destructive" onClick={() => setHoiXoa(true)}>
+          <Button size="sm" variant="ghost" className="rounded-full text-destructive" onClick={() => setHoiXoa(true)} aria-label={`Xoá sản phẩm ${draft.name || ''}`} title="Xoá sản phẩm này">
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -396,7 +404,7 @@ function DongSanPham({ sp, khoaHoc, onSave, onDelete, dangLuu }) {
           onOpenChange={setHoiXoa}
           title={`Xoá "${sp.name}"?`}
           description="Đơn hàng cũ vẫn giữ nguyên, nhưng sản phẩm này sẽ biến mất khỏi Cửa hàng."
-          confirmText="Xoá"
+          confirmLabel="Xoá sản phẩm"
           onConfirm={() => { setHoiXoa(false); onDelete(); }}
         />
       </td>

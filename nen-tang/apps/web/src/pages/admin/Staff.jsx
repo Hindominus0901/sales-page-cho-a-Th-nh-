@@ -1,176 +1,194 @@
 /**
- * Nhan su: nguoi (va AI) dang cham bai, phu trach hoc vien.
+ * Nhan su: ai dang co quyen duyet bai.
  *
- * Dong "Trợ lý AI" trong du lieu khoi tao la co y: AI cham bai duoc
- * mo hinh hoa nhu mot nhan su, de so bai da duyet cua no dung chung mot cho voi
- * cua coach - dung xoa nham.
+ * ================== VI SAO TRANG NAY BI VIET LAI ==================
+ *
+ * Ban truoc doc va ghi vao entity `Staff` - mot bang RIENG, khong noi voi bat
+ * cu thu gi:
+ *
+ *   - Khong mot trang hoc vien nao doc bang do (grep `entities.Staff` trong
+ *     apps/web chi ra dung trang nay).
+ *   - Quyen duyet bai KHONG lay tu do. `isStaff()` trong
+ *     worker/src/functions/index.js doc `users.role` ('admin' hoac 'coach').
+ *
+ * Nghia la: them mot coach vao day, thay toast "Da them nhan su", va nguoi do
+ * VAN KHONG duyet duoc bai nao. Khong loi, khong canh bao. Dung cai bay ma muc
+ * "Tuy chinh Portal" da bi go khoi menu vi no - chi khac la muc nay con nam lai
+ * trong menu.
+ *
+ * Hai cot con te hon: "Hoc vien phu trach" va "Bai da duyet" la SO GO TAY, nhin
+ * y het thong ke that. Mot nguoi van hanh doc bang do se tin rang coach A da
+ * duyet 120 bai, trong khi con so do chi la thu ai do go vao o nam ngoai.
+ *
+ * Gio trang nay doc va ghi THANG vao `users.role` - dung nguon su that ma may
+ * chu dung de quyet dinh quyen. Khong con so nao tu bia ra: so bai da duyet dem
+ * that tu bang activities.
+ *
+ * Entity `Staff` va bang `staff` khong bi dung toi nua nhung van con trong
+ * database - xoa du lieu cua nguoi khac khong phai viec cua mot lan sua giao
+ * dien. Neu ve sau chac chan khong ai can, hay bo bang do bang mot migration
+ * rieng.
  */
 import React from 'react';
+import { Loader2, ShieldCheck } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
+import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  CellInput, CellSelect, ConfirmDialog, InitialAvatar, PageHeader, Panel, QueryState,
+  CellSelect, InitialAvatar, PageHeader, Panel, QueryState,
   StatusPill, TableScroll, errText, fmtNumber,
 } from './_shared';
+
+const VAI = { admin: 'Admin', coach: 'Coach', member: 'Học viên' };
+const CHAN = 500;
 
 export default function Staff() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [deleting, setDeleting] = React.useState(null);
+  const { user: toi } = useAuth();
 
-  const staff = useQuery({
-    queryKey: ['admin', 'staff'],
-    queryFn: () => base44.entities.Staff.list('sort_order', 200),
+  // Doc CA danh sach de con thay ai vua duoc cat quyen. Bang users cua mot lop
+  // hoc khong lon, va chan 500 dong la du rong.
+  const users = useQuery({
+    queryKey: ['admin', 'nhan-su'],
+    queryFn: () => base44.entities.User.list('-total_xp', CHAN),
   });
 
-  const save = useMutation({
-    mutationFn: ({ id, data }) => (id
-      ? base44.entities.Staff.update(id, data)
-      : base44.entities.Staff.create(data)),
-    onSuccess: (_res, vars) => {
-      toast({ title: vars.id ? 'Đã lưu nhân sự' : 'Đã thêm nhân sự' });
-      qc.invalidateQueries({ queryKey: ['admin', 'staff'] });
+  // So bai da duyet: dem THAT tu activities, khong phai so go tay nhu ban cu.
+  const daDuyet = useQuery({
+    queryKey: ['admin', 'nhan-su', 'da-duyet'],
+    queryFn: () => base44.entities.Activity.filter({ status: 'approved' }, '-created_date', 1000),
+  });
+
+  const doiVai = useMutation({
+    mutationFn: ({ id, role }) => base44.entities.User.update(id, { role }),
+    onSuccess: (_r, v) => {
+      toast({
+        title: `Đã đổi vai trò thành ${VAI[v.role]}`,
+        description: v.role === 'member'
+          ? 'Người này không còn duyệt được bài nữa.'
+          : 'Quyền duyệt bài có hiệu lực ngay.',
+      });
+      qc.invalidateQueries({ queryKey: ['admin', 'nhan-su'] });
     },
-    onError: (err) => toast({ title: 'Không lưu được', description: errText(err), variant: 'destructive' }),
+    onError: (err) => toast({ title: 'Không đổi được vai trò', description: errText(err), variant: 'destructive' }),
   });
 
-  const remove = useMutation({
-    mutationFn: (id) => base44.entities.Staff.delete(id),
-    onSuccess: () => {
-      toast({ title: 'Đã xoá nhân sự' });
-      setDeleting(null);
-      qc.invalidateQueries({ queryKey: ['admin', 'staff'] });
-    },
-    onError: (err) => toast({ title: 'Không xoá được', description: errText(err), variant: 'destructive' }),
-  });
+  const tatCa = users.data || [];
+  const doiNgu = tatCa.filter((u) => u.role === 'admin' || u.role === 'coach');
 
-  const list = staff.data || [];
-  const nextOrder = list.length ? Math.max(...list.map((s) => s.sort_order || 0)) + 1 : 1;
+  // Dem theo nguoi duyet. `reviewed_by` luu ID nguoi dung (xem
+  // worker/src/functions/index.js:142) - KHONG phai email. Doi chieu nham
+  // truong la moi nguoi deu hien 0 bai, mot con so sai trong im lang.
+  const soDuyet = React.useMemo(() => {
+    const dem = {};
+    for (const a of daDuyet.data || []) {
+      const ai = a.reviewed_by || '';
+      if (ai) dem[ai] = (dem[ai] || 0) + 1;
+    }
+    return dem;
+  }, [daDuyet.data]);
+  const chamTran = (daDuyet.data?.length || 0) >= 1000;
 
   return (
     <div className="space-y-5">
       <PageHeader
         title="Nhân sự"
-        description="Đội ngũ đang phụ trách học viên và chấm bài — gồm cả trợ lý AI."
-      >
-        <Button
-          className="rounded-full"
-          disabled={save.isPending}
-          onClick={() => save.mutate({
-            data: {
-              name: 'Nhân sự mới', email: '', role_label: 'Coach', avatar_url: '',
-              assigned_members: 0, reviewed_count: 0, is_active: true, sort_order: nextOrder,
-            },
-          })}
-        >
-          <Plus className="mr-1 h-4 w-4" /> Thêm nhân sự
-        </Button>
-      </PageHeader>
+        description="Ai đang có quyền duyệt bài. Đổi vai trò ở đây là có hiệu lực ngay."
+      />
 
-      <Panel title={`${fmtNumber(list.length)} nhân sự`} description="Sửa trực tiếp trong bảng rồi bấm Lưu ở cuối dòng.">
-        <QueryState query={staff} empty={list.length === 0} emptyText="Chưa có nhân sự nào.">
+      <div className="flex gap-2.5 rounded-2xl border border-border bg-muted/40 p-4">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="text-[12.5px] leading-relaxed text-muted-foreground">
+          <b className="text-foreground">Coach</b> duyệt được bài của học viên.{' '}
+          <b className="text-foreground">Admin</b> làm được mọi việc, kể cả đổi vai trò người khác.
+          Muốn cấp quyền cho người chưa có trong bảng này, vào trang{' '}
+          <b className="text-foreground">Học viên</b> rồi đổi vai trò của họ.
+        </div>
+      </div>
+
+      <Panel title={`${fmtNumber(doiNgu.length)} người có quyền`}>
+        <QueryState
+          query={users}
+          empty={doiNgu.length === 0}
+          emptyText="Chưa có ai ngoài bạn. Vào trang Học viên để cấp vai trò Coach cho người phụ trách chấm bài."
+        >
           <TableScroll>
-            <table className="w-full min-w-[980px] text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
-                <tr className="border-b border-border">
-                  <th className="p-2.5 font-semibold">Nhân sự</th>
-                  <th className="p-2.5 font-semibold">Email</th>
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                  <th className="p-2.5 font-semibold">Người</th>
                   <th className="p-2.5 font-semibold">Vai trò</th>
-                  <th className="p-2.5 font-semibold">Học viên phụ trách</th>
                   <th className="p-2.5 font-semibold">Bài đã duyệt</th>
                   <th className="p-2.5 font-semibold">Trạng thái</th>
-                  <th className="p-2.5 font-semibold" />
                 </tr>
               </thead>
               <tbody>
-                {list.map((s) => (
-                  <StaffRow
-                    key={`${s.id}-${s.updated_date}`}
-                    staff={s}
-                    pending={save.isPending}
-                    onSave={(data) => save.mutate({ id: s.id, data })}
-                    onDelete={() => setDeleting(s)}
-                  />
-                ))}
+                {doiNgu.map((u) => {
+                  const laToi = u.id === toi?.id;
+                  return (
+                    <tr key={u.id} className="border-b border-border/60 last:border-0">
+                      <td className="p-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <InitialAvatar name={u.full_name || u.email} />
+                          <div className="min-w-0">
+                            <div className="truncate font-semibold">
+                              {u.full_name || '(chưa đặt tên)'}
+                              {laToi && <span className="ml-1.5 text-xs font-normal text-muted-foreground">— bạn</span>}
+                            </div>
+                            <div className="truncate text-xs text-muted-foreground">{u.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-2.5">
+                        <CellSelect
+                          value={u.role}
+                          // May chu cung chan viec nay (xem `guard` cua User trong
+                          // worker/src/entities/schema.js), nhung chan o day thi
+                          // nguoi dung doc duoc LY DO thay vi an mot loi 422.
+                          disabled={laToi || doiVai.isPending}
+                          title={laToi ? 'Không tự đổi vai trò của chính mình được.' : undefined}
+                          onChange={(e) => doiVai.mutate({ id: u.id, role: e.target.value })}
+                          className={u.role === 'admin' ? 'border-primary/40 bg-primary/5 text-primary' : ''}
+                        >
+                          <option value="coach">Coach</option>
+                          <option value="admin">Admin</option>
+                          <option value="member">Học viên (gỡ quyền)</option>
+                        </CellSelect>
+                        {laToi && (
+                          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                            Không tự đổi vai trò của mình được — nhờ một admin khác.
+                          </p>
+                        )}
+                      </td>
+                      <td className="p-2.5 tabular-nums">
+                        {fmtNumber(soDuyet[u.id] || 0)}
+                        {chamTran && '+'}
+                      </td>
+                      <td className="p-2.5">
+                        <StatusPill tone={u.status === 'active' ? 'good' : 'muted'}>
+                          {u.status === 'active' ? 'Đang hoạt động' : (u.status || 'không rõ')}
+                        </StatusPill>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </TableScroll>
+          {doiVai.isPending && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang lưu…
+            </p>
+          )}
+          {chamTran && (
+            <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+              Số bài đã duyệt chỉ đếm trong 1000 bài gần nhất nên hiển thị kèm dấu “+”.
+            </p>
+          )}
         </QueryState>
       </Panel>
-
-      <ConfirmDialog
-        open={!!deleting}
-        onOpenChange={(v) => !v && setDeleting(null)}
-        title={`Xoá “${deleting?.name || ''}” khỏi danh sách nhân sự?`}
-        description="Dòng nhân sự này bị xoá vĩnh viễn. Tài khoản đăng nhập (nếu có) không bị ảnh hưởng, nhưng số liệu phụ trách và đã duyệt sẽ mất."
-        confirmLabel="Xoá nhân sự"
-        pending={remove.isPending}
-        onConfirm={() => remove.mutate(deleting.id)}
-      />
     </div>
-  );
-}
-
-function StaffRow({ staff, onSave, onDelete, pending }) {
-  const [draft, setDraft] = React.useState(staff);
-  const set = (key) => (e) => setDraft({ ...draft, [key]: e.target.value });
-
-  return (
-    <tr className="border-b border-border last:border-0">
-      <td className="p-2.5">
-        <div className="flex items-center gap-2.5">
-          <InitialAvatar name={draft.name} size={32} />
-          <CellInput value={draft.name || ''} onChange={set('name')} className="min-w-[180px] font-semibold" />
-        </div>
-      </td>
-      <td className="p-2.5">
-        <CellInput value={draft.email || ''} onChange={set('email')} className="min-w-[180px]" placeholder="email@..." />
-      </td>
-      <td className="p-2.5">
-        <CellInput value={draft.role_label || ''} onChange={set('role_label')} className="w-36" placeholder="VD: Coach" />
-      </td>
-      <td className="p-2.5">
-        <CellInput type="number" value={draft.assigned_members ?? 0} onChange={set('assigned_members')} className="w-24" />
-      </td>
-      <td className="p-2.5">
-        <CellInput type="number" value={draft.reviewed_count ?? 0} onChange={set('reviewed_count')} className="w-24" />
-      </td>
-      <td className="p-2.5">
-        <CellSelect
-          value={draft.is_active === false ? '0' : '1'}
-          onChange={(e) => setDraft({ ...draft, is_active: e.target.value === '1' })}
-          className="w-32"
-        >
-          <option value="1">Hoạt động</option>
-          <option value="0">Tạm nghỉ</option>
-        </CellSelect>
-      </td>
-      <td className="p-2.5">
-        <div className="flex items-center gap-1.5">
-          {staff.user_id ? null : <StatusPill tone="brand">Không có tài khoản</StatusPill>}
-          <Button
-            size="sm"
-            className="rounded-full"
-            disabled={pending}
-            onClick={() => onSave({
-              name: draft.name || '',
-              email: draft.email || '',
-              role_label: draft.role_label || '',
-              assigned_members: Number(draft.assigned_members) || 0,
-              reviewed_count: Number(draft.reviewed_count) || 0,
-              is_active: draft.is_active !== false,
-            })}
-          >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Lưu'}
-          </Button>
-          <Button size="icon" variant="outline" className="rounded-full text-destructive" onClick={onDelete} aria-label="Xoá nhân sự">
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </td>
-    </tr>
   );
 }

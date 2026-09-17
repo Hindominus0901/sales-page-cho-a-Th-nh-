@@ -19,7 +19,7 @@
  */
 import { json, apiError } from '../lib/respond.js';
 import { rateLimit, setCookie } from '../lib/http.js';
-import { validateEmail, validateName, validatePhone, clean } from '../lib/validate.js';
+import { validateEmail, validateName, validatePhone, clean, anhUrl } from '../lib/validate.js';
 import {
   hashPassword, verifyPassword, hashOtp, newOtpCode, randomToken, sha256Hex,
 } from '../lib/crypto.js';
@@ -472,12 +472,11 @@ export async function updateMe(rc) {
     // anh len xong bam Luu la nhan 422 "Duong dan anh khong hop le" - tuc la
     // chuc nang doi anh dai dien chua bao gio dung duoc bang duong tai len,
     // chi dan link ngoai moi luu duoc.
-    const okUrl = url === ''
-      || url.startsWith('/api/files/')
-      || url.startsWith('/files/')
-      || /^https:\/\/[\w.-]+\//.test(url);
-    if (!okUrl) return apiError(422, 'validation_failed', 'Đường dẫn ảnh không hợp lệ');
-    patch.avatar_url = url.slice(0, 500);
+    // Luat nay gio dung chung voi createPost va logActivity - xem anhUrl()
+    // trong worker/src/lib/validate.js.
+    const sach = anhUrl(url);
+    if (sach === null) return apiError(422, 'validation_failed', 'Đường dẫn ảnh không hợp lệ');
+    patch.avatar_url = sach;
   }
 
   if (!Object.keys(patch).length) return json(selfUser(rc.user));

@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 
 /**
- * O dan link anh - duong thay the khi KHO ANH DANG TAT.
+ * O dan link anh - duong VAO THU HAI cho moi cho co anh.
  *
  * Khi brand.json dat storage.r2 = false, may chu khong co binding UPLOADS nen
  * POST /api/files tra 503 kem cau "Ban dan link anh vao o ben canh". Truoc day
@@ -10,14 +10,21 @@ import { Input } from '@/components/ui/input';
  * Community va AdminVip chi co nut chon tep, khong co cho nao de dan link. Nguoi
  * dung lam theo huong dan roi khong tim thay thu duoc huong dan.
  *
- * Component nay la o do. No chi hien khi kho anh tat (xem useKhaNang), nen khi
- * nap khoa R2 thi nut tai len tu quay lai va o nay tu bien mat.
+ * O NAY HIEN CA KHI KHO ANH DANG BAT - do la co y, khong phai sot.
+ *
+ * Ban dau no chi hien khi R2 tat, va bat R2 len la no bien mat hoan toan. Nhung
+ * rat nhieu nguoi co san anh o Drive, Facebook hay mot trang khac; bat kho anh
+ * len ma cat mat duong dan link la LAY DI mot duong di dang chay tot, doi lai
+ * chang duoc gi. Hai duong nay khong loai tru nhau.
+ *
+ * `khoAnhTat` chi doi mot dong chu goi y ben duoi, khong doi hanh vi.
  */
 export default function ODanLinkAnh({
   value,
   onChange,
   nhan = 'Link ảnh',
   goiY = 'https://... (dán link ảnh từ Drive, Imgur, Facebook...)',
+  khoAnhTat = true,
 }) {
   return (
     <div className="w-full space-y-1.5">
@@ -31,7 +38,9 @@ export default function ODanLinkAnh({
         aria-label={nhan}
       />
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-        Tải ảnh trực tiếp đang tạm tắt — bạn dán link ảnh vào đây giúp nhé.
+        {khoAnhTat
+          ? 'Tải ảnh trực tiếp đang tạm tắt — bạn dán link ảnh vào đây giúp nhé.'
+          : 'Hoặc dán link ảnh có sẵn (Drive, Facebook...) vào đây.'}
       </p>
     </div>
   );

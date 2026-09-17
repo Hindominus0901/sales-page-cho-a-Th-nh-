@@ -11,8 +11,11 @@ import {
   parseWixMediaUrl,
 } from "./image-helpers"
 
-const FALLBACK_IMAGE_URL =
-  "https://static.wixstatic.com/media/12d367_4f26ccd17f8f4e3a8958306ea08c2332~mv2.png"
+// Truoc day day la mot duong dan toi CDN cua Wix - xem lib/anhGiuCho.js de biet
+// vi sao mot app tu host khong nen du phong bang tep cua ben thu ba.
+import { ANH_GIU_CHO } from "@/lib/anhGiuCho"
+
+const FALLBACK_IMAGE_URL = ANH_GIU_CHO
 
 const ImageWrapper = React.forwardRef(({ aspectRatio, className, style, children }, ref) => (
   <span

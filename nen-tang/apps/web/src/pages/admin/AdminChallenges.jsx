@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
+import ONhapVideo from '@/components/ONhapVideo';
 import {
   CellInput, CellSelect, ConfirmDialog, EmptyBlock, LoadingBlock, PageHeader, Panel, QueryState,
   StatusPill, errText, fmtDate, fmtNumber,
@@ -306,10 +307,11 @@ function DayTaskRow({ task, events = [], onSave, onDelete, pending }) {
         />
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <CellInput value={draft.video_title || ''} onChange={set('video_title')} placeholder="Tên video hướng dẫn" />
-          <CellInput
+          <ONhapVideo
             value={draft.video_url || ''}
             onChange={set('video_url')}
-            placeholder="Link video (Wistia: dán mã hoặc .../medias/MÃ)"
+            placeholder="Dán link video, hoặc mã video"
+            xemThu={false}
           />
           <CellInput value={draft.assignment_url || ''} onChange={set('assignment_url')} placeholder="Link bài tập" />
           <CellInput value={draft.doc_url || ''} onChange={set('doc_url')} placeholder="Link tài liệu" />
@@ -401,19 +403,15 @@ function ChallengeDialog({ value, onClose, onSubmit, pending }) {
               />
             </Field>
             <Field label="Link video giới thiệu">
-              <Input
+              {/* ONhapVideo tu bao khi link sai, khi ma tran dang bi doan nha
+                  cung cap, va khi gap link .../s/... cua Wistia - dung luc
+                  nguoi ta vua dan, thay vi mot doan chu co dinh doc truoc do
+                  chua thay lien quan gi. */}
+              <ONhapVideo
                 value={draft.hero_video_url || ''}
                 onChange={set('hero_video_url')}
-                className="rounded-xl"
-                placeholder="Wistia: dán mã video hoặc link .../medias/MÃ"
+                placeholder="Dán link video giới thiệu, hoặc mã video"
               />
-              {/* Link chia se dang .../s/... la mot ma an, khong suy ra duoc ma
-                  video, nen khong nhung vao trang duoc - bam vao chi nhay sang
-                  tab khac. Noi truoc con hon de nguoi ta dan roi ngoi doan. */}
-              <p className="mt-1 text-xs text-muted-foreground">
-                Link chia sẻ dạng <code>.../s/...</code> của Wistia không phát tại trang được —
-                lấy mã video hoặc link <code>.../medias/...</code>.
-              </p>
             </Field>
             <Field label="Huy hiệu trao khi hoàn thành">
               <select

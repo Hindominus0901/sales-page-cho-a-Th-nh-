@@ -20,10 +20,19 @@ export default function NutNhanAdmin({ className = '', full = false }) {
   const kenh = BRAND.channelLabel || 'Zalo';
 
   if (!BRAND.supportUrl) {
+    // Mot nut xam ghi "Lien he admin de mo khoa" la te nhat trong moi kha nang:
+    // no VUA khong bam duoc, VUA khong noi vi sao, lai vua bao nguoi ta di lam
+    // dung cai viec ma no khong cho lam. Noi thang ra la chua co kenh lien he.
     return (
-      <Button className={`rounded-full ${full ? 'w-full' : ''}`} variant="secondary" disabled>
-        Liên hệ admin để mở khoá
-      </Button>
+      <div className={`${full ? 'w-full' : ''} space-y-1`}>
+        <Button className={`rounded-full ${full ? 'w-full' : ''}`} variant="secondary" disabled>
+          Chưa có kênh liên hệ
+        </Button>
+        <p className="text-[11.5px] leading-snug text-muted-foreground">
+          Phần này cần admin mở khoá, nhưng {kenh} chưa được thiết lập. Nhắn trực tiếp cho
+          người phụ trách lớp giúp bạn nhé.
+        </p>
+      </div>
     );
   }
 

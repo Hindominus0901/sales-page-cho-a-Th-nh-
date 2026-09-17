@@ -90,7 +90,7 @@ function BadgeRow({ badge, pending, onSave, onDelete }) {
         >
           Lưu
         </Button>
-        <Button size="icon" variant="ghost" className="ml-1 h-8 w-8 text-muted-foreground" onClick={onDelete}>
+        <Button size="icon" variant="ghost" className="ml-1 h-8 w-8 text-muted-foreground" onClick={onDelete} aria-label={`Xoá huy hiệu ${f.name || ''}`} title="Xoá huy hiệu này">
           <Trash2 className="h-4 w-4" />
         </Button>
       </td>

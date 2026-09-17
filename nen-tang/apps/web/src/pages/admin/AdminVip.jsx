@@ -303,20 +303,22 @@ export default function AdminVip() {
               className="aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-muted bg-contain bg-center bg-no-repeat"
               style={draft?.image_url ? { backgroundImage: `url(${draft.image_url})` } : undefined}
             />
-            {khaNang.uploads ? (
+            {/* CA HAI duong, khong phai mot hoac mot. Xem ODanLinkAnh.jsx:
+                bat kho anh len khong phai ly do de cat mat duong dan link. */}
+            {khaNang.uploads && (
               <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-bold hover:bg-secondary">
                 {dangTaiAnh
                   ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   : <><ImagePlus className="h-3.5 w-3.5" /> Tải ảnh bìa</>}
                 <input type="file" accept="image/*" hidden onChange={chonAnh} disabled={dangTaiAnh} />
               </label>
-            ) : (
-              <ODanLinkAnh
-                value={draft?.image_url}
-                onChange={(v) => setDraft((d) => ({ ...d, image_url: v }))}
-                nhan="Link ảnh bìa"
-              />
             )}
+            <ODanLinkAnh
+              value={draft?.image_url}
+              onChange={(v) => setDraft((d) => ({ ...d, image_url: v }))}
+              nhan="Link ảnh bìa"
+              khoAnhTat={!khaNang.uploads}
+            />
           </div>
 
           <div className="space-y-3">

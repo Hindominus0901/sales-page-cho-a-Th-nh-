@@ -548,6 +548,7 @@ function AdjustDialog({ user, onClose, onSubmit, pending }) {
             <Label htmlFor="adjust-amount">Số điểm</Label>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="icon" className="rounded-xl"
+                aria-label="Giảm 10 điểm" title="Giảm 10"
                 onClick={() => setAmount(String((Number(amount) || 0) - 10))}>
                 <Minus className="h-4 w-4" />
               </Button>
@@ -560,6 +561,7 @@ function AdjustDialog({ user, onClose, onSubmit, pending }) {
                 className="rounded-xl text-center"
               />
               <Button type="button" variant="outline" size="icon" className="rounded-xl"
+                aria-label="Tăng 10 điểm" title="Tăng 10"
                 onClick={() => setAmount(String((Number(amount) || 0) + 10))}>
                 <Plus className="h-4 w-4" />
               </Button>
@@ -872,9 +874,19 @@ function ChiaNhom() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3">
         <div className="text-[13px]">
           <b>{fmtNumber(con)} học viên chưa có nhóm.</b>{' '}
-          Chia ngẫu nhiên và đều vào {soNhom || 0} nhóm — không nhóm nào lệch quá một người.
+          {/* Khong co nhom nao thi cau cu doc ra thanh "chia deu vao 0 nhom" -
+              mot cau vo nghia, va nut ben canh van bam duoc. */}
+          {soNhom > 0
+            ? `Chia ngẫu nhiên và đều vào ${soNhom} nhóm — không nhóm nào lệch quá một người.`
+            : 'Chưa có nhóm nào để chia. Tạo ít nhất một nhóm ở phần bên trên trước đã.'}
         </div>
-        <Button size="sm" className="rounded-full" disabled={chia.isPending} onClick={() => setHoi(true)}>
+        <Button
+          size="sm"
+          className="rounded-full"
+          disabled={chia.isPending || soNhom === 0}
+          title={soNhom === 0 ? 'Cần có ít nhất một nhóm trước khi chia.' : undefined}
+          onClick={() => setHoi(true)}
+        >
           {chia.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Chia nhóm ngẫu nhiên'}
         </Button>
       </div>

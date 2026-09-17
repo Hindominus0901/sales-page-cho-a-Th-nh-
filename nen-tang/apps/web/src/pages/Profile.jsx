@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { khiAnhHong } from "@/lib/anhGiuCho";
 import { streakDangSong } from "@/lib/streak";
 import MatPhien from '@/components/MatPhien';
 import { useOutletContext } from "react-router-dom";
@@ -75,8 +76,18 @@ export default function Profile() {
           <div className="flex-1 text-center sm:text-left">
             <div className="flex items-center gap-2 justify-center sm:justify-start">
               <h1 className="text-2xl font-bold">{user.full_name}</h1>
-              <button onClick={() => setEditing(!editing)} className="text-muted-foreground hover:text-primary">
-                <Pencil className="w-4 h-4" />
+              {/* Cay but nay la CACH DUY NHAT de hoc vien sua ho so cua minh.
+                  Khong nhan, khong aria-label thi no chi la mot hinh mo canh
+                  cai ten - nguoi doc man hinh khong doc duoc, va nguoi binh
+                  thuong cung phai doan. */}
+              <button
+                type="button"
+                onClick={() => setEditing(!editing)}
+                aria-label={editing ? 'Đóng phần sửa hồ sơ' : 'Sửa hồ sơ'}
+                title={editing ? 'Đóng' : 'Sửa hồ sơ'}
+                className="flex items-center gap-1 text-[12.5px] font-semibold text-muted-foreground hover:text-primary"
+              >
+                <Pencil className="w-3.5 h-3.5" /> {editing ? 'Đóng' : 'Sửa'}
               </button>
             </div>
             <div className="text-sm text-primary font-medium mt-1">{level.icon} Level {level.levelNumber} · {level.name}</div>
@@ -102,12 +113,14 @@ export default function Profile() {
               <div className="flex items-center gap-3">
                 <div className="w-16 h-16 rounded-full overflow-hidden border border-border bg-accent flex items-center justify-center shrink-0">
                   {form.avatar_url ? (
-                    <img src={form.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                    <img src={form.avatar_url} alt="avatar" onError={khiAnhHong} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-lg font-semibold text-muted-foreground">{getInitials(form.full_name || "?")}</span>
                   )}
                 </div>
-                {khaNang.uploads ? (
+                {/* CA HAI duong - xem ODanLinkAnh.jsx. O dan link nam duoi,
+                    ngoai khoi nay, nen no hien du kho anh bat hay tat. */}
+                {khaNang.uploads && (
                   <>
                   <input
                     ref={fileInputRef}
@@ -155,14 +168,14 @@ export default function Profile() {
                     </Button>
                   )}
                   </>
-                ) : (
-                  <ODanLinkAnh
-                    value={form.avatar_url}
-                    onChange={(v) => setForm((f) => ({ ...f, avatar_url: v }))}
-                    nhan="Link ảnh đại diện"
-                  />
                 )}
               </div>
+              <ODanLinkAnh
+                value={form.avatar_url}
+                onChange={(v) => setForm((f) => ({ ...f, avatar_url: v }))}
+                nhan="Link ảnh đại diện"
+                khoAnhTat={!khaNang.uploads}
+              />
               {khaNang.uploads && (
                 <p className="text-xs text-muted-foreground mt-1">JPG, PNG — tối đa 5MB</p>
               )}

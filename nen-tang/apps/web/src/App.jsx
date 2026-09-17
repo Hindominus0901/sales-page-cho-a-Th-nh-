@@ -44,7 +44,6 @@ import AdminProducts from '@/pages/admin/AdminProducts';
 import AdminVip from '@/pages/admin/AdminVip';
 import Staff from '@/pages/admin/Staff';
 import Mechanics from '@/pages/admin/Mechanics';
-import PortalBuilder from '@/pages/admin/PortalBuilder';
 import Email from '@/pages/admin/Email';
 import AdminEvents from '@/pages/admin/AdminEvents';
 import AdminBadges from '@/pages/admin/AdminBadges';
@@ -106,7 +105,16 @@ function App() {
                   <Route path="logs" element={<AdminLogs />} />
                   <Route path="staff" element={<Staff />} />
                   <Route path="mechanics" element={<Mechanics />} />
-                  <Route path="portal" element={<PortalBuilder />} />
+                  {/* "Tuy chinh Portal" da bo khoi menu tu truoc, nhung route
+                      van song nen mo bang URL hay bookmark cu la vao duoc - va
+                      moi cau chu tren trang do deu khong dung: "thay doi ap dung
+                      cho tat ca hoc vien", "Phan nay bien mat khoi app hoc vien",
+                      toast "Da luu". Khong mot trang hoc vien nao doc entity
+                      PortalSection, nen bam Luu o do khong doi mot pixel nao.
+                      An khoi menu ma de cua sau mo la van con nguyen cai bay,
+                      chi kho gap hon. Khi nao noi that vao app hoc vien thi bo
+                      dong Navigate nay di. */}
+                  <Route path="portal" element={<Navigate to="/admin" replace />} />
                   <Route path="email" element={<Email />} />
                   <Route path="events" element={<AdminEvents />} />
                   {/* Hai trang cu da gop vao "Co che" - giu duong dan de link cu khong gay 404. */}

@@ -1,4 +1,5 @@
 import React from "react";
+import { khiAnhHong } from "@/lib/anhGiuCho";
 import { cn } from "@/lib/utils";
 import { getInitials, avatarColors } from "@/lib/gamification";
 
@@ -29,7 +30,7 @@ export default function Avatar({ user, size = 40, ring, ringColor, showLevel, le
         style={ring ? { "--tw-ring-color": ringColor || "hsl(var(--primary))" } : {}}
       >
         {url ? (
-          <img src={url} alt={name} className="w-full h-full object-cover" />
+          <img src={url} alt={name} onError={khiAnhHong} className="w-full h-full object-cover" />
         ) : (
           <span style={{ backgroundColor: avatarColors(name) }} className="w-full h-full flex items-center justify-center">
             {getInitials(name)}

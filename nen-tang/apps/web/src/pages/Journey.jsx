@@ -11,16 +11,18 @@ import Heatmap from "@/components/Heatmap";
 import Avatar from "@/components/Avatar";
 import PageHeader from "@/components/PageHeader";
 import { Loading } from "@/components/EmptyState";
+import { ErrorBlock } from "@/components/QueryState";
 import { cn } from "@/lib/utils";
 
 export default function Journey() {
   const me = useMe();
 
-  const { data: board } = useQuery({
+  const bangXep = useQuery({
     queryKey: ["leaderboard", "all_time", "xp", 200],
     queryFn: () => base44.functions.invoke("getLeaderboard", { period: "all_time", metric: "xp", limit: 200 }),
     refetchInterval: 60_000,
   });
+  const board = bangXep.data;
 
   const { data: xpTx = [], isLoading: loadingHeat } = useQuery({
     queryKey: ["xp-transactions", me?.id],
@@ -58,12 +60,16 @@ export default function Journey() {
   // So hang doi lien tuc, nen so sanh voi lan doc truoc de biet len hay xuong.
   const myPosition = board?.me?.position ?? null;
   const prevPosition = useRef(null);
-  const [delta, setDelta] = useState(0);
+  // `null` = CHUA CO GI DE SO SANH, khac han voi 0 = "da so sanh va khong doi".
+  //
+  // Truoc day o day la useState(0), va `prevPosition` thi luon null o lan render
+  // dau. Nen moi lan tai trang, truoc khi co bat ky lan doc thu hai nao, o nay
+  // deu khang dinh "— Khong doi" - mot cau noi ve mot phep so sanh chua he xay
+  // ra. Hang co the vua tut 20 bac va no van ghi "Khong doi".
+  const [delta, setDelta] = useState(null);
   useEffect(() => {
     if (myPosition == null) return;
-    if (prevPosition.current != null && prevPosition.current !== myPosition) {
-      setDelta(myPosition - prevPosition.current);
-    }
+    if (prevPosition.current != null) setDelta(myPosition - prevPosition.current);
     prevPosition.current = myPosition;
   }, [myPosition]);
 
@@ -93,13 +99,20 @@ export default function Journey() {
   const currentDay = activeMembership ? ngayThuThach(challenge) : 0;
   const approvedDays = new Set(submissions.filter((s) => s.status === "approved").map((s) => s.day));
 
-  const deltaLabel = delta < 0
-    ? `▲ Tăng ${-delta} hạng`
-    : delta > 0 ? `▼ Giảm ${delta} hạng` : "— Không đổi";
+  // Chua co moc so sanh thi KHONG noi gi ca, thay vi noi mot cau nghe nhu su that.
+  const deltaLabel = delta == null
+    ? ""
+    : delta < 0 ? `▲ Tăng ${-delta} hạng`
+      : delta > 0 ? `▼ Giảm ${delta} hạng` : "— Không đổi";
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader title="Hành trình của tôi" subtitle="Nhìn lại sự tiến bộ của bạn qua từng tuần." />
+
+      {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. Truoc day
+          day la trang hoc vien duy nhat khong doc isError, nen mot loi may chu
+          hien ra thanh mot bang toan so 0: nguoi dung tuong minh chua lam gi. */}
+      {bangXep.isError && <ErrorBlock error={bangXep.error} onRetry={bangXep.refetch} />}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {totals.map((t) => (
@@ -127,12 +140,14 @@ export default function Journey() {
             {myPosition ? `Hạng #${myPosition}` : "Chưa có hạng"}
             <span className="text-xs text-muted-foreground font-normal ml-1.5">/ toàn hệ thống</span>
           </div>
-          <div className={cn(
-            "text-xs font-bold",
-            delta < 0 ? "text-emerald-600" : delta > 0 ? "text-destructive" : "text-muted-foreground",
-          )}>
-            {deltaLabel}
-          </div>
+          {deltaLabel && (
+            <div className={cn(
+              "text-xs font-bold",
+              delta < 0 ? "text-emerald-600" : delta > 0 ? "text-destructive" : "text-muted-foreground",
+            )}>
+              {deltaLabel}
+            </div>
+          )}
         </div>
 
         {top5.length === 0 ? (

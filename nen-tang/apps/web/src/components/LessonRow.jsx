@@ -28,7 +28,19 @@ export default function LessonRow({ lesson, completed, onOpen }) {
       )}
     >
       <div className="relative aspect-video overflow-hidden rounded-xl bg-neutral-900">
-        {thumb && <img src={thumb} alt="" className="absolute inset-0 h-full w-full object-cover opacity-80" />}
+        {/* Anh thu nho doan tu ma video nen KHONG chac co that: Wistia co the
+            chua sinh xong swatch, video YouTube co the da bi xoa. Hong thi go
+            han the <img> di, de lo lop nen den voi nut Play ben duoi - dep hon
+            han mot bieu tuong anh vo dat giua khung. */}
+        {thumb && (
+          <img
+            src={thumb}
+            alt=""
+            loading="lazy"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            className="absolute inset-0 h-full w-full object-cover opacity-80"
+          />
+        )}
         <span className="absolute inset-0 flex items-center justify-center text-white">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur transition group-hover:scale-110 group-hover:bg-white/30 sm:h-12 sm:w-12">
             <Play className="h-4 w-4 fill-current sm:h-5 sm:w-5" />

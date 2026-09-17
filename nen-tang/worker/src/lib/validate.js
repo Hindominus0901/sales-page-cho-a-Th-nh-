@@ -63,3 +63,31 @@ export function validatePhone(raw, countryCode = '+84') {
 export const bankSafe = (value, max = 50) =>
   stripDiacritics(value).toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
     .slice(0, max);
+
+/**
+ * Duong dan mot buc anh: tep da tai len he thong nay, hoac anh https ben ngoai.
+ *
+ * Tra ve chuoi da cat 500 ky tu neu hop le, hoac `null` neu khong.
+ *
+ * VI SAO DUNG CHUNG MOT CHO
+ *
+ * Luat nay tung chi ton tai trong PATCH /api/auth/me (avatar_url), con hai duong
+ * ghi anh khac thi nhan bat ky chuoi nao:
+ *   - createPost  -> posts.image_url
+ *   - logActivity -> activities.screenshot_url
+ * Nen `data:` va `blob:` luu duoc vao database that. Chung khong chay ma doc
+ * duoc (CSP chan o luc hien), nhung chung HONG THAM LANG: nguoi dung dan vao,
+ * thay luu thanh cong, roi anh khong bao gio hien voi bat ky ai khac - ke ca
+ * chinh ho sau khi tai lai trang. Mot cai loi luc dan con hon mot buc anh ma.
+ *
+ * Chan `javascript:` la ly do bao mat; chan `http://` la vi trinh duyet chan noi
+ * dung hon hop nen anh do chac chan khong hien.
+ */
+export function anhUrl(raw) {
+  const url = String(raw ?? '').trim();
+  if (url === '') return '';
+  const ok = url.startsWith('/api/files/')
+    || url.startsWith('/files/')
+    || /^https:\/\/[\w.-]+\//.test(url);
+  return ok ? url.slice(0, 500) : null;
+}

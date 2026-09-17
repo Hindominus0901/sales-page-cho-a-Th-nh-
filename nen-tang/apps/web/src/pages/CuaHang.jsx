@@ -289,7 +289,7 @@ export default function CuaHang() {
     <div className="space-y-5">
       <PageHeader
         title="Cửa hàng"
-        subtitle="Khoá học và gói nâng cấp — chuyển khoản ngay tại đây, quyền mở tự động."
+        subtitle="Khoá học và gói nâng cấp — chuyển khoản ngay tại đây."
       />
 
       {/* Loi tai trang phai KHAC trang thai rong - xem QueryState.jsx. */}

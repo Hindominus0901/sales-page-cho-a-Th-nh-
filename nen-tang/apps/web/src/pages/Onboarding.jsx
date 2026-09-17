@@ -75,29 +75,45 @@ export default function Onboarding() {
         <div className="space-y-5 rounded-2xl border border-border bg-card p-6">
           {/* ---------------------------------------------------------- anh */}
           <div className="flex flex-col items-center gap-3">
-            <button
-              type="button"
-              onClick={() => oFile.current?.click()}
-              className="relative rounded-full transition-transform hover:scale-105"
-              aria-label="Chọn ảnh đại diện"
-            >
-              <Avatar user={{ full_name: ten || '?', avatar_url: anh }} size={104} ring />
-              <span className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full border-2 border-card bg-primary text-primary-foreground">
-                {dangTai ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-              </span>
-            </button>
+            {/* Nut may anh chi hien khi kho anh THAT SU dang bat.
+             *
+             * Truoc day o dan link hien ra dung, nhung ca nut nay lan the
+             * <input type="file"> ben duoi van render vo dieu kien - nen nguoi
+             * dung bam vao anh (dong tac tu nhien nhat o man hinh nay) la an
+             * mot cu 503, ngay ben canh mot o dan link dang hoat dong. Hai thu
+             * phai tat bat cung nhau. */}
             {khaNang.uploads ? (
+              <button
+                type="button"
+                onClick={() => oFile.current?.click()}
+                className="relative rounded-full transition-transform hover:scale-105"
+                aria-label="Chọn ảnh đại diện"
+              >
+                <Avatar user={{ full_name: ten || '?', avatar_url: anh }} size={104} ring />
+                <span className="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full border-2 border-card bg-primary text-primary-foreground">
+                  {dangTai ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                </span>
+              </button>
+            ) : (
+              <Avatar user={{ full_name: ten || '?', avatar_url: anh }} size={104} ring />
+            )}
+            {khaNang.uploads && (
               <p className="text-xs text-muted-foreground">
                 {anh ? 'Bấm vào ảnh để đổi' : 'Bấm để chọn ảnh đại diện'}
               </p>
-            ) : (
-              <ODanLinkAnh value={anh} onChange={setAnh} nhan="Link ảnh đại diện" />
             )}
+            <ODanLinkAnh
+              value={anh}
+              onChange={setAnh}
+              nhan="Link ảnh đại diện"
+              khoAnhTat={!khaNang.uploads}
+            />
             <input
               ref={oFile}
               type="file"
               accept="image/*"
               className="hidden"
+              disabled={!khaNang.uploads}
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;

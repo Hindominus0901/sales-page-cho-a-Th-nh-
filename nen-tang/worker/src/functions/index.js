@@ -17,7 +17,7 @@ import {
 import { traoHuyHieu, raSoatHuyHieu } from '../points/badges.js';
 import { rateLimit } from '../lib/http.js';
 import { affiliateOfUser } from '../routes/affiliate.js';
-import { clean, validateEmail, validatePhone } from '../lib/validate.js';
+import { clean, validateEmail, validatePhone, anhUrl } from '../lib/validate.js';
 import { scoreWithAi } from './ai.js';
 import { guiLaiThuMoi } from '../auth/invite.js';
 import { readSettings } from '../settings.js';
@@ -73,6 +73,19 @@ async function logActivity(rc, svc) {
       'Bạn gửi kèm bằng chứng nhé — một đường link, hoặc một ảnh chụp màn hình.');
   }
 
+  // Rieng ANH thi siet hon `checkUrls` cua repo.js mot bac: phai la https hoac
+  // tep cua chinh he thong.
+  //
+  // `checkUrls` cho ca http:// - dung cho `evidence_link` (mot duong dan de bam,
+  // http van mo duoc), nhung SAI cho mot buc anh: CSP chi cho img-src https,
+  // nen anh http luu thanh cong, bao thanh cong, roi khong bao gio hien ra voi
+  // bat ky ai. Bao ngay luc dan con hon de nguoi ta tuong da nop xong.
+  const anhSach = anhUrl(shot);
+  if (anhSach === null) {
+    return apiError(422, 'anh_khong_hop_le',
+      'Link ảnh cần bắt đầu bằng https:// — bạn kiểm tra lại giúp nhé.');
+  }
+
   const day = /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : today();
 
   // Tran theo ngay cua loai hoat dong: vuot thi VAN GHI NHAN nhung khong tinh
@@ -93,7 +106,7 @@ async function logActivity(rc, svc) {
     title: clean(title, 200),
     description: clean(description, 4000),
     evidence_link: clean(link, 500),
-    screenshot_url: clean(shot, 500),
+    screenshot_url: anhSach,
     status: 'pending',
     counted_for_cap: withinCap,
     created_by: rc.user.email,
@@ -813,6 +826,14 @@ async function createPost(rc, svc) {
   const text = clean(rc.body?.body, 8000);
   if (!text) return apiError(400, 'missing', 'Bài viết đang trống');
 
+  // Cung ly do voi screenshot_url trong logActivity: anh http:// bi CSP chan
+  // luc hien, nen phai bao ngay chu khong luu im lang.
+  const anhBai = anhUrl(rc.body?.image_url);
+  if (anhBai === null) {
+    return apiError(422, 'anh_khong_hop_le',
+      'Link ảnh cần bắt đầu bằng https:// — bạn kiểm tra lại giúp nhé.');
+  }
+
   const limit = await rateLimit(rc, `post:${rc.user.id}`, 20, 60 * 60 * 1000);
   if (!limit.allowed) return apiError(429, 'rate_limited', 'Bạn đăng hơi nhanh, nghỉ chút nhé.');
 
@@ -820,7 +841,7 @@ async function createPost(rc, svc) {
     user_id: rc.user.id,
     user_name: rc.user.full_name,
     body: text,
-    image_url: clean(rc.body?.image_url, 500),
+    image_url: anhBai,
   });
   await awardPoints(rc, {
     user_id: rc.user.id, event_key: 'post_created', source_id: post.id,
