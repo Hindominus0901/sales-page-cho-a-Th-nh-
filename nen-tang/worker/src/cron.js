@@ -22,18 +22,22 @@ import { renderMail } from './mail/templates.js';
 import { reconcile } from './points/award.js';
 import { traoThuongTheoLuot } from './commerce/thuong-gioi-thieu.js';
 
+import { ngayDiaPhuong as ngayCuaMoi } from './lib/ngay.js';
+
 const nowIso = () => new Date().toISOString();
 const newId = () => crypto.randomUUID();
 
 /**
- * Ngay theo gio dia phuong cua thuong hieu chu khong phai UTC - cron chay luc
- * 01:00 gio Viet Nam. Do lech lay tu TZ_OFFSET_MINUTES (brand/brand.json),
- * mac dinh 420 phut = UTC+7.
+ * Ngay theo gio dia phuong - cron chay luc 01:00 gio Viet Nam.
+ *
+ * Ban cu la mot ban SAO cua cong thuc nay nam ngay tai day. Cong thuc thi
+ * dung, nhung no la ban sao thu ba trong he thong, va hai ban kia (award.js,
+ * functions/index.js) lai cat theo UTC - nen cron nhac chuoi ngay theo lich
+ * Viet Nam trong khi chuoi ngay duoc GHI theo lich UTC. Gio ca ba doc chung
+ * mot ham trong lib/ngay.js.
  */
-function ngayDiaPhuong(lechPhut, lechNgay = 0) {
-  const d = new Date(Date.now() + lechPhut * 60 * 1000 + lechNgay * 86400 * 1000);
-  return d.toISOString().slice(0, 10);
-}
+const ngayDiaPhuong = (lechPhut, lechNgay = 0) =>
+  ngayCuaMoi({ TZ_OFFSET_MINUTES: lechPhut }, lechNgay);
 
 /**
  * Nhac nhung nguoi SAP dut chuoi ngay: hoat dong gan nhat la hom qua, hom nay

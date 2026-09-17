@@ -21,10 +21,10 @@ import { clean, validateEmail, validatePhone, anhUrl } from '../lib/validate.js'
 import { scoreWithAi } from './ai.js';
 import { guiLaiThuMoi } from '../auth/invite.js';
 import { readSettings } from '../settings.js';
+import { ngayDiaPhuong, moDauNgayDiaPhuong } from '../lib/ngay.js';
 
 const nowIso = () => new Date().toISOString();
 const newId = () => crypto.randomUUID();
-const today = () => nowIso().slice(0, 10);
 
 const isAdmin = (rc) => rc.user?.role === 'admin';
 const isStaff = (rc) => rc.user?.role === 'admin' || rc.user?.role === 'coach';
@@ -86,7 +86,9 @@ async function logActivity(rc, svc) {
       'Link ảnh cần bắt đầu bằng https:// — bạn kiểm tra lại giúp nhé.');
   }
 
-  const day = /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : today();
+  // Ngay Viet Nam - phai khop voi moc ma awardPoints dung de dem tran/ngay,
+  // neu khong thi tu 00:00 den 07:00 hai ben tinh hai ngay khac nhau.
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : ngayDiaPhuong(rc.env);
 
   // Tran theo ngay cua loai hoat dong: vuot thi VAN GHI NHAN nhung khong tinh
   // diem - de nguoi hoc thay minh da lam, chi khong duoc cong them.
@@ -1998,7 +2000,10 @@ async function getLeaderboard(rc) {
 
   const since = () => {
     const d = new Date();
-    if (period === 'today') return `${d.toISOString().slice(0, 10)}T00:00:00.000Z`;
+    // "Hom nay" phai la ngay VIET NAM. Cat theo UTC thi tu 00:00 den 07:00 sang,
+    // bang "Hom nay" hien diem cua HOM QUA - va ai vua ghi diem luc 1 gio sang
+    // mo ra khong thay minh dau ca.
+    if (period === 'today') return moDauNgayDiaPhuong(rc.env);
     if (period === 'week') d.setDate(d.getDate() - 7);
     else if (period === 'month') d.setDate(d.getDate() - 30);
     else return null;

@@ -13,9 +13,10 @@
  * Luat nam trong DATABASE chu khong phai trong ma nguon, nen doi so la doi ngay,
  * khong can deploy lai.
  */
+import { ngayDiaPhuong, khoangNgayDiaPhuong } from '../lib/ngay.js';
+
 const nowIso = () => new Date().toISOString();
 const newId = () => crypto.randomUUID();
-const today = () => nowIso().slice(0, 10);
 
 /** Cac moc thuong them khi giu chuoi ngay. */
 const STREAK_BONUS_DAYS = new Set([7, 30, 100]);
@@ -63,12 +64,23 @@ export async function awardPoints(rc, opts) {
     [userId, eventKey, sourceId]);
   if (existing) return { awarded: false, reason: 'da cong roi', xp: 0, coin: 0 };
 
-  // Tran theo ngay
+  // Tran theo ngay - NGAY VIET NAM, khong phai ngay UTC.
+  //
+  // `substr(awarded_at,1,10)` la cat ngay theo UTC, ma UTC+7 nghia la moc do
+  // roi vao 07:00 sang gio Viet Nam. Mot muc dat daily_cap = 1 an duoc HAI lan
+  // trong khoang 00:00-07:00: mot lan tinh vao "ngay hom qua" theo UTC, mot lan
+  // vao ngay moi. Do khe ho nay rong 7 tieng moi dem, va no mo dung luc nhieu
+  // nguoi lam bai nhat.
+  //
+  // So sanh khoang [tu, den) bang chuoi ISO thay vi goi datetime() cua SQLite:
+  // cot luu dang 'YYYY-MM-DDTHH:MM:SS.sssZ' ma SQLite khong doc chac chan duoc
+  // chu 'Z', con so sanh chuoi thi luon dung va con dung duoc chi muc.
   if (rule.daily_cap) {
+    const [tuLuc, denLuc] = khoangNgayDiaPhuong(rc.env);
     const row = await store.get(
       `SELECT COUNT(*) AS n FROM point_awards
-       WHERE user_id = ? AND event_key = ? AND substr(awarded_at,1,10) = ?`,
-      [userId, eventKey, today()]);
+       WHERE user_id = ? AND event_key = ? AND awarded_at >= ? AND awarded_at < ?`,
+      [userId, eventKey, tuLuc, denLuc]);
     if (Number(row?.n || 0) >= rule.daily_cap) {
       return { awarded: false, reason: 'da het luot trong ngay', xp: 0, coin: 0 };
     }
@@ -240,7 +252,11 @@ export async function touchStreak(rc, userId, dateStr) {
     'SELECT current_streak, longest_streak, last_activity_date FROM users WHERE id = ?', [userId]);
   if (!user) return null;
 
-  const day = dateStr || today();
+  // Ngay Viet Nam: ai lam bai luc 1-2 gio sang truoc day bi ghi vao ngay HOM
+  // TRUOC (theo UTC), nen chuoi ngay dut oan, va cron nhac chuoi (cron.js da
+  // cat dung theo gio Viet Nam tu lau) gui email "ban sap mat chuoi" cho nguoi
+  // vua lam bai xong.
+  const day = dateStr || ngayDiaPhuong(rc.env);
   if (user.last_activity_date === day) return { streak: user.current_streak, changed: false };
 
   const yesterday = new Date(`${day}T00:00:00Z`);

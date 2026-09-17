@@ -22,11 +22,14 @@ import { openSync, closeSync } from 'node:fs';
 
 const CONG = 8787;
 const GOC = `http://127.0.0.1:${CONG}`;
-// tests/video.mjs chay DAU TIEN va co y: no la bo duy nhat khong can may chu,
-// nen no cho ket qua trong mot phan giay. Ba bo sau phai cho wrangler dev khoi
-// dong (co khi 30 giay). Mot loi cu phap trong lib/video.js thi bat duoc ngay
-// thay vi sau nua phut cho mot thu khong lien quan.
-const BO_TEST = ['tests/video.mjs', 'tests/smoke.mjs', 'tests/auth.mjs', 'tests/platform.mjs'];
+// video.mjs va ngay.mjs chay DAU TIEN va co y: hai bo do khong can may chu nen
+// chung cho ket qua trong mot phan giay. Ba bo sau phai cho wrangler dev khoi
+// dong (co khi 30 giay). Mot loi cu phap trong lib/video.js hay lib/ngay.js thi
+// bat duoc ngay thay vi sau nua phut cho mot thu khong lien quan.
+const BO_TEST = [
+  'tests/video.mjs', 'tests/ngay.mjs',
+  'tests/smoke.mjs', 'tests/auth.mjs', 'tests/platform.mjs',
+];
 const CHO_KHOI_DONG_MS = 120_000;
 
 const nghi = (ms) => new Promise((r) => { setTimeout(r, ms); });
