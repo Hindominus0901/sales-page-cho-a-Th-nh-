@@ -946,7 +946,32 @@ async function redeemReward(rc, svc) {
   // "Mo khoa bang loi moi, khong phai bang tien" - dung cau tren trang ban hang.
   // Dem o day chu khong tin vao mot cot da luu san: so luot co the tut xuong khi
   // admin huy mot luot dang ngo, va luc do mon qua phai khoa lai theo.
+  // MOT NGUOI MOT LAN voi qua MOC.
+  //
+  // Qua "moc" la qua khong mua bang xu: mo bang loi moi (min_referrals > 0),
+  // hoac coin_cost = 0. Truoc day khong co gioi han nao ca - khong
+  // UNIQUE(user_id, reward_id) trong migration, va ham nay khong kiem gi. Nen
+  // mot mon qua coin_cost = 0, min_referrals = 2 (dung mau ve Premium tren
+  // trang ban hang) co the bam "Doi" bao nhieu lan cung duoc: moi lan mot don
+  // moi, 0 xu, va tru mot don vi kho - rut sach kho cua nguoi khac.
+  //
+  // Duong TRAO TU DONG (commerce/thuong-gioi-thieu.js:70-73) da chan trung
+  // bang dung cau truy van nay tu lau. Hai duong cung cap mot mon qua ma mot
+  // duong chan mot duong khong la mau thuan, khong phai tinh nang.
+  //
+  // Qua MUA BANG XU thi van doi nhieu lan duoc - do la chuyen binh thuong.
   const canMoi = Number(reward.min_referrals) || 0;
+  const laQuaMoc = canMoi > 0 || Number(reward.coin_cost || 0) === 0;
+  if (laQuaMoc) {
+    const daDoi = await rc.store.get(
+      'SELECT id FROM redemptions WHERE user_id = ? AND reward_id = ? LIMIT 1',
+      [rc.user.id, reward.id]);
+    if (daDoi) {
+      return apiError(409, 'da_doi_roi',
+        'Phần thưởng này mỗi người chỉ nhận một lần. Xem lại trong mục Quà của tôi nhé.');
+    }
+  }
+
   if (canMoi > 0) {
     const cua = await affiliateOfUser(rc, rc.user);
     const daMoi = cua ? await rc.affiliates.validReferralCount(cua.id) : 0;
@@ -976,6 +1001,39 @@ async function redeemReward(rc, svc) {
   //
   // Chep link sang chinh don doi qua thay vi doc nguoc ve bang `rewards`: doi
   // link cua mon qua sau nay khong duoc lam thay doi thu nguoi ta da nhan.
+  // TRU KHO NGUYEN TU, va lam TRUOC khi tao don.
+  //
+  // Ban cu doc `reward.quantity` o dau ham roi tru bang MAX(0, quantity - 1) o
+  // day - hai viec cach nhau mot loi goi spendCoin. Hai nguoi bam cung luc voi
+  // quantity = 1 thi ca hai deu qua duoc cua kiem o dau, ca hai deu tru xu
+  // thanh cong (spendCoin chi bao ve so du cua TUNG nguoi, khong bao ve kho),
+  // ca hai deu nhan don - va MAX(0, ...) am tham kep 1 -> 0 -> 0. Hai nguoi
+  // duoc hua cung mot mon hang cuoi cung.
+  //
+  // Dieu kien `quantity > 0` ngay trong cau UPDATE moi la thu chan that. Doc
+  // so dong bi doi de biet minh co gianh duoc hay khong.
+  //
+  // CHU Y HINH DANG TRA VE: `store.run()` (worker/src/db.js:62) tra ve MOT
+  // OBJECT PHANG `{ changes, lastId }` - da boc `meta` san. spendCoin trong
+  // points/award.js doc `ketQua?.[1]?.meta?.changes` vi no chay `store.batch()`,
+  // la mot hinh dang KHAC. Chep nham `?.meta?.changes` sang day thi bieu thuc
+  // luon `undefined` -> guard luon dinh -> MOI luot doi qua deu bao het hang va
+  // hoan xu. Lam hong im lang, khong nem loi.
+  const gianhKho = await rc.store.run(
+    'UPDATE rewards SET quantity = quantity - 1, updated_date = ? WHERE id = ? AND quantity > 0',
+    [nowIso(), reward.id]);
+  if (!Number(gianhKho?.changes ?? 0)) {
+    // Da tru xu roi moi biet het hang -> phai tra lai, khong duoc giu.
+    await refundCoin(rc, {
+      user_id: rc.user.id,
+      amount: reward.coin_cost,
+      source_id: reward.id,
+      description: `Hoàn xu: "${reward.name}" vừa hết hàng`,
+    });
+    return apiError(409, 'out_of_stock',
+      'Rất tiếc, phần thưởng vừa hết trong lúc bạn bấm. Xu đã được hoàn lại.');
+  }
+
   const coLink = !!reward.delivery_url;
   const redemption = await svc.Redemption.create({
     user_id: rc.user.id, user_name: rc.user.full_name,
@@ -985,8 +1043,6 @@ async function redeemReward(rc, svc) {
     delivery_url: reward.delivery_url || null,
     note: coLink ? clean(reward.delivery_note, 300) : '',
   });
-  await rc.store.run('UPDATE rewards SET quantity = MAX(0, quantity - 1), updated_date = ? WHERE id = ?',
-    [nowIso(), reward.id]);
   await notify(svc, rc.user.id,
     coLink ? `🎁 Quà "${reward.name}" đã mở` : '🎁 Đã ghi nhận yêu cầu đổi quà',
     coLink
@@ -1020,7 +1076,22 @@ async function updateRedemption(rc, svc) {
       `Yêu cầu đổi "${redemption.reward_name}" bị huỷ, ${redemption.coin_spent} xu đã hoàn lại.`, 'reward');
   }
 
-  await svc.Redemption.update(id, { status, note: clean(rc.body?.note, 300) });
+  // HUY THI THU LAI LINK QUA.
+  //
+  // `Redemption` giu mot ban sao `delivery_url` cua rieng no (co y - doi link
+  // mon qua sau nay khong duoc lam thay doi thu nguoi ta da nhan). Nhung entity
+  // nay KHONG co gatedFields, nen trang Qua cua toi doc thang cot do va ve nut
+  // "Mo qua" mien la no khac rong - bat ke trang thai.
+  //
+  // Nen truoc day: hoc vien doi qua -> nhan link -> admin huy -> xu duoc hoan,
+  // kho duoc tra, va dong do van hien "da huy, xu da hoan lai" NGAY CANH mot
+  // nut "Mo qua" con bam duoc. Vua lay qua vua lay lai xu, khong can lam gi ca.
+  //
+  // Xoa link la dung nghia "huy": thu hoi cai da trao. Con `note` giu lai de
+  // nguoi dung doc duoc ly do.
+  const capNhat = { status, note: clean(rc.body?.note, 300) };
+  if (status === 'cancelled') capNhat.delivery_url = null;
+  await svc.Redemption.update(id, capNhat);
   await svc.AdminLog.create({
     admin_id: rc.user.id, admin_name: rc.user.full_name,
     target_user_id: redemption.user_id, target_user_name: redemption.user_name,

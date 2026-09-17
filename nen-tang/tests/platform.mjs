@@ -426,12 +426,17 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
 
   // ------------------------------------------------------------------- doi qua
   console.log('\n8. Doi qua');
-  await admin.call('POST', '/api/entities/Reward', {
+  // DUNG ID TRA VE TU LENH TAO, dung tim theo TEN.
+  //
+  // Ban cu lam `rewards.data.find(r => r.name === 'Qua thu nghiem')`. Ten thi
+  // lap lai qua moi lan chay, ma buoc don dep khong xoa bang rewards, nen
+  // `find` co the voo phai mot dong CU da het hang tu lan truoc - va bai test
+  // do vi mot ly do khong lien quan gi toi thu no dang kiem.
+  const taoQua = await admin.call('POST', '/api/entities/Reward', {
     name: 'Quà thử nghiệm', coin_cost: 20, quantity: 1, min_level: 1, is_active: true,
   });
-  const rewards = await alice.call('GET', '/api/entities/Reward');
-  const reward = rewards.data.find((r) => r.name === 'Quà thử nghiệm');
-  check('admin tao duoc phan thuong', !!reward, rewards.data?.length);
+  const reward = taoQua.data;
+  check('admin tao duoc phan thuong', taoQua.status === 201 && !!reward?.id, taoQua.data);
 
   const poor = await alice.call('POST', '/api/functions/redeemReward', { reward_id: reward.id });
   check('khong du xu -> tu choi va noi ro con thieu bao nhieu',
@@ -458,6 +463,60 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const refunded = await bob.call('GET', '/api/auth/me');
   check('huy thi HOAN LAI xu',
     refunded.data.total_coin === levelUpCoin.data.total_coin, refunded.data.total_coin);
+
+  // HUY THI PHAI THU LAI LINK QUA.
+  // `Redemption` giu ban sao delivery_url cua rieng no va KHONG co gatedFields,
+  // nen trang "Qua cua toi" ve nut "Mo qua" mien la cot do khac rong - bat ke
+  // trang thai. Truoc day: doi qua -> nhan link -> admin huy -> xu hoan, kho
+  // hoan, ma nut "Mo qua" van bam duoc. Vua giu qua vua lay lai xu.
+  const donDaHuy = sql(`SELECT status, delivery_url FROM redemptions WHERE id='${rich.data.redemption.id}'`);
+  check('huy roi thi KHONG con link qua de bam',
+    donDaHuy[0]?.status === 'cancelled' && !donDaHuy[0]?.delivery_url, donDaHuy[0]);
+
+  // --- Qua MOC: moi nguoi mot lan -------------------------------------------
+  //
+  // Qua khong mua bang xu (coin_cost = 0, hoac mo bang loi moi) truoc day doi
+  // duoc VO HAN: khong UNIQUE(user_id, reward_id), va redeemReward khong kiem
+  // gi. Duong trao tu dong (commerce/thuong-gioi-thieu.js:70) thi da chan trung
+  // tu lau - hai duong cung cap mot mon qua ma mot ben chan mot ben khong.
+  const taoQuaMoc = await admin.call('POST', '/api/entities/Reward', {
+    name: 'Quà mốc miễn phí', coin_cost: 0, quantity: 50, min_level: 1, is_active: true,
+  });
+  const quaMoc = taoQuaMoc.data;
+
+  const mocLan1 = await alice.call('POST', '/api/functions/redeemReward', { reward_id: quaMoc.id });
+  check('qua moc: lan dau nhan duoc', mocLan1.status === 200, mocLan1.data);
+
+  const mocLan2 = await alice.call('POST', '/api/functions/redeemReward', { reward_id: quaMoc.id });
+  check('qua moc: lan hai bi tu choi (moi nguoi mot lan)',
+    mocLan2.status === 409 && mocLan2.data?.error?.code === 'da_doi_roi', mocLan2.data);
+
+  const khoSauHaiLan = sql(`SELECT quantity FROM rewards WHERE id='${quaMoc.id}'`);
+  check('qua moc: kho chi tru DUNG mot don vi',
+    Number(khoSauHaiLan[0].quantity) === 49, khoSauHaiLan[0]);
+
+  // --- Tru kho nguyen tu ----------------------------------------------------
+  //
+  // Ban cu doc quantity o dau ham roi tru bang MAX(0, quantity - 1) o cuoi, cach
+  // nhau mot loi goi spendCoin. Hai nguoi bam cung luc voi quantity = 1 thi ca
+  // hai deu lot: MAX(0, ...) am tham kep 1 -> 0 -> 0 va hai nguoi duoc hua cung
+  // mot mon hang cuoi cung. Gio dieu kien `quantity > 0` nam trong chinh cau
+  // UPDATE, va ham doc meta.changes de biet minh co gianh duoc khong.
+  const taoQuaCuoi = await admin.call('POST', '/api/entities/Reward', {
+    name: 'Quà cuối cùng', coin_cost: 0, quantity: 1, min_level: 1, is_active: true,
+  });
+  const quaCuoi = taoQuaCuoi.data;
+
+  const [dua1, dua2] = await Promise.all([
+    alice.call('POST', '/api/functions/redeemReward', { reward_id: quaCuoi.id }),
+    bob.call('POST', '/api/functions/redeemReward', { reward_id: quaCuoi.id }),
+  ]);
+  const soThanhCong = [dua1, dua2].filter((r) => r.status === 200).length;
+  check('hai nguoi gianh mon cuoi cung -> DUNG MOT nguoi duoc',
+    soThanhCong === 1, { dua1: dua1.status, dua2: dua2.status });
+
+  const khoCuoi = sql(`SELECT quantity FROM rewards WHERE id='${quaCuoi.id}'`);
+  check('kho khong bao gio xuong duoi 0', Number(khoCuoi[0].quantity) === 0, khoCuoi[0]);
 
   // ------------------------------------------------------------------ doi soat
   console.log('\n9. Doi soat so cai');
