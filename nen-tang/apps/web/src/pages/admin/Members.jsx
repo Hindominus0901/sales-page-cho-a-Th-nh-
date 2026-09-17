@@ -178,7 +178,7 @@ export default function Members() {
           download
           className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-muted-foreground hover:bg-secondary"
         >
-          members.csv
+          Tải danh sách học viên (.csv)
         </a>
       </div>
 
@@ -397,6 +397,7 @@ export default function Members() {
                                 size="sm"
                                 className="rounded-full"
                                 disabled={!unlockChoice || grant.isPending}
+                                title={!unlockChoice ? 'Chọn khoá học hoặc gói muốn tặng trước đã.' : undefined}
                                 onClick={() => {
                                   const [kind, ref] = unlockChoice.split(':');
                                   grant.mutate({ user_id: u.id, kind, ref, note: 'Tặng từ trang Học viên' });

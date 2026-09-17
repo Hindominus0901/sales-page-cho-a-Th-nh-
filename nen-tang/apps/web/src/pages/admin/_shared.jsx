@@ -191,7 +191,7 @@ export function Heatmap({ days }) {
 /** Hop xac nhan cho hanh dong khong lui lai duoc. */
 export function ConfirmDialog({
   open, onOpenChange, title, description, confirmLabel = 'Xoá', onConfirm, pending,
-  disabled = false, children,
+  disabled = false, disabledReason, children,
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -203,6 +203,12 @@ export function ConfirmDialog({
         {/* Cho phep nhet mot o chon vao giua: co viec phai chon xong moi xac
             nhan duoc (vd gan luot cua mot ma la cho dung nguoi). */}
         {children}
+        {/* Nut xac nhan bi khoa PHAI noi ro dang thieu gi. Hop nay co the nhet
+            mot o chon vao giua (xem children), nen "chua chon xong" la truong
+            hop thuong gap - ma mot cai nut xam khong tu giai thich duoc. */}
+        {disabled && disabledReason && (
+          <p className="text-[12.5px] leading-snug text-muted-foreground">{disabledReason}</p>
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel className="rounded-full">Huỷ bỏ</AlertDialogCancel>
           <AlertDialogAction

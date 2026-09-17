@@ -272,14 +272,25 @@ export default function AdminBadges() {
               ))}
             </CellSelect>
           </div>
-          <Button
-            className="rounded-full"
-            disabled={!chonNguoi || !chonHuyHieu || trao.isPending}
-            onClick={() => trao.mutate()}
-          >
-            {trao.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Award className="mr-1 h-4 w-4" />}
-            Trao huy hiệu
-          </Button>
+          <div className="space-y-1">
+            <Button
+              className="rounded-full"
+              disabled={!chonNguoi || !chonHuyHieu || trao.isPending}
+              onClick={() => trao.mutate()}
+            >
+              {trao.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Award className="mr-1 h-4 w-4" />}
+              Trao huy hiệu
+            </Button>
+            {/* Nut xam PHAI noi dang thieu gi - hai o "— Chon —" ben canh khong
+                du de suy ra, nhat la khi da chon mot trong hai. */}
+            {(!chonNguoi || !chonHuyHieu) && (
+              <p className="text-[11.5px] leading-snug text-muted-foreground">
+                {!chonNguoi && !chonHuyHieu
+                  ? 'Chọn học viên và huy hiệu trước đã.'
+                  : !chonNguoi ? 'Chọn học viên nhận huy hiệu.' : 'Chọn huy hiệu muốn trao.'}
+              </p>
+            )}
+          </div>
         </div>
       </Panel>
 

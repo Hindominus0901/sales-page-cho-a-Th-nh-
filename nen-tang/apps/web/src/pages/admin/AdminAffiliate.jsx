@@ -446,6 +446,7 @@ export default function AdminAffiliate() {
         confirmLabel="Gán lượt"
         pending={gan.isPending}
         disabled={!ganCode}
+        disabledReason={!ganCode ? 'Chọn người nhận những lượt này trước đã.' : undefined}
         onConfirm={() => gan.mutate({ ma: ganMa.ma, code: ganCode })}
       >
         <ChonNguoiGioiThieu
