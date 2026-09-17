@@ -424,6 +424,33 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const byStreak = await alice.call('POST', '/api/functions/getLeaderboard', { metric: 'streak' });
   check('xep hang theo chuoi ngay cung chay', byStreak.status === 200, byStreak.data?.metric);
 
+  // NGUOI NGOAI BANG VAN PHAI BIET MINH O HANG MAY.
+  //
+  // Ban cu tim `me` trong dung nhung dong vua lay ve. Trang xin 100 dong ma lop
+  // gan 500 nguoi, nen phan lon hoc vien nhan `me: null`: mo bang xep hang ra,
+  // khong thay ten minh, khong biet minh dung o dau.
+  //
+  // `limit: 1` o day mo phong dung canh do bang mot cai bang be xiu.
+  const bangHep = await alice.call('POST', '/api/functions/getLeaderboard', {
+    period: 'all_time', metric: 'xp', limit: 1,
+  });
+  check('gioi han bao nhieu thi tra ve bay nhieu dong',
+    bangHep.data?.ranking?.length === 1, bangHep.data?.ranking?.length);
+  check('nguoi ngoai bang VAN nhan duoc dong cua chinh minh',
+    !!bangHep.data?.me && bangHep.data.me.is_me === true, bangHep.data?.me);
+
+  // So hang phai khop voi so nguoi thuc su dang tren - dem bang chinh cong
+  // thuc ORDER BY cua bang: diem cao hon, hoac bang diem ma vao truoc.
+  const toi = sql(`SELECT total_xp, created_date FROM users WHERE id = '${alice.id}'`)[0];
+  const soNguoiTren = sql(`SELECT COUNT(*) AS n FROM users
+     WHERE status = 'active' AND (total_xp > ${Number(toi.total_xp)}
+        OR (total_xp = ${Number(toi.total_xp)} AND created_date < '${toi.created_date}'))`)[0];
+  check('hang tra ve khop voi so nguoi dang tren minh',
+    bangHep.data?.me?.position === Number(soNguoiTren.n) + 1,
+    { tra_ve: bangHep.data?.me?.position, dem_duoc: Number(soNguoiTren.n) + 1 });
+  check('diem cua dong rieng do dung bang diem that',
+    bangHep.data?.me?.score === Number(toi.total_xp), bangHep.data?.me?.score);
+
   // ------------------------------------------------------------------- doi qua
   console.log('\n8. Doi qua');
   // DUNG ID TRA VE TU LENH TAO, dung tim theo TEN.

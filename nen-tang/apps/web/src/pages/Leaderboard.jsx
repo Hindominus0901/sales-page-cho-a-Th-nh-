@@ -175,6 +175,31 @@ export default function Leaderboard() {
               </div>
             ))}
           </div>
+
+          {/* VI TRI CUA CHINH MINH KHI KHONG NAM TRONG BANG.
+              Trang xin 100 dong, ma lop gan 500 nguoi - phan lon hoc vien mo
+              bang xep hang ra va khong thay ten minh o dau. May chu tra rieng
+              `me` kem so hang that (dem bang chinh cau da xep hang), nen o day
+              chi can hien no ra. */}
+          {data?.me && !ranking.some((r) => r.is_me) && (
+            <div className="sticky bottom-3 flex items-center gap-3 rounded-2xl border border-primary/30 bg-secondary/80 px-4 py-3 backdrop-blur">
+              <span className="w-10 shrink-0 font-mono text-[13px] font-bold text-muted-foreground">
+                #{data.me.position}
+              </span>
+              <Avatar user={data.me} size={40} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[13.5px] font-semibold">
+                  {data.me.name} <span className="text-xs text-primary">(Bạn)</span>
+                </div>
+                <div className="truncate text-[11px] text-muted-foreground">
+                  {data.me.level_icon} {data.me.level_name}
+                </div>
+              </div>
+              <div className="whitespace-nowrap font-mono text-[13.5px] font-bold text-primary">
+                {formatNumber(data.me.score)} {unit}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

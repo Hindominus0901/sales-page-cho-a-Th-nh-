@@ -2069,7 +2069,12 @@ async function getLeaderboard(rc) {
   // Nhanh 'xp' them dieu kien amount > 0 cho khop nhanh 'coin': truoc day
   // mot lan admin tru diem tay lam tut ca diem tren bang xep hang cua nguoi
   // do, trong khi ben xu thi khong.
-  let rows;
+  //
+  // MOT CAU TRUY VAN, DUNG HAI LAN. Moi nhanh duoi day chi dung cau NEN (chua
+  // co ORDER BY/LIMIT) roi de doan sau gan vao. Ly do o cuoi ham: nguoi xem
+  // khong nam trong top van phai biet minh dang o hang may, va cach duy nhat
+  // de con so do dung la dem bang CHINH cau da xep hang.
+  let nen;
   if (metric === 'thi_dua') {
     // LEFT JOIN chu khong JOIN: nguoi chua co diem nao van phai xuat hien voi
     // so 0. Dung JOIN thi ho bien mat khoi bang - ke ca chinh nguoi dang xem,
@@ -2077,52 +2082,63 @@ async function getLeaderboard(rc) {
     const dk = since() ? 'AND p.awarded_at >= ?' : '';
     const args = [...NGUON_THI_DUA];
     if (since()) args.push(since());
-    args.push(limit);
-    rows = await store.all(
-      `SELECT ${cols}, COALESCE(SUM(p.xp), 0) AS score
+    nen = {
+      sql: `SELECT ${cols}, COALESCE(SUM(p.xp), 0) AS score
        FROM users u
        LEFT JOIN point_awards p ON p.user_id = u.id
          AND p.event_key IN (${choThiDua}) ${dk}
        WHERE u.status = 'active'
-       GROUP BY u.id ORDER BY score DESC, u.created_date ASC LIMIT ?`, args);
+       GROUP BY u.id`,
+      args,
+    };
   } else if (period === 'all_time' || metric === 'streak') {
     const orderBy = {
       xp: 'u.total_xp', coin: 'u.total_coin', streak: 'u.current_streak',
       content: 'u.content_count', call: 'u.call_count', assignment: 'u.assignment_count',
     }[metric];
-    rows = await store.all(
-      `SELECT ${cols}, ${orderBy} AS score FROM users u
-       WHERE u.status = 'active' ORDER BY score DESC, u.created_date ASC LIMIT ?`, [limit]);
+    nen = {
+      sql: `SELECT ${cols}, ${orderBy} AS score FROM users u WHERE u.status = 'active'`,
+      args: [],
+    };
   } else if (metric === 'coin') {
-    rows = await store.all(
-      `SELECT ${cols}, COALESCE(SUM(c.amount),0) AS score
+    nen = {
+      sql: `SELECT ${cols}, COALESCE(SUM(c.amount),0) AS score
        FROM users u LEFT JOIN coin_transactions c ON c.user_id = u.id
          AND c.created_date >= ? AND c.amount > 0
        WHERE u.status = 'active'
-       GROUP BY u.id ORDER BY score DESC, u.created_date ASC LIMIT ?`, [since(), limit]);
+       GROUP BY u.id`,
+      args: [since()],
+    };
   } else if (metric === 'xp') {
-    rows = await store.all(
-      `SELECT ${cols}, COALESCE(SUM(x.amount),0) AS score
+    nen = {
+      sql: `SELECT ${cols}, COALESCE(SUM(x.amount),0) AS score
        FROM users u LEFT JOIN xp_transactions x ON x.user_id = u.id
          AND x.created_date >= ? AND x.amount > 0
        WHERE u.status = 'active'
-       GROUP BY u.id ORDER BY score DESC, u.created_date ASC LIMIT ?`, [since(), limit]);
+       GROUP BY u.id`,
+      args: [since()],
+    };
   } else {
-    rows = await store.all(
-      `SELECT ${cols}, COUNT(a.id) AS score
+    nen = {
+      sql: `SELECT ${cols}, COUNT(a.id) AS score
        FROM users u LEFT JOIN activities a ON a.user_id = u.id
          AND a.status = 'approved' AND a.activity_type_key = ? AND a.created_date >= ?
        WHERE u.status = 'active'
-       GROUP BY u.id ORDER BY score DESC, u.created_date ASC LIMIT ?`, [metric, since(), limit]);
+       GROUP BY u.id`,
+      args: [metric, since()],
+    };
   }
+
+  const XEP = 'ORDER BY score DESC, u.created_date ASC';
+  const rows = await store.all(`${nen.sql} ${XEP} LIMIT ?`, [...nen.args, limit]);
 
   const levels = await store.all('SELECT * FROM levels WHERE is_active = 1 ORDER BY threshold_xp ASC');
   const levelOf = (xp) => [...levels].reverse().find((l) => xp >= l.threshold_xp) || levels[0] || null;
 
-  const ranking = rows.map((r, i) => {
+  const dong = (r, position) => {
     const level = levelOf(Number(r.total_xp));
     return {
-      position: i + 1,
+      position,
       user_id: r.user_id,
       name: r.name,
       avatar_url: r.avatar_url || '',
@@ -2138,12 +2154,38 @@ async function getLeaderboard(rc) {
       level_icon: level?.icon || '',
       is_me: r.user_id === rc.user.id,
     };
-  });
+  };
 
-  return json({
-    ok: true, period, metric, ranking,
-    me: ranking.find((r) => r.is_me) || null,
-  });
+  const ranking = rows.map((r, i) => dong(r, i + 1));
+
+  // NGUOI NGOAI TOP VAN PHAI BIET MINH O HANG MAY.
+  //
+  // Ban cu: `me: ranking.find((r) => r.is_me) || null` - tim trong dung nhung
+  // dong vua lay ve. Giao dien xin 100 dong (Leaderboard.jsx:69), ma lop nay
+  // co gan 500 nguoi, nen PHAN LON hoc vien nhan `me: null`: ho mo bang xep
+  // hang ra, khong thay ten minh o dau, va khong co cach nao biet minh dang
+  // dung o dau. Bang affiliate da xu ly dung chuyen nay tu lau (rankOf trong
+  // affiliates.js dem so nguoi dang tren); bang trong app thi khong.
+  //
+  // Dem bang CHINH cau da xep hang, khong bia mot cau khac: hai cau khac nhau
+  // la co ngay vi tri lech voi bang ma khong ai hieu vi sao. Dieu kien hoa
+  // chinh la ORDER BY o tren dich sang - diem cao hon, hoac bang diem ma vao
+  // truoc, thi dung tren.
+  let me = ranking.find((r) => r.is_me) || null;
+  if (!me) {
+    const rieng = await store.get(
+      `SELECT * FROM (${nen.sql}) WHERE user_id = ?`, [...nen.args, rc.user.id]);
+    if (rieng) {
+      const diem = Number(rieng.score) || 0;
+      const tren = await store.get(
+        `SELECT COUNT(*) AS n FROM (${nen.sql})
+          WHERE score > ? OR (score = ? AND created_date < ?)`,
+        [...nen.args, diem, diem, rieng.created_date]);
+      me = dong(rieng, (Number(tren?.n) || 0) + 1);
+    }
+  }
+
+  return json({ ok: true, period, metric, ranking, me });
 }
 
 /** Doi soat so cai - admin bam de kiem tra con so tong co lech khong. */
