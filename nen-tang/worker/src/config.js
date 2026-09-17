@@ -93,11 +93,17 @@ export function readConfig(env) {
       currency: 'VND',
     },
 
-    video: {
-      // VSL o trang chu: wistia | youtube | vimeo | stream
-      heroProvider: str(env, 'HERO_VIDEO_PROVIDER', 'youtube'),
-      heroId: str(env, 'HERO_VIDEO_ID') || str(env, 'HERO_VIDEO_YOUTUBE_ID'),
-    },
+    // KHONG CO `video` O DAY NUA - no la code chet.
+    //
+    // Truoc day cho nay dung mot object { heroProvider, heroId } doc tu
+    // HERO_VIDEO_*. Khong mot dong nao trong worker/src doc toi no, va khong
+    // endpoint nao phat no ra. Trang ban hang lay video luc BUILD: ban template
+    // (apps/funnel) doc .env, ban dang dung (apps/funnel-gc) doc
+    // site.config.json. Ca hai deu khong di qua day.
+    //
+    // De lai mot object trong nay la moi nguoi sua HERO_VIDEO_ID roi deploy va
+    // ngoi doi mot thu khong bao gio doi. Neu ve sau can phat cau hinh video
+    // cho SPA thi them lai kem MOT endpoint doc that su.
 
     affiliate: {
       // Ty le hoa hong mac dinh tren moi don ban duoc qua link gioi thieu

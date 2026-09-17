@@ -87,7 +87,7 @@ export default function Members() {
   const patchUser = useMutation({
     mutationFn: ({ id, patch }) => base44.entities.User.update(id, patch),
     onSuccess: (_res, vars) => {
-      toast({ title: vars.successTitle || 'Đã cập nhật' });
+      toast({ title: vars.successTitle || 'Đã cập nhật', description: vars.successDesc });
       invalidate();
     },
     onError: (err) => toast({ title: 'Không lưu được', description: errText(err), variant: 'destructive' }),
@@ -207,7 +207,7 @@ export default function Members() {
                   <th className="p-2.5 font-semibold">Cấp bậc</th>
                   <th className="p-2.5 text-right font-semibold">XP</th>
                   <th className="p-2.5 text-right font-semibold">Xu</th>
-                  <th className="p-2.5 text-right font-semibold">Streak</th>
+                  <th className="p-2.5 text-right font-semibold">Chuỗi ngày</th>
                   <th className="p-2.5 font-semibold">Đội</th>
                   <th className="p-2.5 font-semibold">Vai trò</th>
                   <th className="p-2.5 font-semibold">Trạng thái</th>
@@ -258,7 +258,18 @@ export default function Members() {
                             onChange={(e) => patchUser.mutate({
                               id: u.id,
                               patch: { role: e.target.value },
+                              // Doi vai tro o day cap QUYEN THAT ngay lap tuc:
+                              // isStaff() trong worker/src/functions/index.js
+                              // coi ca 'coach' lan 'admin' la nguoi duyet bai
+                              // duoc. Truoc day o chon nay im lang, nen chon
+                              // "Coach" cho ai do la trao quyen duyet bai ma
+                              // khong mot chu nao noi ra.
                               successTitle: `Đã đổi vai trò thành ${ROLE_LABEL[e.target.value]}`,
+                              successDesc: e.target.value === 'coach'
+                                ? 'Người này duyệt được bài của học viên kể từ bây giờ.'
+                                : e.target.value === 'admin'
+                                  ? 'Người này làm được mọi việc trong trang quản trị, kể cả đổi vai trò người khác.'
+                                  : 'Người này không còn duyệt được bài nữa.',
                             })}
                             className={u.role === 'admin' ? 'border-primary/40 bg-primary/5 text-primary' : ''}
                           >

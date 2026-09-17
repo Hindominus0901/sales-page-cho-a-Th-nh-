@@ -70,6 +70,15 @@ function dungVars(brand) {
     "APP_HOST": ${q(domains.appHost)},
 
     // VSL o trang chu. De trong = dung video co san trong ban thiet ke.
+    //
+    // CHI CO TAC DUNG VOI TRANG BAN HANG CUA TEMPLATE (apps/funnel), va no doc
+    // cac bien nay tu .env luc BUILD chu khong doc tu day.
+    //
+    // Thuong hieu nao dat funnel.trangRieng = true (nhu Goc Creator) thi trang
+    // ban hang do apps/funnel-gc dung ra, va bo do lay video tu
+    // apps/funnel-gc/site.config.json - KHONG doc bien nay. Sua o day se khong
+    // thay gi doi tren trang that. Khong xoa han vi template van can chung.${
+      brand.funnel?.trangRieng ? '\n    // >>> Thuong hieu NAY dang trangRieng = true: bon dong duoi day dang bi bo qua.' : ''}
     "HERO_VIDEO_PROVIDER": ${q(hero.provider)},
     "HERO_VIDEO_ID": ${q(hero.id || '')},
     "HERO_VIDEO_THUMB": ${q(hero.thumb || '')},

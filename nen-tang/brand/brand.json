@@ -135,7 +135,7 @@
   "environment": "production",
   "cron": "0 18 * * *",
   "storage": {
-    "r2": false,
+    "r2": true,
     "_doc": "true = khai binding R2 cho kho anh (phai bat R2 trong dashboard Cloudflare truoc, can phuong thuc thanh toan). false = bo han: hoc vien khong tai anh len duoc (API tra 503 kem loi nhan tu te), moi thu khac chay binh thuong. Doi xong chay brand:apply."
   }
 }

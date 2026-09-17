@@ -290,12 +290,22 @@ export default function Email() {
             <span className="ml-2">Đẩy thử</span>
           </Button>
         </div>
+        {!configured && (
+          <p className="mt-2 text-[12.5px] text-muted-foreground">
+            Chưa nối được với Kit nên nút này đang tắt — xem phần “Kết nối Kit” ở trên.
+          </p>
+        )}
       </Panel>
 
       <Panel
         title="Đẩy người cũ sang Kit"
         description="Những người đã có trong hệ thống từ trước. Chạy theo từng đợt 25 người, bấm lại để chạy tiếp."
       >
+        {!configured && (
+          <p className="mb-2 text-[12.5px] text-muted-foreground">
+            Chưa nối được với Kit nên hai nút dưới đang tắt — xem phần “Kết nối Kit” ở trên.
+          </p>
+        )}
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => backfill.mutate('leads')} disabled={!configured || backfill.isPending}>
             {backfill.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

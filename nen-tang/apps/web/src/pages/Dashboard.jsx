@@ -131,12 +131,12 @@ export default function Dashboard() {
           value={<span className="text-3xl">{level.icon}</span>}
           label={`Level ${level.levelNumber} · ${level.name}`}
         />
-        <KpiCard icon={Coins} accent={KPI_ACCENT.coin} value={<CountUp value={me.total_coin || 0} />} label="Coin" />
+        <KpiCard icon={Coins} accent={KPI_ACCENT.coin} value={<CountUp value={me.total_coin || 0} />} label="Xu" />
         <KpiCard
           icon={Flame}
           accent={KPI_ACCENT.streak}
           value={<CountUp value={streakDangSong(me)} suffix=" ngày" />}
-          label="Streak"
+          label="Chuỗi ngày"
         />
       </div>
 

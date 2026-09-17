@@ -188,9 +188,18 @@ function EventCard({ event, signup, seats, onJoin, onLeave, onCheckIn, busy, now
         )}
 
         {!past && !cancelled && (joined ? (
-          <Button size="sm" variant="ghost" className="rounded-full" onClick={onLeave} disabled={busy || attended}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Bỏ chỗ"}
-          </Button>
+          /* Da diem danh thi khong bo cho duoc nua - va PHAI noi ra. Truoc day
+             nut chi xam di, khong mot chu nao giai thich, nen nguoi dung bam
+             hoai khong duoc va khong hieu minh lam sai o dau. */
+          attended ? (
+            <span className="text-[12.5px] font-semibold text-emerald-600">
+              Đã điểm danh — không bỏ chỗ được nữa
+            </span>
+          ) : (
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={onLeave} disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Bỏ chỗ"}
+            </Button>
+          )
         ) : (
           <Button size="sm" className="rounded-full" onClick={onJoin} disabled={busy || full}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" />

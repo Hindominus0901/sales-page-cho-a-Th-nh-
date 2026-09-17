@@ -196,7 +196,7 @@ export default function Profile() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <StatCard icon={Zap} label="XP" value={(user.total_xp || 0).toLocaleString('vi-VN')} accent="327 100% 53%" />
         <StatCard icon={Coins} label="Xu" value={(user.total_coin || 0).toLocaleString('vi-VN')} accent="23 53% 55%" />
-        <StatCard icon={Flame} label="Streak" value={`${streakDangSong(user)}`} sublabel={`Tối đa: ${user.longest_streak || 0}`} accent="0 84% 60%" />
+        <StatCard icon={Flame} label="Chuỗi ngày" value={`${streakDangSong(user)}`} sublabel={`Tối đa: ${user.longest_streak || 0}`} accent="0 84% 60%" />
         <StatCard icon={Trophy} label="Huy hiệu" value={`${myBadges.length}`} accent="44 100% 48%" />
       </div>
 

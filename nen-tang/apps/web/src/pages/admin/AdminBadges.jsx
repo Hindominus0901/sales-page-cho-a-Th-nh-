@@ -284,7 +284,12 @@ export default function AdminBadges() {
       </Panel>
 
       <Panel
-        title={`Đã trao (${fmtNumber((daTrao.data || []).length)})`}
+        // Truy van chan o 300 dong, nen con so nay KHONG phai tong that khi
+        // vuot nguong - hien "300+" thay vi mot con so tron nghe nhu da dem
+        // het. Mau lay tu AdminVip.jsx.
+        title={`Đã trao (${(daTrao.data || []).length >= 300
+          ? '300+'
+          : fmtNumber((daTrao.data || []).length)})`}
         action={(
           <CellInput
             value={tim}

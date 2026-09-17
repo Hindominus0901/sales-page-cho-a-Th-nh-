@@ -70,7 +70,9 @@
   // quen noi day vao la kieu hong im lang nhat: khong log, khong bao loi khi
   // deploy, chi co hoc vien khong tai duoc anh len ma khong ai biet vi sao.
   // <<< BRAND:R2 (sinh boi scripts/brand/apply.mjs - dung sua tay)
-  // R2 dang TAT (brand.json -> storage.r2 = false). Tai anh len se tra 503.
+  "r2_buckets": [
+    { "binding": "UPLOADS", "bucket_name": "goc-creator-platform-uploads" }
+  ],
   // >>> BRAND:R2
 
   // <<< BRAND:VARS (sinh boi scripts/brand/apply.mjs - dung sua tay)

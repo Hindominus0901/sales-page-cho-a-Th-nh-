@@ -92,7 +92,7 @@ export default function Rewards() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Đổi quà" subtitle="Dùng Coin tích lũy để đổi phần thưởng thật.">
+      <PageHeader title="Đổi quà" subtitle="Dùng Xu tích luỹ để đổi phần thưởng thật.">
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand-gold/10 border border-brand-gold/30 self-start">
           <span className="w-4 h-4 rounded-full bg-gradient-to-b from-amber-200 to-amber-500" />
           <span className="font-mono font-extrabold text-base text-amber-700">

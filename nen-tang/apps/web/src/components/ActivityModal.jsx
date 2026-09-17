@@ -135,7 +135,7 @@ export default function ActivityModal({ open, onOpenChange, onLogged }) {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-primary">+{success.xp} XP · +{success.coin} Xu</div>
-                  <div className="text-sm text-muted-foreground mt-1">🔥 Streak: {success.streak} ngày liên tục</div>
+                  <div className="text-sm text-muted-foreground mt-1">🔥 Chuỗi: {success.streak} ngày liên tục</div>
                 </div>
               </>
             )}

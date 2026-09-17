@@ -36,7 +36,7 @@ const CATEGORY_LABEL = {
 /** Nhan tieng Viet cho vai gia tri select hay gap; con lai hien nguyen ban. */
 const OPTION_LABEL = {
   daily: 'Hằng ngày', weekly: 'Hằng tuần', monthly: 'Hằng tháng', all_time: 'Toàn thời gian',
-  streak: 'Streak dài hơn', earliest: 'Đạt điểm sớm hơn', alphabet: 'Tên A-Z',
+  streak: 'Chuỗi ngày dài hơn', earliest: 'Đạt điểm sớm hơn', alphabet: 'Tên A-Z',
   auto: 'Tự động', manual: 'Admin duyệt tay',
   zalo: 'Zalo', email: 'Email', both: 'Cả hai',
 };
