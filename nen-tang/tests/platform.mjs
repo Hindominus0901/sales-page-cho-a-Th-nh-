@@ -1436,6 +1436,24 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const idBai2 = nop2.data?.submission?.id;
   check('nop lai cung ngay thi SUA bai cu chu khong tao bai moi', idBai2 === idBai, { idBai, idBai2 });
 
+  // NOP LAI MOT NGAY DA DUYET KHONG DUOC HA NO VE "CHO DUYET".
+  //
+  // Bai vua nop lai o tren la ngay 1 - ngay da duoc admin duyet cach day vai
+  // dong. Ban cu luon ghi `status: 'pending'`, nen mot cu bam nham (hay mot lan
+  // sua link dan sai) la mat cong nhan: `progress` dem so bai `approved` nen
+  // tien do tut tu 1 ve 0, va the ngay doi mau tu xanh ve vang. Hoc vien khong
+  // lam gi sai va khong co cach nao lay lai.
+  const baiSauNopLai = sql(`SELECT status, content FROM challenge_submissions WHERE id = '${idBai}'`)[0];
+  check('nop lai ngay DA DUYET van giu nguyen cong nhan',
+    baiSauNopLai?.status === 'approved', baiSauNopLai);
+  check('nop lai ngay da duyet van luu duoc noi dung moi',
+    baiSauNopLai?.content === 'Bai lam lan hai', baiSauNopLai);
+  check('may chu noi ro la da duyet tu truoc, de giao dien khong bao nham',
+    nop2.data?.da_duyet_truoc_do === true, nop2.data);
+
+  const tienDoSauNopLai = sql(`SELECT progress FROM challenge_members WHERE challenge_id = '${idTT}' AND user_id = '${alice.id}'`)[0];
+  check('nop lai KHONG lam tut tien do', tienDoSauNopLai?.progress === 1, tienDoSauNopLai);
+
   // ------------------------------------------- diem danh ngay trong thu thach
   // Diem danh cua thu thach va cua trang Lich phai la MOT: cung buoi, cung ban
   // ghi co mat, cung mot lan cong diem. Hai duong rieng la co ngay mot nguoi

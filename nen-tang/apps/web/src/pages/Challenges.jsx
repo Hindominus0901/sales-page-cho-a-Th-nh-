@@ -461,6 +461,18 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
         });
         return;
       }
+      // Ngay da duoc duyet tu truoc: may chu chi luu noi dung moi va GIU NGUYEN
+      // cong nhan. Noi dung ro, neu khong nguoi ta doc "dang cho duyet" roi
+      // tuong minh vua lam mat cai da co.
+      if (d?.da_duyet_truoc_do) {
+        setLinkBai("");
+        setLinkCamNhan("");
+        toast({
+          title: "Đã cập nhật bài",
+          description: "Ngày này vẫn được tính là đã hoàn thành.",
+        });
+        return;
+      }
       toast({
         title: "Đã lưu bài nộp",
         description: d?.con_thieu?.length

@@ -466,9 +466,22 @@ async function submitChallengeDay(rc, svc) {
   const noiDung = clean(content, 8000);
   const duongDan = clean(link, 500);
   const linkCamNhan = clean(rc.body?.file_url, 500);
-  const payload = {
-    content: noiDung, link: duongDan, file_url: linkCamNhan, status: 'pending',
-  };
+
+  // NOP LAI MOT NGAY DA DUOC DUYET KHONG DUOC HA NO VE "CHO DUYET".
+  //
+  // Ban cu luon ghi `status: 'pending'`. Ai da duoc duyet ma bam nop lan nua -
+  // sua lai cai link dan nham, hay chi la bam nham nut - la mat cong nhan:
+  // `progress` tinh bang so bai `approved` nen tien do tut mot ngay, va the
+  // ngay do doi mau tu xanh ve vang. Ho khong lam gi sai, va khong co cach nao
+  // lay lai ngoai viec nop dung bo link mot lan nua (neu con trong ngay).
+  //
+  // Giu nguyen trang thai thi khong mat gi: nop bai KHONG con cong diem
+  // (chi Thanh chot 11/09), nen day khong phai duong an diem lap - chi la cho
+  // phep sua noi dung cua mot ngay da xong.
+  const daDuyet = existing?.status === 'approved';
+  const payload = daDuyet
+    ? { content: noiDung, link: duongDan, file_url: linkCamNhan }
+    : { content: noiDung, link: duongDan, file_url: linkCamNhan, status: 'pending' };
 
   const submission = existing
     ? await svc.ChallengeSubmission.update(existing.id, payload)
@@ -479,6 +492,12 @@ async function submitChallengeDay(rc, svc) {
       user_name: rc.user.full_name,
       day: dayNum,
     });
+
+  // Da duyet tu truoc: chi luu noi dung moi, khong chay lai duong tu duyet
+  // (no se bao tin "bai da dat" them mot lan nua cho mot viec da xong).
+  if (daDuyet) {
+    return json({ ok: true, submission, tu_duyet: false, da_duyet_truoc_do: true });
+  }
 
   // ------------------------------------------------------------- tu duyet
   //
