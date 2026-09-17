@@ -175,8 +175,16 @@ export default function Dashboard() {
               </Button>
             </div>
             {loadingToday && <p className="text-sm text-muted-foreground">Đang tải...</p>}
+            {/* Cau nay truoc day la mot ngo cut: no dung, nhung khong noi ai
+                sua duoc va sua o dau. Voi hoc vien thi day khong phai viec cua
+                ho; voi chi Thanh (cung doc man hinh nay) thi gio co duong di. */}
             {!loadingToday && progressBars.length === 0 && (
-              <p className="text-sm text-muted-foreground">Chưa có loại hoạt động nào được mở.</p>
+              <p className="text-sm text-muted-foreground">
+                Chưa có loại hoạt động nào được mở.{' '}
+                {me?.role === 'admin'
+                  ? <Link to="/admin/activity-types" className="font-semibold text-primary underline underline-offset-2">Mở trong trang Loại hoạt động →</Link>
+                  : 'Admin sẽ mở trong ít ngày tới.'}
+              </p>
             )}
             <div className="space-y-3">
               {progressBars.map((p) => (

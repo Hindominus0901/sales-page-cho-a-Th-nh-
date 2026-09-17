@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, TrendingUp, Users, CheckCircle2, Trophy, Share2,
   GraduationCap, Gift, Briefcase, Settings2, LayoutGrid, ShieldAlert, Mail, CalendarDays,
-  Award, Bell, ScrollText, ShoppingBag, Crown,
+  Award, Bell, ScrollText, ShoppingBag, Crown, ListChecks,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -32,6 +32,11 @@ export const ADMIN_NAV = [
   { key: 'productsAdmin', to: '/admin/products', label: 'Sản phẩm', icon: ShoppingBag },
   { key: 'vipAdmin', to: '/admin/vip', label: 'Khu vực VIP', icon: Crown },
   { key: 'badgesAdmin', to: '/admin/badges', label: 'Huy hiệu', icon: Award },
+  // Bang `activity_types` duoc Dashboard va ActivityModal doc tu lau nhung
+  // KHONG co trang quan tri nao sua duoc - du lieu chi den tu mot lenh INSERT
+  // trong migration. Khi Dashboard bao "chua co loai hoat dong nao duoc mo"
+  // thi truoc day khong co cai nut nao trong ca san pham de xu ly.
+  { key: 'activityTypes', to: '/admin/activity-types', label: 'Loại hoạt động', icon: ListChecks },
   { key: 'notify', to: '/admin/notify', label: 'Thông báo', icon: Bell },
   { key: 'staff', to: '/admin/staff', label: 'Nhân sự', icon: Briefcase },
   { key: 'events', to: '/admin/events', label: 'Lịch & sự kiện', icon: CalendarDays },

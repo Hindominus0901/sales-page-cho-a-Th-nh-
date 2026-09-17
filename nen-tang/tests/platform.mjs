@@ -273,6 +273,42 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const adminEditRule = await admin.call('PUT', '/api/entities/PointRule/pr-post', { xp: 10 });
   check('admin thi sua duoc luat tinh diem', adminEditRule.status === 200, adminEditRule.data);
 
+  // --- Loai hoat dong: admin sua duoc, hoc vien thi khong ---------------------
+  //
+  // Bang nay duoc Dashboard va ActivityModal doc de biet hien nhung nut nao, va
+  // logActivity tu choi moi key khong co o day. Truoc day KHONG co trang quan
+  // tri nao sua duoc no, nen gio them trang thi phai co bai giu cho: quyen o
+  // schema la admin-only, va no khong duoc am tham noi long ra.
+  const loaiCuaAlice = await alice.call('POST', '/api/entities/ActivityType', {
+    name: 'Tu che', key: 'tu_che', xp_reward: 9999, coin_reward: 9999, is_active: true,
+  });
+  check('hoc vien KHONG tu tao duoc loai hoat dong', loaiCuaAlice.status === 403, loaiCuaAlice.data);
+
+  const loaiMoi = await admin.call('POST', '/api/entities/ActivityType', {
+    name: 'Đăng story', key: 'dang_story', description: 'Đăng một story',
+    xp_reward: 7, coin_reward: 3, daily_cap: 2, is_active: true, sort_order: 9,
+  });
+  // POST /api/entities/... tra 201, khong phai 200 (worker/src/entities/api.js:66).
+  check('admin tao duoc loai hoat dong moi', loaiMoi.status === 201 && !!loaiMoi.data?.id, loaiMoi.data);
+
+  if (loaiMoi.data?.id) {
+    const doiXp = await admin.call('PUT', `/api/entities/ActivityType/${loaiMoi.data.id}`, { xp_reward: 12 });
+    check('admin doi duoc so XP cua loai do', doiXp.status === 200 && doiXp.data?.xp_reward === 12, doiXp.data);
+
+    // Tat mot muc la no bien mat khoi app hoc vien - day chinh la cach chi Thanh
+    // go mot muc xuong ma khong mat lich su cua no.
+    const tat = await admin.call('PUT', `/api/entities/ActivityType/${loaiMoi.data.id}`, { is_active: false });
+    check('admin tat duoc mot loai', tat.status === 200 && tat.data?.is_active === false, tat.data);
+
+    const nopVaoMucDaTat = await alice.call('POST', '/api/functions/logActivity', {
+      activity_type_key: 'dang_story', title: 'thu', evidence_link: 'https://vi.du/abc',
+    });
+    check('muc da tat thi KHONG nop vao duoc nua', nopVaoMucDaTat.status === 404, nopVaoMucDaTat.data);
+
+    const xoa = await admin.call('DELETE', `/api/entities/ActivityType/${loaiMoi.data.id}`);
+    check('admin xoa duoc loai hoat dong', xoa.status === 200, xoa.data);
+  }
+
   const ghost = await alice.call('GET', '/api/entities/KhongCoThatDau');
   check('entity khong khai bao -> tu choi (mac dinh la cam)', ghost.status === 403, ghost.data);
 
