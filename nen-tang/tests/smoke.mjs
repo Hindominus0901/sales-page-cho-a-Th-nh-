@@ -517,6 +517,97 @@ const ANSWERS = {
 
   cookieJar = jarQuaLink;
 
+  // ---------------------------------------------------------------------------
+  // 7b. DUNG CON DUONG MA TRANG THAT DI: POST /api/register
+  //
+  // VI SAO PHAI CO KHOI NAY RIENG, DU O TREN DA TEST HOA HONG XANH:
+  //
+  // Moi bai o tren goi THANG /api/leads. Nhung form tren trang ban hang that
+  // khong goi duong do - no goi /api/register (apps/funnel-gc/partials/
+  // dang-ky.js:104), roi dangKyTuongThich moi goi createLead ben trong.
+  //
+  // Va da co luc bo dung apps/funnel-gc KHONG he goi /api/ref lan /api/track.
+  // Nen ca day chuyen dut ngay mat dau tien: khong cookie gioi thieu, khong
+  // landing_url trong sessions, refCodeFromRequest va refCodeFromSession deu
+  // tra chuoi rong, creditReferral khong bao gio chay, bang commissions khong
+  // bao gio co dong nao. Dai ly chia se link, ban ho mua that, cong dai ly
+  // hien 0 luot / 0 nguoi / 0d - khong mot loi nao.
+  //
+  // Toan bo 91 bai smoke van XANH suot thoi gian do, vi chung di mot con duong
+  // khong trang nao di. Khoi nay dong cai khe hop giua test va trang that.
+  // ---------------------------------------------------------------------------
+  // DAT O CUOI, SAU MOI BAI PHU THUOC SO DEM.
+  // Khoi nay them mot luot gioi thieu that cho cung mot dai ly, nen dat no
+  // o giua muc 6 la lam lech con so ma hai bai sau do trong vao
+  // ("huy luot -> tut ve bac 1", "mat cookie ref"). Hai bai do do chinh
+  // toi lam do o lan chay dau - khong phai san pham hong.
+  const jarTruocRegister = cookieJar;
+
+  // Do TUONG DOI, khong do con so tuyet doi: den luc nay cac bai truoc da huy
+  // roi khoi phuc luot gioi thieu, nen so goc khong doan truoc duoc. Thu can
+  // chung minh la "mot don di qua /api/register co sinh them hoa hong khong",
+  // chu khong phai tong bang bao nhieu.
+  const truocKhiDangKy = (await call('GET', '/api/affiliate/me')).data?.stats?.commission_total || 0;
+
+  cookieJar = {};                       // mot "trinh duyet" hoan toan moi
+
+  const bamLink = await call('POST', '/api/ref', {
+    code: refCode,
+    landing_url: `${BASE}/?ref=${refCode}`,
+    referrer: 'https://www.facebook.com/',
+    attribution: { landing_url: `${BASE}/?ref=${refCode}`, utm_source: 'facebook' },
+  });
+  check('bam link gioi thieu -> ma hop le', bamLink.status === 200 && bamLink.data?.valid === true, bamLink.data);
+
+  const dkPhone = uniquePhone();
+  const dangKy = await call('POST', '/api/register', {
+    name: 'Khach Qua Trang That',
+    email: `reg${Date.now()}@smoketest.local`,
+    phone: dkPhone,
+    field: 'Thiet ke noi that',
+    note: 'vao tu link gioi thieu',
+  });
+  check('form tren trang that (POST /api/register) tao duoc don',
+    dangKy.status === 200 && !!dangKy.data?.order?.code, dangKy.data);
+
+  const maDonRegister = dangKy.data?.order?.code;
+  if (maDonRegister) {
+    const traTien = await call('POST', '/api/webhooks/bank', {
+      id: 'tx-reg-' + Date.now(), transferType: 'in', transferAmount: PRODUCT_PRICE,
+      accountNumber: SO_TK_GIA,
+      content: `${(process.env.BANK_MEMO_PREFIX || '').toUpperCase()} ${maDonRegister} KHACH QUA TRANG THAT`,
+    }, { Authorization: `Apikey ${HOOK}` });
+    check('don do -> paid', traTien.data?.results?.[0]?.status === 'paid', traTien.data);
+
+    // DAY LA BAI QUAN TRONG NHAT CUA CA KHOI: hoa hong phai TANG THEM.
+    cookieJar = jarTruocRegister;
+    const sauCung = await call('GET', '/api/affiliate/me');
+    const tang = (sauCung.data?.stats?.commission_total || 0) - truocKhiDangKy;
+
+    // DO CAI GI, VA VI SAO KHONG DO HOA HONG TRUC TIEP
+    //
+    // Thu tung DUT la buoc GAN NGUOI GIOI THIEU. Con tu mot luot da gan hop le
+    // ra dong hoa hong 20% thi muc 6 o tren da do roi.
+    //
+    // Khong the doi hoa hong tang o day, va do la he thong lam DUNG: luat
+    // chong gian lan `maxPerIp` (mac dinh 3, worker/src/config.js:114) danh dau
+    // luot thu tu tu CUNG mot IP la cho duyet tay. Ca bo test di ra tu 127.0.0.1
+    // nen no cham tran - o ngoai doi thi ba nguoi khac nhau khong dung chung IP.
+    //
+    // Nen do bang hang cho duyet: luot nam trong do la BANG CHUNG da gan dung
+    // nguoi gioi thieu. Va neu chua cham tran thi hoa hong phai tang - bat ca
+    // hai nhanh, khong nhanh nao duoc im lang truot qua.
+    const choDuyet = await call('GET', '/api/admin/referrals/pending', undefined,
+      { 'X-Admin-Token': ADMIN });
+    const cuaToi = (choDuyet.data?.items || []).some((r) => r.affiliate_code === refCode);
+
+    check('don qua /api/register duoc GAN cho dung nguoi gioi thieu',
+      tang === Math.round(PRODUCT_PRICE * 0.2) || cuaToi,
+      { tang, trong_hang_cho_duyet: cuaToi, so_luot_cho: (choDuyet.data?.items || []).length });
+  }
+
+  cookieJar = jarTruocRegister;
+
   const orderPublic = await call('GET', `/api/orders/${code}`);
   check('API cong khai khong lo ten/sdt/email khach',
     orderPublic.status === 200 && !JSON.stringify(orderPublic.data).match(/customer_phone|"phone"|"email"/),

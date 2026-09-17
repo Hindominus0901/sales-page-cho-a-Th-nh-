@@ -164,3 +164,109 @@ function wireMarqueePause() {
     }
   } catch (e) { /* bỏ qua */ }
 }
+
+/* ==========================================================================
+   BẮT MÃ GIỚI THIỆU  ?ref=...
+   ==========================================================================
+
+   ĐÂY LÀ MẮT XÍCH TỪNG BỊ ĐỨT HOÀN TOÀN.
+
+   Toàn bộ hệ thống hoa hồng phía máy chủ chạy đúng và có bài test: /api/ref
+   ghi lượt bấm rồi đặt cookie, /api/leads đọc cookie đó, webhook ngân hàng
+   sinh dòng hoa hồng 20%. Nhưng KHÔNG MỘT TRANG NÀO của bộ dựng này gọi tới
+   /api/ref — đoạn bắt ?ref= chỉ tồn tại ở apps/funnel/static/funnel.js, tức
+   bộ dựng của TEMPLATE, không phải bộ đang chạy (package.json: build:funnel
+   trỏ vào apps/funnel-gc).
+
+   Nên dây chuyền đứt ngay mắt đầu tiên:
+     khách bấm  /?ref=ABC  ->  không ai gọi /api/ref
+       -> không có cookie giới thiệu
+       -> cũng không có /api/track nên sessions.landing_url để rỗng
+       -> refCodeFromRequest và refCodeFromSession đều trả chuỗi rỗng
+       -> creditReferral không bao giờ chạy
+       -> bảng commissions không bao giờ có dòng nào.
+
+   Đại lý chia sẻ link, bạn họ mua thật, cổng đại lý hiện 0 lượt / 0 người /
+   0đ. Không lỗi, không cảnh báo. 20% hoa hồng mà trang bán hàng hứa thì
+   không ai nhận được.
+
+   Bộ test không bắt được vì nó gọi thẳng POST /api/ref rồi POST /api/leads —
+   một con đường không trang nào đi. Trang thật nộp form qua /api/register.
+
+   GỌI CẢ KHI KHÔNG CÓ ?ref=: lệnh này còn ghi landing_url, utm_* và fbclid
+   vào sessions, tức là nguồn quảng cáo. Trang Doanh thu đọc utm_source để
+   biết tiền về từ đâu; không ghi thì cột đó vĩnh viễn trống.
+   ========================================================================== */
+var REF_LUU = 'gc_ref_attr';
+
+function refThuocTinh() {
+  var p = new URLSearchParams(location.search);
+  return {
+    landing_url: location.href.slice(0, 500),
+    referrer: String(document.referrer || '').slice(0, 300),
+    utm_source: p.get('utm_source') || '',
+    utm_medium: p.get('utm_medium') || '',
+    utm_campaign: p.get('utm_campaign') || '',
+    utm_content: p.get('utm_content') || '',
+    utm_term: p.get('utm_term') || '',
+    fbclid: p.get('fbclid') || '',
+    gclid: p.get('gclid') || '',
+  };
+}
+
+function batMaGioiThieu() {
+  var attr = refThuocTinh();
+  var ma = (new URLSearchParams(location.search).get('ref') || '').trim();
+
+  // Nhớ lại mã của lần vào trước trong CÙNG trình duyệt. Cookie phía máy chủ
+  // mới là nguồn thật, nhưng nó có thể mất (trình duyệt xoá, chế độ ẩn danh)
+  // trong khi người ta còn đang đọc trang. Giữ thêm một bản ở đây để lần điều
+  // hướng sau vẫn báo lại được cho máy chủ.
+  if (!ma) {
+    try { ma = sessionStorage.getItem(REF_LUU) || ''; } catch (e) { ma = ''; }
+  } else {
+    try { sessionStorage.setItem(REF_LUU, ma); } catch (e) { /* bỏ qua */ }
+  }
+
+  // HAI ĐƯỜNG KHÁC NHAU, ĐỪNG GỘP.
+  //
+  // /api/ref BẮT BUỘC có mã hợp lệ — thiếu là nó trả 400 và không ghi gì cả
+  // (worker/src/routes/affiliate.js:75-78). Nên nguồn quảng cáo phải đi qua
+  // /api/track, đường vốn dành cho việc đó; cả hai cùng gọi upsertSession nên
+  // landing_url và utm_* vào đúng một chỗ.
+  //
+  // Việc này cũng vá luôn cột "Nguồn" đang trống trơn trong trang Doanh thu:
+  // trang đó đọc sessions.utm_source, mà trước giờ không ai ghi vào đó.
+  fetch('/api/track', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ type: 'page_view', page: location.pathname.slice(0, 60), attribution: attr }),
+  }).catch(function () { /* đo lường hỏng thì thôi, không phiền người đọc trang */ });
+
+  if (!ma) return;
+
+  fetch('/api/ref', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      code: ma,
+      landing_url: attr.landing_url,
+      referrer: attr.referrer,
+      attribution: attr,
+    }),
+  }).then(function (r) { return r.json(); }).then(function (d) {
+    if (d && d.valid && d.referrer_name) {
+      var el = document.querySelector('[data-nguoi-gioi-thieu]');
+      if (el) {
+        el.textContent = 'Bạn được ' + d.referrer_name + ' giới thiệu tới chương trình này.';
+        el.removeAttribute('hidden');
+      }
+    }
+  }).catch(function () {
+    // Im lặng là ĐÚNG ở đây: người đang đọc trang bán hàng không làm gì được
+    // với một lỗi mạng của việc ghi nhận giới thiệu, và một hộp lỗi hiện lên
+    // giữa trang bán hàng thì hại nhiều hơn lợi.
+  });
+}
+
+try { batMaGioiThieu(); } catch (e) { /* không được để hỏng cả trang */ }
