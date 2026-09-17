@@ -70,9 +70,7 @@
   // quen noi day vao la kieu hong im lang nhat: khong log, khong bao loi khi
   // deploy, chi co hoc vien khong tai duoc anh len ma khong ai biet vi sao.
   // <<< BRAND:R2 (sinh boi scripts/brand/apply.mjs - dung sua tay)
-  "r2_buckets": [
-    { "binding": "UPLOADS", "bucket_name": "goc-creator-platform-uploads" }
-  ],
+  // R2 dang TAT (brand.json -> storage.r2 = false). Tai anh len se tra 503.
   // >>> BRAND:R2
 
   // <<< BRAND:VARS (sinh boi scripts/brand/apply.mjs - dung sua tay)
@@ -94,6 +92,15 @@
     "APP_HOST": "app.manhthanh.net",
 
     // VSL o trang chu. De trong = dung video co san trong ban thiet ke.
+    //
+    // CHI CO TAC DUNG VOI TRANG BAN HANG CUA TEMPLATE (apps/funnel), va no doc
+    // cac bien nay tu .env luc BUILD chu khong doc tu day.
+    //
+    // Thuong hieu nao dat funnel.trangRieng = true (nhu Goc Creator) thi trang
+    // ban hang do apps/funnel-gc dung ra, va bo do lay video tu
+    // apps/funnel-gc/site.config.json - KHONG doc bien nay. Sua o day se khong
+    // thay gi doi tren trang that. Khong xoa han vi template van can chung.
+    // >>> Thuong hieu NAY dang trangRieng = true: bon dong duoi day dang bi bo qua.
     "HERO_VIDEO_PROVIDER": "youtube",
     "HERO_VIDEO_ID": "",
     "HERO_VIDEO_THUMB": "",
