@@ -140,8 +140,18 @@ export default function Members() {
 
   const xacNhanTra = useMutation({
     mutationFn: (code) => adminApi.markOrderPaid(code, { note: 'xác nhận tay từ trang Học viên' }),
-    onSuccess: () => {
-      toast({ title: 'Đã ghi nhận tiền', description: 'Quyền đã mở, doanh thu vào sổ, hoa hồng đã tính.' });
+    onSuccess: (d) => {
+      toast(d?.thu_da_gui
+        ? {
+          title: 'Đã ghi nhận tiền',
+          description: 'Quyền đã mở, doanh thu vào sổ, hoa hồng đã tính, email vào lớp đã gửi.',
+        }
+        : {
+          title: 'Đã ghi nhận tiền — NHƯNG CHƯA GỬI ĐƯỢC EMAIL',
+          description: 'Quyền đã mở và hoa hồng đã tính, nhưng khách chưa nhận được '
+            + 'link vào lớp. Nhắn Zalo cho họ.',
+          variant: 'destructive',
+        });
       qc.invalidateQueries({ queryKey: ['admin', 'don-cho'] });
       qc.invalidateQueries({ queryKey: ['admin', 'entitlements'] });
     },

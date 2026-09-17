@@ -50,12 +50,31 @@ export default function Revenue() {
 
   // Duong CHINH de mot don thanh 'da thanh toan' la webhook SePay tu ban ve.
   // Nut nay chi de vet nhung truong hop webhook truot: khach chuyen thieu vai
-  // nghin, ghi sai noi dung, hoac ngan hang bao cham. Backend van chay dung
-  // luong xu ly nhu webhook (mo quyen truy cap, sinh hoa hong), nen bam o day
-  // khong tao ra don "nua voi".
+  // nghin, ghi sai noi dung, hoac ngan hang bao cham. Backend chay dung luong
+  // xu ly nhu webhook - mo quyen truy cap, sinh hoa hong, VA GUI THU bien nhan
+  // kem link vao lop - nen bam o day khong tao ra don "nua voi".
+  //
+  // Cau tren tung SAI: duong nay thieu dung buc thu, va vi webhook chua duoc
+  // noi nen MOI don that deu di qua day. Chu thich khang dinh "y het webhook"
+  // la ly do khong ai di kiem lai.
   const danhDauDaTra = useMutation({
     mutationFn: (code) => adminApi.markOrderPaid(code, { note: 'xác nhận tay trong trang Doanh thu' }),
-    onSuccess: () => { toast({ title: 'Đã đánh dấu đơn đã thanh toán' }); setDangXacNhanTra(null); lamMoi(); },
+    // NOI RO THU DA DI HAY CHUA. Buc thu nay mang link dat mat khau - voi
+    // nguoi mua lan dau, no la duong DUY NHAT de vao lop. Bao "đã đánh dấu"
+    // roi thoi thi khong ai biet khach van dang ngoi cho.
+    onSuccess: (d) => {
+      toast(d?.thu_da_gui
+        ? { title: 'Đã ghi nhận tiền', description: 'Đã gửi email biên nhận kèm link vào lớp cho khách.' }
+        : {
+          title: 'Đã ghi nhận tiền — NHƯNG CHƯA GỬI ĐƯỢC EMAIL',
+          description: d?.thu_ly_do === 'khong_co_email'
+            ? 'Đơn này không có email nên không gửi được. Nhắn Zalo cho khách kèm link đăng nhập.'
+            : 'Hệ thống email chưa cấu hình được. Khách chưa nhận link vào lớp — nhắn Zalo cho họ.',
+          variant: 'destructive',
+        });
+      setDangXacNhanTra(null);
+      lamMoi();
+    },
     onError: (err) => toast({ title: 'Không cập nhật được', description: errText(err), variant: 'destructive' }),
   });
 

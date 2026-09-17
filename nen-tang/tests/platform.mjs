@@ -1913,6 +1913,15 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   // nay cung mot dong, khong phai ngau nhien.
   sql(`INSERT INTO orders (code,product_sku,product_name,amount,currency,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDon}','${SKU_TEST}','Test',399000,'VND','pending','${maDon}','Alice Test','${alice.email}','',datetime('now'),datetime('now'))`);
 
+  // Do HIEU SO quanh dung cu goi webhook, khong dem tong.
+  //
+  // Bai nay tung khang dinh `thu.length === 1`. Con so do chi dung khi duong
+  // xac nhan TAY khong gui thu - ma do chinh la lo hong duoc va o commit nay:
+  // bai "admin xac nhan duoc don da tra tien" o tren cung dia chi alice gio
+  // sinh mot buc thu that, nen tong thanh 2 va bai nay do vi mot ly do khong
+  // lien quan gi toi thu no dang kiem.
+  const thuTruocHook = sql(`SELECT COUNT(*) AS n FROM emails_sent WHERE to_addr='${alice.email}' AND template='order_paid'`);
+
   const hook = await fetchLaiMotLan(`${BASE}/api/webhooks/bank`, {
     method: 'POST',
     headers: {
@@ -1931,13 +1940,56 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
 
   // rc.waitUntil chay sau khi phan hoi da tra ve, nen phai cho mot nhip.
   await new Promise((r) => { setTimeout(r, 1500); });
-  const thu = sql(`SELECT template,status FROM emails_sent WHERE to_addr='${alice.email}' AND template='order_paid'`);
-  check('co gui thu bao da nhan thanh toan', thu.length === 1, thu);
+  const thuSauHook = sql(`SELECT COUNT(*) AS n FROM emails_sent WHERE to_addr='${alice.email}' AND template='order_paid'`);
+  check('co gui thu bao da nhan thanh toan',
+    Number(thuSauHook[0].n) === Number(thuTruocHook[0].n) + 1,
+    { truoc: Number(thuTruocHook[0].n), sau: Number(thuSauHook[0].n) });
 
   sql(`DELETE FROM entitlements WHERE order_id IN (SELECT id FROM orders WHERE code='${maDon}')`);
   sql(`DELETE FROM bank_txns WHERE matched_order = '${maDon}'`);
   sql(`DELETE FROM events WHERE meta_json LIKE '%${maDon}%'`);
   sql(`DELETE FROM orders WHERE code = '${maDon}'`);
+
+  // --- XAC NHAN TAY CUNG PHAI GUI THU -----------------------------------------
+  //
+  // Duong webhook (vua kiem o tren) gui thu bien nhan kem link dat mat khau.
+  // Duong xac nhan TAY thi khong - no mo quyen, sinh hoa hong, roi dung.
+  //
+  // Va vi BANK_WEBHOOK_SECRET chua duoc nap tren ban that, webhook tu choi moi
+  // cu goi, nen MOI don that deu di qua duong tay: khach chuyen tien, admin bam
+  // xac nhan, khach khong nhan duoc gi - khong bien nhan, khong link vao lop.
+  // Chu thich trong Revenue.jsx con khang dinh duong nay "chay dung luong y het
+  // webhook", nen khong ai di kiem lai.
+  const maDonTay = `${TIEN_TO_DON_TEST}TEST23`;
+  sql(`DELETE FROM entitlements WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonTay}')`);
+  sql(`DELETE FROM orders WHERE code = '${maDonTay}'`);
+  sql(`INSERT INTO orders (code,product_sku,product_name,amount,currency,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDonTay}','${SKU_TEST}','Test',399000,'VND','pending','${maDonTay}','Alice Test','${alice.email}','',datetime('now'),datetime('now'))`);
+
+  const thuTruoc = sql(`SELECT COUNT(*) AS n FROM emails_sent WHERE to_addr='${alice.email}' AND template='order_paid'`);
+  const xacNhanTay = await admin.call('POST', `/api/admin/orders/${maDonTay}/paid`, {});
+  check('admin xac nhan tay -> don chuyen paid',
+    xacNhanTay.status === 200 && xacNhanTay.data?.changed === true
+      && xacNhanTay.data?.order?.status === 'paid', xacNhanTay.data);
+
+  const thuSau = sql(`SELECT COUNT(*) AS n FROM emails_sent WHERE to_addr='${alice.email}' AND template='order_paid'`);
+  check('xac nhan tay CUNG gui thu bien nhan cho khach',
+    Number(thuSau[0].n) === Number(thuTruoc[0].n) + 1,
+    { truoc: Number(thuTruoc[0].n), sau: Number(thuSau[0].n) });
+
+  // Va phai noi THAT ve viec gui duoc hay khong. O may chay test khong co
+  // RESEND_API_KEY nen thu KHONG di duoc - may chu phai noi dung the, khong
+  // duoc bao thanh cong.
+  //
+  // Ban cu cua guiThuDaThanhToan vut ket qua sendMail di va luon tra { ok:true },
+  // nen bai duoi day se DO neu ai do lam lai dieu do: giao dien se bao voi chi
+  // Thanh rang khach da nhan duoc link vao lop trong khi khong buc thu nao roi
+  // khoi may chu.
+  check('may chu noi THAT ve viec thu co gui duoc khong',
+    xacNhanTay.data?.thu_da_gui === false
+      && xacNhanTay.data?.thu_ly_do === 'chua_cau_hinh_email', xacNhanTay.data);
+
+  sql(`DELETE FROM entitlements WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonTay}')`);
+  sql(`DELETE FROM orders WHERE code = '${maDonTay}'`);
 
   // ============================================================================
   // N. DUONG KHAI THAC DA DONG

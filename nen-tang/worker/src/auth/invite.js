@@ -85,7 +85,10 @@ export async function inviteLeadToApp(rc, lead) {
     // khong mang y nghia bao mat nao, may chu khong doc tham so nay.
     // Funnel va webapp dung chung mot ten mien nen rc.origin la dung cho.
     const url = `${rc.origin}/reset-password?token=${token}&moi=1`;
-    await sendMail(rc, {
+    // Doc ket qua gui, cung ly do nhu guiThuDaThanhToan ben duoi. Hien chua ai
+    // dung gia tri tra ve cua ham nay, nhung mot ham bao "ok" trong khi thu
+    // khong di la cai bay dat san cho nguoi goi tiep theo.
+    const ketMoi = await sendMail(rc, {
       to: email,
       template: 'invite_app',
       ...renderMail('invite_app', {
@@ -99,7 +102,7 @@ export async function inviteLeadToApp(rc, lead) {
         coGoogle: !!(rc.env.GOOGLE_CLIENT_ID && rc.env.GOOGLE_CLIENT_SECRET),
       }),
     });
-    return { ok: true };
+    return { ok: !!ketMoi?.ok, reason: ketMoi?.error || null };
   } catch (err) {
     console.error('[invite] khong moi duoc lead vao webapp', err?.stack || err);
     return { ok: false, reason: 'loi' };
@@ -147,7 +150,18 @@ export async function guiThuDaThanhToan(rc, order, userId) {
     }
 
     const soTien = `${Number(order.paid_amount || order.amount || 0).toLocaleString('vi-VN')}đ`;
-    await sendMail(rc, {
+    // PHAI DOC KET QUA GUI, dung `await` roi `return { ok: true }`.
+    //
+    // Ban cu vut ket qua cua sendMail di va luon bao thanh cong. Ma sendMail
+    // tra ve { ok: false, error: 'chua_cau_hinh_email' } khi thieu
+    // RESEND_API_KEY - dung tinh trang cua he thong hom nay. Nen moi nguoi goi
+    // deu tin la thu da di: webhook ghi log thanh cong, va nut xac nhan tay
+    // trong trang quan tri bao voi chi Thanh rang khach da nhan duoc link vao
+    // lop, trong khi khong mot buc thu nao roi khoi may chu.
+    //
+    // Ham anh em ngay duoi (guiLaiThuMoi) doc ket qua dung tu dau. Hai ham
+    // canh nhau, mot thanh that mot khong.
+    const ket = await sendMail(rc, {
       to: email,
       template: 'order_paid',
       ...renderMail('order_paid', {
@@ -160,7 +174,7 @@ export async function guiThuDaThanhToan(rc, order, userId) {
         coGoogle: !!(rc.env.GOOGLE_CLIENT_ID && rc.env.GOOGLE_CLIENT_SECRET),
       }),
     });
-    return { ok: true };
+    return { ok: !!ket?.ok, reason: ket?.error || null };
   } catch (err) {
     console.error('[invite] khong gui duoc thu da thanh toan', err?.stack || err);
     return { ok: false, reason: 'loi' };

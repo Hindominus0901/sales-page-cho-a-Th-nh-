@@ -8,7 +8,7 @@ import { loadUser } from '../auth/guard.js';
 import { kitStatus, kitLists, kitTest, kitBackfill } from './admin-kit.js';
 import { fulfilOrder } from '../commerce/fulfil.js';
 import { traoThuongTheoLuot } from '../commerce/thuong-gioi-thieu.js';
-import { guiLaiThuMoi } from '../auth/invite.js';
+import { guiLaiThuMoi, guiThuDaThanhToan } from '../auth/invite.js';
 
 /**
  * Mot dong du lieu hong (vd tu dot di tru) khong duoc lam sap ca trang danh
@@ -301,19 +301,48 @@ async function markPaid(rc) {
     // Chi admin bam tay moi duoc hoi sinh don da huy; webhook thi khong.
     allowCancelled: true,
   });
+  let thu = null;
   if (changed) {
     await rc.affiliates.createCommission(order);
     // Xac nhan tay cung phai mo quyen y het webhook, khong thi don xac nhan tay
     // se la mot loai don "da tra tien nhung khong xem duoc gi".
-    await fulfilOrder(rc, (await rc.store.getOrderByCode(code)) || order)
-      .catch((err) => console.warn('[admin] khong mo duoc quyen', code, err?.message || err));
+    const donMoi = (await rc.store.getOrderByCode(code)) || order;
+    const moQuyen = await fulfilOrder(rc, donMoi)
+      .catch((err) => {
+        console.warn('[admin] khong mo duoc quyen', code, err?.message || err);
+        return null;
+      });
+
+    // VA PHAI GUI THU. Day tung la viec DUY NHAT duong xac nhan tay thieu so
+    // voi webhook - va vi webhook chua duoc noi (thieu BANK_WEBHOOK_SECRET),
+    // moi don that deu di qua day. Tuc la: khach chuyen tien, admin bam xac
+    // nhan, va khach khong nhan duoc GI CA - khong bien nhan, khong link dat
+    // mat khau, khong biet duong nao vao lop. Chu thich o Revenue.jsx con
+    // khang dinh duong nay "chay dung luong y het webhook", nen khong ai di
+    // kiem lai.
+    //
+    // CHO THU GUI XONG roi moi tra loi, khac webhook (no phai tra loi SePay
+    // trong vai giay nen gui o nen). O day nguoi bam la con nguoi dang ngoi
+    // nhin man hinh: ho can biet thu da di hay chua gui duoc vi chua cau hinh
+    // email - chu khong phai mot dau tich xanh roi thoi.
+    thu = await guiThuDaThanhToan(rc, donMoi, moQuyen?.userId || null)
+      .catch((err) => {
+        console.warn('[admin] khong gui duoc thu', code, err?.message || err);
+        return { ok: false, reason: 'loi' };
+      });
   }
-  await rc.store.audit('order.mark_paid', code, { changed, by: 'admin' }, rc.ip);
+  await rc.store.audit('order.mark_paid', code, { changed, by: 'admin', thu: thu?.ok || false }, rc.ip);
   if (changed) {
     notifyAsync(rc, 'order.paid', `Xác nhận thủ công ${code} - ${order.customer_name}`, { code });
   }
 
-  return json({ ok: true, changed, order: await rc.store.getOrderByCode(code) });
+  return json({
+    ok: true,
+    changed,
+    thu_da_gui: !!thu?.ok,
+    thu_ly_do: thu?.ok ? null : (thu?.reason || null),
+    order: await rc.store.getOrderByCode(code),
+  });
 }
 
 async function cancel(rc) {
