@@ -180,7 +180,9 @@ if (args[0] === 'deploy') {
 
 const child = spawn('npx', ['wrangler', ...args], {
   cwd: ROOT,
-  stdio: 'inherit',
+  // stdout van 'inherit' de thanh tien trinh cua wrangler chay nhu thuong.
+  // Rieng stderr phai 'pipe' thi moi doc duoc loi - xem goiYQuyen() ben duoi.
+  stdio: ['inherit', 'inherit', 'pipe'],
   shell: true,
   env: {
     ...process.env,
@@ -191,4 +193,46 @@ const child = spawn('npx', ['wrangler', ...args], {
   },
 });
 
-child.on('exit', (code) => process.exit(code ?? 1));
+// Ghi thang ra man hinh NGAY khi nhan duoc, roi moi gom lai. Khong doi den luc
+// thoat moi in - nguoi dung phai thay loi dung luc no xay ra, y nhu truoc.
+let loi = '';
+child.stderr.on('data', (khuc) => {
+  process.stderr.write(khuc);
+  loi += khuc.toString();
+});
+
+/**
+ * Loi 7403 khong tu noi ra cach sua, va no lam mat mot luot chay that.
+ *
+ * Cloudflare tra ve: "The given account is not valid or is not authorized to
+ * access this service [code: 7403]". Doc cau do thi tuong la SAI TAI KHOAN, nen
+ * nguoi ta di kiem lai CLOUDFLARE_ACCOUNT_ID - ma ID thi dang dung. Thu that
+ * su thieu la QUYEN D1 tren token: mau "Edit Cloudflare Workers" khong phai luc
+ * nao cung kem quyen do.
+ *
+ * .env.example:106-107 da doan truoc duoc dieu nay ("thuong la D1:Edit"), nhung
+ * cho biet nam xa cho vap. Day la cho vap.
+ */
+function goiYQuyen() {
+  if (!/7403|not authorized to access this service/i.test(loi)) return;
+  console.error('');
+  console.error('─────────────────────────────────────────────────────────────');
+  console.error('Loi 7403 o tren KHONG phai do sai CLOUDFLARE_ACCOUNT_ID.');
+  console.error('Duong dan trong loi da tro dung tai khoan va dung database,');
+  console.error('nghia la .env doc duoc roi. Thu thieu la QUYEN tren token.');
+  console.error('');
+  console.error('Dashboard -> My Profile -> API Tokens -> token dang dung -> Edit:');
+  console.error('');
+  console.error('  1. Permissions      them dong:  Account · D1 · Edit');
+  console.error('  2. Account Resources phai gom dung tai khoan chua ten mien.');
+  console.error('     La thanh vien nhieu tai khoan Cloudflare ma chon nham');
+  console.error('     luc tao token thi loi cung ra dung dong 7403 nay.');
+  console.error('');
+  console.error('Sua quyen thuong GIU NGUYEN chuoi token, khong phai dan lai .env.');
+  console.error('─────────────────────────────────────────────────────────────');
+}
+
+child.on('exit', (code) => {
+  if (code) goiYQuyen();
+  process.exit(code ?? 1);
+});
