@@ -473,11 +473,19 @@ function ChallengeDetail({ challenge, me, participants, onBack }) {
         });
         return;
       }
+      // `tu_duyet_bat` = cong tac 'st-tu-duyet' ben may chu. Khong doc no thi
+      // cau duoi hua "duoc tinh diem ngay" ca khi ban to chuc da TAT tu duyet -
+      // luc do bo sung link xong van phai cho nguoi duyet, va loi hua do sai.
+      const nhacThieu = d?.con_thieu?.length ? `Bổ sung ${d.con_thieu.join(' và ')}` : '';
       toast({
         title: "Đã lưu bài nộp",
-        description: d?.con_thieu?.length
-          ? `Bổ sung ${d.con_thieu.join(' và ')} là được tính điểm ngay.`
-          : "Bài của bạn đang chờ được duyệt.",
+        description: d?.tu_duyet_bat === false
+          ? (nhacThieu
+            ? `${nhacThieu} rồi chờ ban tổ chức duyệt giúp bạn nhé.`
+            : "Bài của bạn đang chờ ban tổ chức duyệt.")
+          : (nhacThieu
+            ? `${nhacThieu} là được tính điểm ngay.`
+            : "Bài của bạn đang chờ được duyệt."),
       });
     },
     onError: (err) => toast({ title: "Không nộp được bài", description: err.message, variant: "destructive" }),

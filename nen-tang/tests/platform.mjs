@@ -1795,6 +1795,53 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   // dung kieu hong ma ca migration nay sinh ra de dap.
   sql(`INSERT INTO app_settings (key,value,type,created_date,updated_date) VALUES ('st-ngay-khong-bai-tap','[]','json',datetime('now'),datetime('now')) ON CONFLICT(key) DO UPDATE SET value='[]', type='json'`);
 
+  // --- TAT tu duyet: bai phai nam cho, VA loi hua phai doi theo ------------
+  //
+  // 'st-tu-duyet' la cong tac van hanh that tu migration 0018. Khi ban to chuc
+  // tat no, ba thu phai dung cung luc:
+  //   1. nop DU link van KHONG duoc tu duyet
+  //   2. bai nam 'pending' - co that trong bang, khong phai chi trong cau tra ve
+  //   3. may chu NOI RA rang tu duyet dang tat (`tu_duyet_bat`)
+  //
+  // Diem 3 khong phai cho dep. Thieu no thi Challenges.jsx van in "Bo sung
+  // ... la duoc tinh diem NGAY" - dung khi tu duyet bat, nhung thanh mot loi
+  // hua khong giu duoc ngay khi tat, vi luc do bo sung xong van phai cho nguoi
+  // duyet. Giao dien chi noi that duoc neu may chu chiu noi.
+  console.log('\nN3. Tat tu duyet: bai nam cho quan tri vien');
+
+  sql(`INSERT INTO app_settings (key,value,type,created_date,updated_date) VALUES ('st-tu-duyet','false','bool',datetime('now'),datetime('now')) ON CONFLICT(key) DO UPDATE SET value='false', type='bool'`);
+  sql(`DELETE FROM challenge_submissions WHERE challenge_id = '${idTTL}'`);
+
+  const nopDuLink = await alice.call('POST', '/api/functions/submitChallengeDay', {
+    challenge_id: idTTL, day: 3, content: 'Nop du ca hai link',
+    link: 'https://drive.google.com/file/abc',
+    file_url: 'https://facebook.com/groups/x/posts/2',
+  });
+  check('tat tu duyet: nop DU link van khong duoc tu duyet',
+    nopDuLink.status === 200 && nopDuLink.data?.tu_duyet === false,
+    { status: nopDuLink.status, tu_duyet: nopDuLink.data?.tu_duyet });
+  check('tat tu duyet: khong con thieu gi (nen neu do la ly do thi da duyet)',
+    !nopDuLink.data?.con_thieu, nopDuLink.data?.con_thieu);
+  check('tat tu duyet: may chu noi ro cong tac dang tat',
+    nopDuLink.data?.tu_duyet_bat === false, nopDuLink.data?.tu_duyet_bat);
+
+  const dangCho = sql(`SELECT status FROM challenge_submissions WHERE challenge_id='${idTTL}' AND day=3`);
+  check('tat tu duyet: bai nam cho duyet THAT trong bang',
+    dangCho[0]?.status === 'pending', dangCho);
+
+  // Bat lai thi phai tu duyet nhu cu - chung minh cong tac that su dieu khien
+  // hanh vi, chu khong phai bai tren tinh co xanh.
+  sql(`INSERT INTO app_settings (key,value,type,created_date,updated_date) VALUES ('st-tu-duyet','true','bool',datetime('now'),datetime('now')) ON CONFLICT(key) DO UPDATE SET value='true', type='bool'`);
+  sql(`DELETE FROM challenge_submissions WHERE challenge_id = '${idTTL}'`);
+  const nopLaiKhiBat = await alice.call('POST', '/api/functions/submitChallengeDay', {
+    challenge_id: idTTL, day: 3, content: 'Nop lai khi da bat tu duyet',
+    link: 'https://drive.google.com/file/abc',
+    file_url: 'https://facebook.com/groups/x/posts/3',
+  });
+  check('bat lai tu duyet: nop du link la duoc duyet ngay',
+    nopLaiKhiBat.data?.tu_duyet === true && nopLaiKhiBat.data?.tu_duyet_bat === true,
+    { tu_duyet: nopLaiKhiBat.data?.tu_duyet, tu_duyet_bat: nopLaiKhiBat.data?.tu_duyet_bat });
+
   sql(`DELETE FROM challenge_submissions WHERE challenge_id = '${idTTL}'`);
   sql(`DELETE FROM challenge_members WHERE challenge_id = '${idTTL}'`);
   sql(`DELETE FROM challenge_day_tasks WHERE challenge_id = '${idTTL}'`);

@@ -509,6 +509,11 @@ async function submitChallengeDay(rc, svc) {
   // Da duyet tu truoc: chi luu noi dung moi, khong chay lai duong tu duyet
   // (no se bao tin "bai da dat" them mot lan nua cho mot viec da xong).
   if (daDuyet) {
+    // CO Y khong kem `tu_duyet_bat` o day: doan nay chay TRUOC khi doc cai dat,
+    // va giao dien re nhanh theo `da_duyet_truoc_do` nen khong bao gio doc toi
+    // cong tac tu duyet. Ai them cho doc no o nhanh nay thi phai chuyen
+    // readSettings len tren, dung mac dinh `undefined` - xem chu thich o duong
+    // ve tu duyet ben duoi.
     return json({ ok: true, submission, tu_duyet: false, da_duyet_truoc_do: true });
   }
 
@@ -565,7 +570,11 @@ async function submitChallengeDay(rc, svc) {
       reviewedBy: 'tu-dong',
     });
     const daDuyet = await svc.ChallengeSubmission.get(submission.id);
-    return json({ ok: true, submission: daDuyet, tu_duyet: true, awarded });
+    // `tu_duyet_bat` phai co o CA HAI duong ve, khong chi duong "chua duyet".
+    // Mot truong mang nghia "cong tac dang bat hay tat" ma luc co luc khong thi
+    // ben doc nhan `undefined` - va `undefined` la falsy, tuc la doc thanh
+    // "dang TAT". Day dung la kieu hong ma chinh truong nay sinh ra de dap.
+    return json({ ok: true, submission: daDuyet, tu_duyet: true, awarded, tu_duyet_bat: true });
   }
 
   return json({
@@ -573,6 +582,12 @@ async function submitChallengeDay(rc, svc) {
     submission,
     tu_duyet: false,
     con_thieu: thieu.length ? thieu : null,
+    // Giao dien PHAI biet cong tac 'st-tu-duyet' dang bat hay tat, neu khong no
+    // hua sai. Khi thieu link, Challenges.jsx noi "Bo sung ... la duoc tinh
+    // diem NGAY" - cau do chi dung khi tu duyet dang bat. Tat tu duyet roi thi
+    // bo sung link xong van phai cho admin duyet, va loi hua "ngay" khong giu
+    // duoc. Mot con so hay mot loi hua sai con te hon khong noi gi.
+    tu_duyet_bat: batTuDuyet,
   });
 }
 
