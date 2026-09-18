@@ -96,6 +96,37 @@ async function bridgeLead(rc, userId, email) {
       'SELECT id, phone_e164, full_name FROM leads WHERE lower(email) = lower(?) ORDER BY id ASC LIMIT 1',
       [email]);
     if (!lead) return;
+
+    // MOT NGUOI CO HAI TAI KHOAN: day la KHOANH KHAC DUY NHAT nhin ra duoc.
+    //
+    // Luc dang ky he thong chua co so dien thoai nen khong the doi chieu. Nhung
+    // neu dong lead nay DA thuoc ve mot tai khoan khac thi chac chan la mot
+    // nguoi dang co tai khoan thu hai: ho dien form bang email A (sinh tai
+    // khoan A), roi dang ky lai bang email B. upsertLead nhan ra ho theo SO
+    // DIEN THOAI nen van la mot lead, chi doi email sang B.
+    //
+    // Truoc day cau UPDATE ben duoi vo rang buoc UNIQUE cua legacy_lead_id va
+    // loi bi nuot o catch - tai khoan thu hai van duoc tao, khong mot dau vet
+    // nao. Voi mot cuoc thi co giai thuong va mot kho qua tru theo so luong,
+    // do la duong farm re nhat he thong.
+    //
+    // KHONG CHAN TAI KHOAN: nguoi that doi email la chuyen binh thuong, va
+    // khoa nham mot hoc vien da tra tien te hon nhieu so voi de lot mot nguoi
+    // to mo. Ghi vao nhat ky de trang quan tri goi ten duoc - xem duong
+    // /api/admin/tai-khoan-trung.
+    const chuCu = await rc.store.get(
+      'SELECT id, email FROM users WHERE legacy_lead_id = ? AND id <> ?', [lead.id, userId]);
+    if (chuCu) {
+      await rc.store.audit('user.trung_tai_khoan', String(lead.id), {
+        tai_khoan_cu: chuCu.id,
+        email_cu: chuCu.email,
+        tai_khoan_moi: userId,
+        email_moi: email,
+        so_dien_thoai: lead.phone_e164 || null,
+      }, rc.ip).catch(() => {});
+      return;
+    }
+
     await rc.store.run(
       `UPDATE users SET legacy_lead_id = ?,
          phone_e164 = COALESCE(NULLIF(phone_e164, ''), ?),

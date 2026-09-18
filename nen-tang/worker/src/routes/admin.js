@@ -796,6 +796,80 @@ async function adminLeaderboard(rc) {
   return json({ ok: true, contest: rc.rewards.contestInfo(), tiers: rc.rewards.TIERS, items });
 }
 
+/**
+ * GET /api/admin/tai-khoan-trung - nhung nguoi co dau hieu co NHIEU HON MOT
+ * tai khoan.
+ *
+ * VI SAO CAN: `users.phone_e164` co UNIQUE, nhung no chi duoc dat khi tai
+ * khoan noi duoc vao mot dong lead cung email (bridgeLead). Ai tu dang ky
+ * bang email moi thi cot do la NULL - ma SQLite cho phep bao nhieu NULL cung
+ * duoc trong mot cot UNIQUE. Nen mot nguoi dung ba email la co ba tai khoan
+ * day du: cung tich XP, cung leo bang xep hang, cung doi qua.
+ *
+ * Voi mot cuoc thi co giai thuong va mot kho qua tru theo so luong, do la
+ * duong farm re nhat he thong - va truoc duong dan nay, khong mot man hinh
+ * nao cho chi Thanh nhin thay.
+ *
+ * BA TIN HIEU, do tin cay giam dan. Khong tu ket luan ai gian lan: chi gom
+ * nhom lai de mot con nguoi nhin va quyet dinh.
+ *
+ *   1. `dau_vet`  - da bat qua tan tay: bridgeLead thay dong lead nay DA thuoc
+ *                   mot tai khoan khac (ghi vao audit_log). Chac chan nhat.
+ *   2. `sdt`      - hai tai khoan cung 8 chu so cuoi cua so dien thoai.
+ *   3. `ten_ip`   - hai lead cung TEN va cung IP luc dien form. Yeu nhat: ca
+ *                   nha dung chung mot mang la trung IP, nen chi dung de goi y.
+ */
+async function taiKhoanTrung(rc) {
+  const { store } = rc;
+  const gioiHan = intParam(rc.url, 'limit', 100, 500);
+
+  const [dauVet, theoSdt, theoTenIp] = await Promise.all([
+    store.all(
+      `SELECT target AS lead_id, meta_json, created_at FROM audit_log
+        WHERE action = 'user.trung_tai_khoan'
+        ORDER BY id DESC LIMIT ?`, [gioiHan]).catch(() => []),
+
+    // Cung 8 chu so cuoi - hai ben luu khac dinh dang (+84... va 09...).
+    store.all(
+      `SELECT substr(replace(replace(phone_e164,'+',''),' ',''), -8) AS duoi_so,
+              COUNT(*) AS so_tai_khoan,
+              GROUP_CONCAT(id)    AS ids,
+              GROUP_CONCAT(email) AS emails
+         FROM users
+        WHERE phone_e164 IS NOT NULL AND phone_e164 <> ''
+        GROUP BY duoi_so HAVING COUNT(*) > 1
+        ORDER BY so_tai_khoan DESC LIMIT ?`, [gioiHan]).catch(() => []),
+
+    store.all(
+      `SELECT lower(trim(full_name)) AS ten, ip,
+              COUNT(*) AS so_lead,
+              GROUP_CONCAT(email) AS emails
+         FROM leads
+        WHERE ip IS NOT NULL AND ip <> '' AND trim(full_name) <> ''
+        GROUP BY ten, ip HAVING COUNT(*) > 1
+        ORDER BY so_lead DESC LIMIT ?`, [gioiHan]).catch(() => []),
+  ]);
+
+  const doc = (r) => { try { return JSON.parse(r.meta_json || '{}'); } catch { return {}; } };
+
+  return json({
+    ok: true,
+    dau_vet: dauVet.map((r) => ({ lead_id: r.lead_id, luc: r.created_at, ...doc(r) })),
+    theo_so_dien_thoai: theoSdt.map((r) => ({
+      duoi_so: r.duoi_so,
+      so_tai_khoan: Number(r.so_tai_khoan),
+      ids: String(r.ids || '').split(','),
+      emails: String(r.emails || '').split(','),
+    })),
+    theo_ten_va_ip: theoTenIp.map((r) => ({
+      ten: r.ten,
+      ip: r.ip,
+      so_lead: Number(r.so_lead),
+      emails: String(r.emails || '').split(','),
+    })),
+  });
+}
+
 /** GET /api/admin/referrals/pending - cac luot dang cho duyet (nghi gian lan). */
 async function pendingReferrals(rc) {
   const items = await rc.store.all(`
@@ -935,6 +1009,7 @@ const ROUTES = [
   { method: 'GET', pattern: /^\/api\/admin\/commissions$/, handler: listCommissions },
   { method: 'GET', pattern: /^\/api\/admin\/leaderboard$/, handler: adminLeaderboard },
   { method: 'GET', pattern: /^\/api\/admin\/referrals\/pending$/, handler: pendingReferrals },
+  { method: 'GET', pattern: /^\/api\/admin\/tai-khoan-trung$/, handler: taiKhoanTrung },
   { method: 'GET', pattern: /^\/api\/admin\/ref-ma-la$/, handler: listMaLa },
   { method: 'POST', pattern: /^\/api\/admin\/trao-thuong-bu$/, handler: traoThuongBu },
   { method: 'POST', pattern: /^\/api\/admin\/ref-ma-la\/([A-Z0-9]+)\/gan$/i, handler: ganMaLa, params: ['ma'] },

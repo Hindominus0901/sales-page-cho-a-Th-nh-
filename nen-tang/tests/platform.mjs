@@ -593,6 +593,61 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
 
   // ---------------------------------------------------- gop hai he quan tri
   console.log('');
+  // ---------------------------------------------- MOT NGUOI, HAI TAI KHOAN
+  //
+  // `users.phone_e164` co UNIQUE nhung chi duoc dat khi tai khoan noi duoc vao
+  // mot dong lead cung email. Ai tu dang ky bang email moi thi cot do la NULL,
+  // ma SQLite cho phep bao nhieu NULL cung duoc trong cot UNIQUE. Nen mot nguoi
+  // dung ba email la co ba tai khoan day du: cung tich XP, cung leo bang xep
+  // hang, cung doi qua. Voi mot cuoc thi co giai thuong thi do la duong farm re
+  // nhat he thong.
+  //
+  // Luc dang ky he thong CHUA CO so dien thoai nen khong the doi chieu. Nhung
+  // co dung mot khoanh khac nhin ra duoc: khi dong lead da thuoc ve mot tai
+  // khoan khac. Truoc day cau UPDATE vo rang buoc UNIQUE va loi bi nuot o
+  // catch - tai khoan thu hai van duoc tao, khong mot dau vet nao.
+  console.log('\n10b. Mot nguoi co hai tai khoan');
+
+  const soChung = `+8498${String(Date.now()).slice(-7)}`;
+  const mailA = `trung-a-${Date.now()}@smoketest.local`;
+  const mailB = `trung-b-${Date.now()}@smoketest.local`;
+  sql(`INSERT INTO leads (full_name,email,phone,phone_e164,ip,created_at,updated_at) VALUES ('Nguoi Hai Tai Khoan','${mailA}','0981234567','${soChung}','1.2.3.4',datetime('now'),datetime('now'))`);
+  const leadChung = sql(`SELECT id FROM leads WHERE phone_e164='${soChung}'`)[0];
+
+  const idA = `u-trung-a-${Date.now()}`;
+  sql(`INSERT INTO users (id,email,email_verified,full_name,role,status,source,legacy_lead_id,created_date,updated_date) VALUES ('${idA}','${mailA}',1,'Nguoi Hai Tai Khoan','member','active','funnel',${leadChung.id},datetime('now'),datetime('now'))`);
+
+  // Nguoi do dang ky lai bang email khac. upsertLead nhan ra ho theo SO DIEN
+  // THOAI nen van la mot lead, chi doi email sang B.
+  sql(`UPDATE leads SET email='${mailB}' WHERE id=${leadChung.id}`);
+  // Trinh duyet MOI hoan toan: nguoi do dang ky lai nhu mot nguoi la.
+  const trinhDuyetB = newBrowser();
+  await trinhDuyetB.call('GET', '/api/auth/me');   // xin cookie chong CSRF
+  const dangKyLai = await trinhDuyetB.call('POST', '/api/auth/register', { email: mailB, password: 'MatKhau#2026' });
+  check('dang ky bang email thu hai van di qua (khong khoa oan nguoi that)',
+    dangKyLai.status === 200, dangKyLai.data);
+
+  const idB = sql(`SELECT id, legacy_lead_id FROM users WHERE email='${mailB}'`)[0];
+  check('tai khoan thu hai KHONG chiem dong lead cua tai khoan cu',
+    idB && (idB.legacy_lead_id === null || idB.legacy_lead_id === undefined), idB);
+
+  const dauVet = sql(`SELECT meta_json FROM audit_log WHERE action='user.trung_tai_khoan' AND target='${leadChung.id}'`);
+  check('he thong GHI LAI dau vet mot nguoi co hai tai khoan',
+    dauVet.length === 1, dauVet.map((r) => r.meta_json));
+
+  const dsTrung = await admin.call('GET', '/api/admin/tai-khoan-trung');
+  check('trang quan tri doc duoc danh sach tai khoan nghi trung',
+    dsTrung.status === 200 && Array.isArray(dsTrung.data?.dau_vet), dsTrung.data);
+  check('nguoi vua bat duoc co trong danh sach',
+    (dsTrung.data?.dau_vet || []).some((r) => r.email_moi === mailB), dsTrung.data?.dau_vet);
+  check('thanh vien thuong KHONG doc duoc danh sach nay',
+    [401, 403, 503].includes((await alice.call('GET', '/api/admin/tai-khoan-trung')).status));
+
+  sql(`DELETE FROM audit_log WHERE action='user.trung_tai_khoan' AND target='${leadChung.id}'`);
+  sql(`DELETE FROM credentials WHERE user_id IN ('${idA}', '${idB?.id}')`);
+  sql(`DELETE FROM users WHERE email IN ('${mailA}','${mailB}')`);
+  sql(`DELETE FROM leads WHERE id=${leadChung.id}`);
+
   console.log('11. Khu vuc quan tri funnel');
   // khoan nen tang co role=admin van bi 401 - cong quan tri moi khong doc duoc
   // so lieu doanh thu. Gio mot lan dang nhap la vao duoc ca hai.
@@ -939,18 +994,33 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const entsAgain = sql(`SELECT id FROM entitlements WHERE user_id='${alice.id}' AND ref='${SKU_TEST}'`);
   check('xac nhan lai lan hai KHONG tao quyen trung', entsAgain.length === 1, entsAgain.length);
 
-  // VA NHAT KY PHAI NOI THAT LA LAN HAI MO DUOC 0 QUYEN.
+  // NHAT KY PHAI DEM DUNG SO QUYEN THUC SU MO DUOC.
   //
-  // `store.run()` tra ve { changes, lastId } - LUON truthy - nen `if (res)`
-  // trong fulfilOrder dem ca nhung lan INSERT OR IGNORE bo qua. Nhat ky
-  // `order.fulfilled` ghi "granted: 2" cho mot lan chay mo 0 quyen, va do la
-  // dong duy nhat de doi soat xem ai da duoc mo gi.
+  // `store.run()` tra ve { changes, lastId } - LUON truthy khi khong nem loi -
+  // nen `if (res)` trong fulfilOrder dem ca nhung lan INSERT OR IGNORE bo qua
+  // vi nguoi do DA CO quyen. Nhat ky `order.fulfilled` la dong DUY NHAT de doi
+  // soat xem ai da duoc mo gi, nen mot con so sai o do la sai o cho khong con
+  // gi de doi chieu.
+  //
+  // Canh xay ra that: nguoi mua GOI THU HAI, hoac admin da mo tay truoc roi.
+  // (Xac nhan lai cung mot don thi khong chay lai fulfilOrder - markPaid chi
+  // goi no khi `changed`, nen duong do khong lo ra loi nay.)
   //
   // Cung mot ho voi loi `?.meta?.changes` tung lam MOI luot doi qua bao het hang.
-  const nhatKyMo = sql(`SELECT meta_json FROM audit_log WHERE action='order.fulfilled' AND target='${orderCode}' ORDER BY id`);
-  check('nhat ky ghi DUNG so quyen moi mo duoc o lan hai (0)',
-    nhatKyMo.length >= 2 && JSON.parse(nhatKyMo[nhatKyMo.length - 1].meta_json || '{}').granted === 0,
+  const maDonLai = `VIPLAI${Date.now()}`.slice(0, 20);
+  sql(`INSERT INTO orders (code,product_sku,product_name,amount,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDonLai}','${SKU_TEST}','Ve VIP',399000,'pending','${maDonLai}','Alice','${alice.email}','0912345678',datetime('now'),datetime('now'))`);
+  // Alice DA CO san quyen `package` tu don truoc (vua mua o tren).
+  const daCoQuyen = sql(`SELECT COUNT(*) AS n FROM entitlements WHERE user_id='${alice.id}' AND kind='package' AND ref='${SKU_TEST}'`);
+  check('alice da co san quyen truoc khi mo lan hai', Number(daCoQuyen[0]?.n) === 1, daCoQuyen[0]);
+
+  await admin.call('POST', `/api/admin/orders/${maDonLai}/paid`, { amount: 399000 });
+  const nhatKyMo = sql(`SELECT meta_json FROM audit_log WHERE action='order.fulfilled' AND target='${maDonLai}'`);
+  check('nhat ky ghi 0 quyen moi khi nguoi do DA CO du quyen',
+    nhatKyMo.length === 1 && JSON.parse(nhatKyMo[0].meta_json || '{}').granted === 0,
     nhatKyMo.map((r) => r.meta_json));
+
+  sql(`DELETE FROM commissions WHERE order_id IN (SELECT id FROM orders WHERE code='${maDonLai}')`);
+  sql(`DELETE FROM orders WHERE code='${maDonLai}'`);
 
   sql(`DELETE FROM entitlements WHERE user_id='${alice.id}'`);
   sql(`DELETE FROM commissions WHERE order_id IN (SELECT id FROM orders WHERE code='${orderCode}')`);
