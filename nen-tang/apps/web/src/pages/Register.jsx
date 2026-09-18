@@ -11,6 +11,7 @@ import { useKhaNang } from "@/lib/useKhaNang";
 import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import BRAND from "@/brand.generated.js";
 
 export default function Register() {
   const { khaNang } = useKhaNang();
@@ -72,6 +73,69 @@ export default function Register() {
   const handleGoogle = () => {
     base44.auth.loginWithProvider("google", safeReturnTo());
   };
+
+  // Khong gui duoc thu thi KHONG duoc mo form dang ky.
+  //
+  // Dang ky o day bat buoc qua ma OTP gui bang email (auth.mjs kiem: "dung mat
+  // khau nhung chua xac thuc email -> 403"). Thieu RESEND_API_KEY thi
+  // mail/resend.js:49 danh dau thu 'failed' va tra ve
+  // {ok:false, error:'chua_cau_hinh_email'} - khong mot buc thu nao di.
+  //
+  // Nhung `register` van tra 200, nen man hinh cu nhay sang o nhap ma va bao
+  // "Chung toi da gui ma toi <email>". Nguoi that ngoi doi mot buc thu khong
+  // bao gio toi, khong mot dong nao noi vi sao. Day dung la kieu hong ma co che
+  // co kha nang (capabilities) duoc dung ra de chan - ba trang dang nhap deu da
+  // doc `khaNang.google` de an nut Google, rieng `khaNang.email` thi chua ai doc.
+  //
+  // Nguoi DA MUA van vao lop duoc ma khong can email: /api/order/:ma/vao-lop
+  // (tuong-thich.js:177) tra thang link dat mat khau ra man hinh sau khi kiem
+  // ma don + so dien thoai. Nen chi ra duong do thay vi de ho mac ket.
+  if (khaNang.email === false) {
+    return (
+      <AuthLayout
+        icon={Mail}
+        title="Chưa tự đăng ký được"
+        subtitle="Hệ thống gửi email chưa được cấu hình, nên chúng tôi chưa gửi được mã xác nhận."
+      >
+        <div className="space-y-4">
+          <div className="rounded-lg bg-muted p-4 text-sm leading-relaxed">
+            <p className="font-semibold">Anh chị đã mua khoá học rồi?</p>
+            <p className="mt-1 text-muted-foreground">
+              Vào lớp được ngay, không cần email — chỉ cần mã đơn và số điện thoại
+              đã dùng lúc đăng ký.
+            </p>
+            <a
+              href={`${BRAND.salesOrigin}/tra-cuu`}
+              className="mt-3 inline-block font-medium text-primary underline underline-offset-4"
+            >
+              Tìm lại đơn và lấy link vào lớp
+            </a>
+          </div>
+
+          {BRAND.supportUrl && (
+            <p className="text-center text-sm text-muted-foreground">
+              Cần giúp thêm?{' '}
+              <a
+                href={BRAND.supportUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-primary underline underline-offset-4"
+              >
+                Nhắn {BRAND.channelLabel} cho {BRAND.hostName}
+              </a>
+            </p>
+          )}
+
+          <p className="text-center text-sm text-muted-foreground">
+            Đã có mật khẩu?{' '}
+            <Link to="/login" className="font-medium text-primary underline underline-offset-4">
+              Đăng nhập
+            </Link>
+          </p>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   if (showOtp) {
     return (
