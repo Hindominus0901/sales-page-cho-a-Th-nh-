@@ -114,6 +114,20 @@ const ANSWERS = {
   check('link nhom Zalo khong con la cho giu cho',
     !/\/g\/chua-co\/?$/.test(cfg.data?.zalo?.group_url || ''), cfg.data?.zalo?.group_url);
 
+  // CO "THANH TOAN TU DONG" phai noi dung su that cua may chu.
+  //
+  // Man hinh mua hang hua "quyen mo tu dong sau 1-2 phut". Cau do chi dung khi
+  // webhook ngan hang da noi (BANK_WEBHOOK_SECRET). Chua noi thi webhook tu
+  // choi MOI cu goi va khong don nao tu xac nhan - nguoi VUA CHUYEN TIEN doc
+  // cau hua do roi ngoi doi mot thu khong bao gio toi.
+  //
+  // Do doi chieu voi chinh bien moi truong dang chay, khong do mot gia tri co
+  // dinh: bo test nay chay duoc ca khi da nap khoa lan chua.
+  const coHook = !!process.env.BANK_WEBHOOK_SECRET;
+  check('/api/config noi dung su that ve thanh toan tu dong',
+    cfg.data?.capabilities?.thanh_toan_tu_dong === coHook,
+    { may_chu_bao: cfg.data?.capabilities?.thanh_toan_tu_dong, thuc_te: coHook });
+
   // Danh sach trang lay tu brand.json chu khong viet cung: thuong hieu bo trang
   // /vip hay doi duong dan la bo test cu do ma khong lien quan gi den san pham.
   const TRANG = Object.values(BRAND_TEST.funnel?.pages || {}).map((t) => t.route);

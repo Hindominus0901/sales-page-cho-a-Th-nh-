@@ -14,7 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, TrendingUp, Users, CheckCircle2, Trophy, Share2,
   GraduationCap, Gift, Briefcase, Settings2, LayoutGrid, ShieldAlert, Mail, CalendarDays,
-  Award, Bell, ScrollText, ShoppingBag, Crown, ListChecks,
+  Award, Bell, ScrollText, ShoppingBag, Crown, ListChecks, MessagesSquare,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
@@ -37,6 +37,10 @@ export const ADMIN_NAV = [
   // trong migration. Khi Dashboard bao "chua co loai hoat dong nao duoc mo"
   // thi truoc day khong co cai nut nao trong ca san pham de xu ly.
   { key: 'activityTypes', to: '/admin/activity-types', label: 'Loại hoạt động', icon: ListChecks },
+  // Co che an bai (`posts.is_hidden`) da chay that tu lau - trang hoc vien loc
+  // theo no, may chu chan tim/binh luan tren bai da an - nhung khong man hinh
+  // nao bam duoc cai nut do. Quyen thi co, duong thi khong.
+  { key: 'congDong', to: '/admin/cong-dong', label: 'Cộng đồng', icon: MessagesSquare },
   { key: 'notify', to: '/admin/notify', label: 'Thông báo', icon: Bell },
   { key: 'staff', to: '/admin/staff', label: 'Nhân sự', icon: Briefcase },
   { key: 'events', to: '/admin/events', label: 'Lịch & sự kiện', icon: CalendarDays },

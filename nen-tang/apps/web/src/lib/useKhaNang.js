@@ -17,7 +17,9 @@ import { base44 } from '@/api/base44Client';
  * di neu sai - la mot cu nhay giao dien kho chiu, va te hon la mot cu bam vao
  * thu khong chay.
  */
-const MAC_DINH = { google: false, email: false, uploads: false, ai: false };
+const MAC_DINH = {
+  google: false, email: false, uploads: false, ai: false, thanh_toan_tu_dong: false,
+};
 
 export function useKhaNang() {
   const { data, isLoading } = useQuery({

@@ -8,7 +8,7 @@
  */
 import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, Loader2, Minus, Plus, Search, History, Trash2, Users2, ExternalLink, FileText } from 'lucide-react';
+import { KeyRound, Loader2, Minus, Plus, Search, History, Trash2, Users2, ExternalLink, FileText, IdCard } from 'lucide-react';
 import { base44, adminApi } from '@/api/base44Client';
 import { computeLevel } from '@/lib/gamification';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,7 @@ export default function Members() {
   const [suspendFor, setSuspendFor] = React.useState(null);
   const [lichSuCua, setLichSuCua] = React.useState(null);   // hoc vien dang xem so diem
   const [baiTapCua, setBaiTapCua] = React.useState(null);   // hoc vien dang xem bai tap
+  const [hoSoCua, setHoSoCua] = React.useState(null);      // hoc vien dang xem ho so day du
   const [doiMoi, setDoiMoi] = React.useState('');           // ten doi dang go de tao
 
   // 2000 = dung tran cua entity User o worker/src/entities/schema.js (LIMITS).
@@ -342,6 +343,14 @@ export default function Members() {
                             </Button>
                             <Button
                               size="sm"
+                              variant="outline"
+                              className="rounded-full text-xs"
+                              onClick={() => setHoSoCua(u)}
+                            >
+                              <IdCard className="mr-1 h-3.5 w-3.5" /> Hồ sơ
+                            </Button>
+                            <Button
+                              size="sm"
                               variant={open ? 'default' : 'outline'}
                               className="rounded-full text-xs"
                               onClick={() => {
@@ -487,6 +496,7 @@ export default function Members() {
         )}
       </Panel>
 
+      <HoSoDialog user={hoSoCua} onClose={() => setHoSoCua(null)} />
       <SoDiemDialog user={lichSuCua} onClose={() => setLichSuCua(null)} />
       <BaiTapDialog user={baiTapCua} onClose={() => setBaiTapCua(null)} />
 
@@ -721,6 +731,182 @@ function BaiTapDialog({ user, onClose }) {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * HO SO DAY DU CUA MOT HOC VIEN - gom moi thu he thong biet ve mot nguoi.
+ *
+ * VI SAO CAN: du lieu deu co san trong database, nhung moi man hinh quan tri
+ * lai nhin theo MOT CHIEU KHAC: trang Duyet bai loc theo trang thai, trang Qua
+ * tang loc theo trang thai don, trang Su kien xem theo tung buoi, trang Huy
+ * hieu lay 300 dong moi nhat toan he thong. Khong cho nao nhin theo NGUOI.
+ *
+ * Nen khi mot hoc vien nhan "hom kia em dang bai, sao khong thay diem", chi
+ * Thanh khong co man hinh nao de tra. Va khi can biet ai da hoc toi dau thi
+ * cung khong co - du bang `lesson_progress` day du du lieu.
+ *
+ * Khong can API moi: `project()` trong entities/repo.js tra ve NGUYEN HANG cho
+ * staff, nen trang quan tri doc thang bang entity co san.
+ */
+function HoSoDialog({ user, onClose }) {
+  const bat = !!user;
+  const uid = user?.id;
+
+  // Bay useQuery viet THANG, khong goi qua mot ham trung gian: hook phai nam
+  // truc tiep trong than component, neu khong thi nguoi sua sau them mot dieu
+  // kien vao ham do la vo quy tac thu tu hook cua React - va loi kieu do hien
+  // ra nhu du lieu nhay lung tung chu khong nhu mot thong bao loi.
+  const quyen = useQuery({
+    queryKey: ['admin', 'ho-so', 'quyen', uid],
+    queryFn: () => base44.entities.Entitlement.filter({ user_id: uid }, '-granted_at', 100),
+    enabled: bat,
+  });
+  const hoatDong = useQuery({
+    queryKey: ['admin', 'ho-so', 'hoat-dong', uid],
+    queryFn: () => base44.entities.Activity.filter({ user_id: uid }, '-created_date', 50),
+    enabled: bat,
+  });
+  const tienDo = useQuery({
+    queryKey: ['admin', 'ho-so', 'tien-do', uid],
+    queryFn: () => base44.entities.LessonProgress.filter({ user_id: uid }, '-updated_date', 200),
+    enabled: bat,
+  });
+  const doiQua = useQuery({
+    queryKey: ['admin', 'ho-so', 'doi-qua', uid],
+    queryFn: () => base44.entities.Redemption.filter({ user_id: uid }, '-created_date', 50),
+    enabled: bat,
+  });
+  const huyHieu = useQuery({
+    queryKey: ['admin', 'ho-so', 'huy-hieu', uid],
+    queryFn: () => base44.entities.UserBadge.filter({ user_id: uid }, '-created_date', 50),
+    enabled: bat,
+  });
+  const giuCho = useQuery({
+    queryKey: ['admin', 'ho-so', 'giu-cho', uid],
+    queryFn: () => base44.entities.EventSignup.filter({ user_id: uid }, '-created_date', 50),
+    enabled: bat,
+  });
+  const thuThach = useQuery({
+    queryKey: ['admin', 'ho-so', 'thu-thach', uid],
+    queryFn: () => base44.entities.ChallengeMember.filter({ user_id: uid }, '-created_date', 20),
+    enabled: bat,
+  });
+
+  const dangTai = [quyen, hoatDong, tienDo, doiQua, huyHieu, giuCho, thuThach].some((x) => x.isLoading);
+
+  const ngay = (v) => (v ? String(v).slice(0, 10) : '—');
+
+  return (
+    <Dialog open={bat} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-h-[88vh] overflow-hidden rounded-2xl sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Hồ sơ — {user?.full_name || user?.email}</DialogTitle>
+          <DialogDescription>
+            Mọi thứ hệ thống biết về học viên này, gom về một chỗ.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1">
+          {/* Lien he: so dien thoai truoc day KHONG hien o bat ky man hinh quan
+              tri nao, du cot `phone_e164` co san. Can goi cho hoc vien la phai
+              di tra file CSV. */}
+          <section className="rounded-xl border border-border p-3">
+            <h4 className="mb-2 text-sm font-bold">Liên hệ &amp; tài khoản</h4>
+            <dl className="grid grid-cols-1 gap-x-4 gap-y-1.5 text-[13px] sm:grid-cols-2">
+              <Dong nhan="Email" giaTri={user?.email} />
+              <Dong nhan="Điện thoại" giaTri={user?.phone_e164 || user?.phone} />
+              <Dong nhan="Email đã xác thực" giaTri={user?.email_verified ? 'Rồi' : 'Chưa'} />
+              <Dong nhan="Vào hệ thống từ" giaTri={user?.source || '—'} />
+              <Dong nhan="Ngày tạo tài khoản" giaTri={ngay(user?.created_date)} />
+              <Dong nhan="Hoạt động gần nhất" giaTri={user?.last_activity_date || '—'} />
+              <Dong nhan="Chuỗi ngày hiện tại" giaTri={`${fmtNumber(user?.current_streak)} ngày`} />
+              <Dong nhan="Chuỗi dài nhất" giaTri={`${fmtNumber(user?.longest_streak)} ngày`} />
+            </dl>
+          </section>
+
+          {dangTai ? <LoadingBlock /> : (
+            <>
+              <Khoi
+                tieuDe="Quyền đang có"
+                rong="Chưa được mở quyền nào — nên chưa vào được khoá học nào cần mở khoá."
+                items={quyen.data}
+                ve={(e) => `${e.kind}: ${e.ref}${e.revoked_at ? ' (đã thu hồi)' : ''}`}
+              />
+              <Khoi
+                tieuDe="Đã học"
+                rong="Chưa mở bài giảng nào."
+                items={tienDo.data}
+                ve={(p) => `${p.lesson_id}${p.completed ? ' — đã xong' : ' — đang học'}`}
+              />
+              <Khoi
+                tieuDe="Hoạt động đã ghi nhận"
+                rong="Chưa ghi nhận hoạt động nào."
+                items={hoatDong.data}
+                ve={(a) => `${ngay(a.created_date)} · ${a.title || a.activity_type_name || a.activity_type_key} — ${a.status}`}
+              />
+              <Khoi
+                tieuDe="Thử thách"
+                rong="Chưa tham gia thử thách nào."
+                items={thuThach.data}
+                ve={(m) => `${m.challenge_name || m.challenge_id} — ${m.progress || 0} ngày${m.completed ? ' · đã hoàn thành' : ''}`}
+              />
+              <Khoi
+                tieuDe="Quà đã đổi"
+                rong="Chưa đổi quà nào."
+                items={doiQua.data}
+                ve={(r) => `${ngay(r.created_date)} · ${r.reward_name || r.reward_id} — ${r.status}`}
+              />
+              <Khoi
+                tieuDe="Huy hiệu"
+                rong="Chưa có huy hiệu nào."
+                items={huyHieu.data}
+                ve={(b) => `${b.badge_name || b.badge_id}`}
+              />
+              <Khoi
+                tieuDe="Buổi đã giữ chỗ"
+                rong="Chưa giữ chỗ buổi nào."
+                items={giuCho.data}
+                ve={(e) => `${e.event_title || e.event_id} — ${e.status}`}
+              />
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Dong({ nhan, giaTri }) {
+  return (
+    <div className="flex justify-between gap-2 border-b border-border/50 py-1 last:border-0">
+      <dt className="text-muted-foreground">{nhan}</dt>
+      <dd className="text-right font-medium">{giaTri || '—'}</dd>
+    </div>
+  );
+}
+
+/** Mot khoi trong ho so. Rong thi NOI RO Y NGHIA, khong chi de mot dong xam. */
+function Khoi({ tieuDe, items, ve, rong }) {
+  const ds = items || [];
+  return (
+    <section className="rounded-xl border border-border p-3">
+      <h4 className="mb-2 text-sm font-bold">
+        {tieuDe} <span className="font-normal text-muted-foreground">({fmtNumber(ds.length)})</span>
+      </h4>
+      {ds.length === 0 ? (
+        <p className="text-[12.5px] text-muted-foreground">{rong}</p>
+      ) : (
+        <ul className="space-y-1 text-[12.5px]">
+          {ds.slice(0, 30).map((it, i) => (
+            <li key={it.id || i} className="border-b border-border/40 pb-1 last:border-0">{ve(it)}</li>
+          ))}
+          {ds.length > 30 && (
+            <li className="pt-1 text-muted-foreground">… và {fmtNumber(ds.length - 30)} dòng nữa</li>
+          )}
+        </ul>
+      )}
+    </section>
   );
 }
 

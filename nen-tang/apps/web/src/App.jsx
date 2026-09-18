@@ -48,6 +48,7 @@ import Email from '@/pages/admin/Email';
 import AdminEvents from '@/pages/admin/AdminEvents';
 import AdminBadges from '@/pages/admin/AdminBadges';
 import AdminActivityTypes from '@/pages/admin/AdminActivityTypes';
+import AdminCongDong from '@/pages/admin/AdminCongDong';
 import AdminNotify from '@/pages/admin/AdminNotify';
 import AdminLogs from '@/pages/admin/AdminLogs';
 
@@ -103,6 +104,7 @@ function App() {
                   <Route path="vip" element={<AdminVip />} />
                   <Route path="badges" element={<AdminBadges />} />
                   <Route path="activity-types" element={<AdminActivityTypes />} />
+                  <Route path="cong-dong" element={<AdminCongDong />} />
                   <Route path="notify" element={<AdminNotify />} />
                   <Route path="logs" element={<AdminLogs />} />
                   <Route path="staff" element={<Staff />} />

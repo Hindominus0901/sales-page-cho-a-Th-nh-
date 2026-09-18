@@ -114,6 +114,14 @@ export async function handleApi(rc) {
         email: !!rc.env.RESEND_API_KEY,
         uploads: !!rc.env.UPLOADS,
         ai: !!rc.env.ANTHROPIC_API_KEY,
+        // Webhook ngan hang da noi chua. Thieu BANK_WEBHOOK_SECRET thi
+        // webhook.js:85 tu choi MOI cu goi, nen khong don nao tu xac nhan -
+        // moi don deu cho admin bam tay.
+        //
+        // Giao dien PHAI biet dieu nay: man hinh mua hang dang hua "quyen mo tu
+        // dong sau 1-2 phut", va nguoi vua chuyen tien doc cau do roi ngoi doi
+        // mot thu khong bao gio toi.
+        thanh_toan_tu_dong: !!rc.cfg.webhook.bankSecret,
       },
     });
   }

@@ -19,6 +19,7 @@ import { base44 } from "@/api/base44Client";
 import { ErrorBlock } from "@/components/QueryState";
 import BRAND from "@/brand.generated.js";
 import { useMe } from "@/lib/useMe";
+import { useKhaNang } from "@/lib/useKhaNang";
 import ChonNguoiGioiThieu from "@/components/ChonNguoiGioiThieu";
 import PageHeader from "@/components/PageHeader";
 import EmptyState, { Loading } from "@/components/EmptyState";
@@ -206,6 +207,7 @@ function ManChuyenKhoan({ don, sanPham, onXong, nhacGuiBill = false }) {
 
 export default function CuaHang() {
   const me = useMe();
+  const { khaNang } = useKhaNang();
   const qc = useQueryClient();
   const { toast } = useToast();
 
@@ -383,7 +385,15 @@ export default function CuaHang() {
             </DialogTitle>
             {!don && (
               <DialogDescription className="text-[13px]">
-                {tien(dangMua?.price)} — chuyển khoản ngân hàng, quyền mở tự động sau 1–2 phút.
+                {/* CAU NAY PHAI DOC TU MAY CHU, khong duoc hua cung.
+                    "Tu dong sau 1-2 phut" chi dung khi webhook ngan hang da noi
+                    (BANK_WEBHOOK_SECRET). Chua noi thi khong don nao tu xac
+                    nhan - nguoi vua chuyen tien doc cau hua do roi ngoi doi mot
+                    thu khong bao gio toi, va do la nguoi DA TRA TIEN. */}
+                {tien(dangMua?.price)}
+                {khaNang.thanh_toan_tu_dong
+                  ? ' — chuyển khoản ngân hàng, quyền mở tự động sau 1–2 phút.'
+                  : ' — chuyển khoản ngân hàng. Bên mình xác nhận tay nên có thể mất ít phút; chuyển xong bạn gửi bill qua Zalo cho nhanh nhé.'}
               </DialogDescription>
             )}
           </DialogHeader>

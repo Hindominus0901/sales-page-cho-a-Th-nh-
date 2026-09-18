@@ -373,6 +373,35 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const awards = sql(`SELECT COUNT(*) AS n FROM point_awards WHERE user_id='${alice.id}'`);
   check('so lan cong dung bang so lan trong tran', Number(awards[0].n) === 3, awards[0]);
 
+  // --- KIEM DUYET CONG DONG ---------------------------------------------------
+  //
+  // Co che an (`posts.is_hidden`) da chay that tu lau: trang hoc vien loc theo
+  // no (Community.jsx:84) va may chu chan tim/binh luan tren bai da an
+  // (functions/index.js:803,836). Thieu dung mot thu - khong man hinh quan tri
+  // nao bam duoc cai nut do, nen co bai xau thi khong co cach nao go.
+  const idBaiAn = post1.data.post.id;
+  const anBai = await admin.call('PATCH', `/api/entities/Post/${idBaiAn}`, { is_hidden: true });
+  check('admin an duoc mot bai viet', anBai.status === 200, anBai.data);
+
+  const dsSauKhiAn = await bob.call('GET',
+    `/api/entities/Post?filter=${encodeURIComponent(JSON.stringify({ is_hidden: false }))}`);
+  check('bai da an BIEN MAT khoi danh sach hoc vien nhin thay',
+    !(dsSauKhiAn.data || []).some((p) => p.id === idBaiAn), (dsSauKhiAn.data || []).length);
+
+  const timBaiAn = await bob.call('POST', '/api/functions/togglePostLike', { post_id: idBaiAn });
+  check('bai da an thi khong tha tim duoc nua', timBaiAn.status === 404, timBaiAn.data);
+
+  // Hoc vien thuong KHONG duoc an bai cua nguoi khac - `writable.admin` moi co
+  // cot is_hidden. Neu khong, ai cung go bai cua nguoi minh khong thich.
+  const bobAn = await bob.call('PATCH', `/api/entities/Post/${idBaiAn}`, { is_hidden: false });
+  check('hoc vien thuong KHONG an/hien duoc bai cua nguoi khac',
+    bobAn.status === 403 || bobAn.status === 404, { status: bobAn.status, data: bobAn.data });
+
+  const hienLai = await admin.call('PATCH', `/api/entities/Post/${idBaiAn}`, { is_hidden: false });
+  check('admin hien lai duoc - an la hoan tac duoc, khong phai xoa',
+    hienLai.status === 200 && sql(`SELECT is_hidden FROM posts WHERE id='${idBaiAn}'`)[0]?.is_hidden === 0,
+    hienLai.data);
+
   // Tha tim + binh luan
   const postId = post1.data.post.id;
   const like1 = await bob.call('POST', '/api/functions/togglePostLike', { post_id: postId });
