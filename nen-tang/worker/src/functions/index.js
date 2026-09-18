@@ -225,7 +225,18 @@ async function approveActivity(rc, svc) {
     // Tinh theo NGAY CUA HOAT DONG (`activity.date`) chu khong phai ngay duyet:
     // chi Thanh thuong duyet don mot the sau vai hom, lay ngay duyet thi ca
     // tuan hoat dong don vao mot ngay va bi cat oan.
-    const tran = Number(caiHD['st-tran-diem-hoat-dong-moi-ngay'] ?? TRAN_DIEM_HOAT_DONG);
+    // SO 0 NGHIA LA BO TRAN, khong phai "tran bang 0".
+    //
+    // O nhap nay nam trong trang quan tri, va nguoi go se hieu 0 la "khong gioi
+    // han" - do la cach `point_rules.daily_cap` hoat dong o cho khac trong
+    // chinh he thong nay (award.js:67 `if (rule.daily_cap)`). Neu o day lay
+    // thang 0 lam tran thi mot lan go 0 se lam MOI hoat dong ngung cong diem,
+    // im lang, cho toan bo hoc vien.
+    //
+    // Toi da tu dinh dung bay do khi viet migration 0018: nap san gia tri 0 vi
+    // nghi no co nghia "khong gioi han". Sau bai test do ngay.
+    const tranDat = Number(caiHD['st-tran-diem-hoat-dong-moi-ngay'] ?? TRAN_DIEM_HOAT_DONG);
+    const tran = Number.isFinite(tranDat) && tranDat > 0 ? tranDat : Infinity;
     const daCo = await rc.store.get(
       `SELECT COALESCE(SUM(p.xp), 0) AS n FROM point_awards p
          JOIN activities a ON a.id = p.source_id

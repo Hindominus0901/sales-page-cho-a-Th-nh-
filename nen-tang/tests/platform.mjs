@@ -224,7 +224,22 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   check('doc duoc bang luat tinh diem', rules.data?.length >= 12, rules.data?.length);
 
   const settings = await alice.call('GET', '/api/entities/AppSetting?limit=50');
-  check('doc duoc bang cau hinh', settings.data?.length >= 20, settings.data?.length);
+  check('doc duoc bang cau hinh', settings.data?.length >= 9, settings.data?.length);
+
+  // KIEM THEO TEN KHOA, khong dem so dong.
+  //
+  // Bai cu khang dinh `>= 20`. Con so do chi dung khi bang con chua 23 dong cai
+  // dat KHONG AI DOC (migration 0018 da xoa), nen no dang do mot thu khong ai
+  // quan tam: bang co dong day, ke ca khi moi dong deu vo dung.
+  //
+  // Doi sang kiem dung nhung khoa ma ma nguon THUC SU doc. Neu ai do lai nap
+  // nham chuoi 'st-...' vao cot `id` thay vi cot `key` - dung loi da lam phan
+  // thuong hoan thanh khong bao gio tra - thi bai nay do ngay.
+  const khoaThat = ['st-khoa-noi-dung', 'st-tu-duyet', 'st-ngay-chi-diem-danh',
+    'st-tran-diem-hoat-dong-moi-ngay'];
+  const coDu = khoaThat.filter((k) => (settings.data || []).some((s) => s.key === k));
+  check('cac khoa dieu khien THAT deu co mat, dung ten khoa',
+    coDu.length === khoaThat.length, { thieu: khoaThat.filter((k) => !coDu.includes(k)) });
 
   // ------------------------------------------------------------- LO DU LIEU
   console.log('\n2. Chan lo thong tin ca nhan');

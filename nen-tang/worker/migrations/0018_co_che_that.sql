@@ -95,7 +95,16 @@ DELETE FROM app_settings WHERE key IN (
 --                                        tra true khi khoa nay khong phai true)
 --   st-tu-duyet*                true   = dang bat (index.js:513 coi `!== false`)
 --   cac danh sach ngay           []    = dang rong
---   st-tran-diem-hoat-dong-moi-ngay 0  = 0 nghia la khong dat tran
+--   st-tran-diem-hoat-dong-moi-ngay 40 = DUNG hang so TRAN_DIEM_HOAT_DONG
+--                                        (functions/index.js:48) ma he thong
+--                                        dang dung. Lan dau viet migration nay
+--                                        toi nap 0 va TU NGHI 0 nghia la
+--                                        "khong gioi han" - ma nguon KHONG co
+--                                        nghia do: index.js:228 lay thang so do
+--                                        lam tran, nen tran = 0 lam MOI hoat
+--                                        dong ngung cong diem. Sau bai test do
+--                                        ngay. Dung cai bay ma dong ghi chu
+--                                        ngay tren canh bao.
 --
 -- Rieng `st-ngay-chi-diem-danh` mac dinh [0]: buoi Kick-Off la ngay 0 va khong
 -- ai nop duoc gi o do - day la ly do ca khoa nay ton tai. De [] thi migration
@@ -144,7 +153,7 @@ VALUES
    'Danh sách mã loại hoạt động vẫn được ghi nhận nhưng không ra XP/xu. Để trống là mọi loại đều cộng điểm bình thường.',
    20, datetime('now'), datetime('now')),
 
-  ('st-tran-diem-hoat-dong-moi-ngay', 'st-tran-diem-hoat-dong-moi-ngay', '0', 'number', NULL, 'diem',
+  ('st-tran-diem-hoat-dong-moi-ngay', 'st-tran-diem-hoat-dong-moi-ngay', '40', 'number', NULL, 'diem',
    'Trần XP mỗi học viên kiếm được mỗi ngày',
-   'Từ hoạt động tự ghi nhận. Đặt 0 là không giới hạn. Đặt số > 0 là chặn đường cày điểm bằng cách ghi nhận hàng loạt.',
+   'Tính trên các hoạt động học viên tự ghi nhận (đăng bài, gọi khách, nộp bài tập). Đây là thứ chặn đường cày điểm: không có trần thì một người khai 10 hoạt động trong một buổi tối là hơn cả tuần đi học của người khác. Đặt 0 để bỏ trần hoàn toàn.',
    21, datetime('now'), datetime('now'));
