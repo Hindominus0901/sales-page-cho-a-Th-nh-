@@ -1,6 +1,6 @@
 # Góc Creator — 3 trang bán hàng + CMS + hệ affiliate
 
-Chạy trên Cloudflare Workers. Một codebase, một lần deploy.
+Chạy trên Cloudflare Workers. **Lưu ý: repo này còn chứa một ứng dụng thứ hai ở `nen-tang/` — đọc `CLAUDE.md` ở thư mục gốc trước khi deploy.**
 
 | Đường dẫn | Việc |
 |---|---|
