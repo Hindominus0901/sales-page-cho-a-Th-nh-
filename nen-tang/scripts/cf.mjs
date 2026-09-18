@@ -43,8 +43,18 @@ const accountId = env.CLOUDFLARE_ACCOUNT_ID;
 const apiToken = env.CLOUDFLARE_API_TOKEN;
 
 if (!accountId || !apiToken) {
-  console.error('Thieu CLOUDFLARE_ACCOUNT_ID hoac CLOUDFLARE_API_TOKEN trong .env');
-  console.error('Xem huong dan o cuoi file .env.example');
+  console.error('');
+  console.error('DUNG: thieu CLOUDFLARE_ACCOUNT_ID hoac CLOUDFLARE_API_TOKEN trong .env');
+  console.error('');
+  console.error('  Da chay `wrangler login` roi VAN bao loi nay la binh thuong:');
+  console.error('  lenh nay doc .env chu khong dung phien dang nhap do.');
+  console.error('');
+  console.error('  Account ID : dashboard -> chon tai khoan -> Account ID o cot phai');
+  console.error('  API token  : My Profile -> API Tokens -> Create Token');
+  console.error('               -> mau "Edit Cloudflare Workers"');
+  console.error('');
+  console.error('  Dien ca hai vao file .env (muc "Chon tai khoan Cloudflare de deploy").');
+  console.error('');
   process.exit(1);
 }
 
