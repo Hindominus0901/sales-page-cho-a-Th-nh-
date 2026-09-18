@@ -25,8 +25,17 @@ Các file mang dấu `SINH TU brand/brand.json` là **file sinh ra**: sửa tay 
 6. `npm run db:migrate` rồi `npm run brand:seed -- --local --admin-email <email>`.
 7. `npm run build`.
 8. `npm run dev:worker` (nền) → chờ `/api/health` trả 200.
-9. `npm test` — **377/377 phải xanh** (86 smoke + 53 auth + 238 platform). Nó tự bật `wrangler dev` nếu chưa có, chạy ba bộ
-   tuần tự, và tự bật lại máy chủ nếu giữa chừng nó sập (xem `scripts/chay-test.mjs`).
+9. `npm test` — **sáu bộ phải xanh**. Nó tự bật `wrangler dev` nếu chưa có, chạy tuần tự,
+   và tự bật lại máy chủ nếu giữa chừng nó sập (xem `scripts/chay-test.mjs`).
+
+   Ba bộ đầu (`video`, `ngay`, `tien`) là **bộ thuần tuý**: không cần máy chủ, chạy trong
+   một phần giây, nên chúng chạy trước. Chúng tồn tại vì có những thứ bộ gọi qua HTTP
+   không bao giờ chạm tới — ví dụ mốc cắt ngày chỉ sai trong khoảng 00:00–07:00 giờ Việt
+   Nam, khung giờ không bộ test nào chạy vào; hay các dạng số tài khoản lạ ngân hàng gửi về.
+
+   **Đừng gõ một con số tổng vào đây.** Bản ghi này từng ghi "377/377" trong khi bộ test đã
+   lên hơn 500 bài — và một con số sai trong tài liệu là thứ người sau tin ngay mà không
+   kiểm lại.
 10. `npm run brand:check` — không được còn dấu vết nào.
 11. `npm run setup:cloudflare` → tạo D1/KV/R2, chạy migration thật, in ra bí mật còn thiếu.
 12. Nạp từng bí mật, `npm run brand:seed -- --remote --admin-email <email>`, rồi `npm run deploy`.
@@ -48,9 +57,18 @@ làm" trong `README.md`.
   `scripts/chay-test.mjs` tồn tại, đừng gỡ nó đi để "cho gọn".
 - **`tests/auth.mjs` và `tests/platform.mjs` chỉ chạy ở máy** — chúng có lệnh `DELETE` dọn dẹp.
   Trỏ vào cơ sở dữ liệu thật là **xoá dữ liệu thật**. Chỉ `tests/smoke.mjs` chạy được với bản deploy.
-- **Ba bộ test dùng chung một D1 cục bộ.** Chạy song song là chúng xoá dữ liệu của nhau giữa chừng,
+- **Các bộ test dùng chung một D1 cục bộ.** Chạy song song là chúng xoá dữ liệu của nhau giữa chừng,
   cho ra lỗi giả rất khó hiểu (`FOREIGN KEY constraint failed`, `unauthorized` hàng loạt). `npm test`
   đã chạy tuần tự — đừng "tối ưu" thành song song.
+
+  Điều này cũng có nghĩa: **không bao giờ chạy hai lượt `npm test` chồng lên nhau.** Kiểm
+  `ps -C node` trước khi bắt đầu một lượt mới. Triệu chứng khi vấp phải là hàng loạt bài đỏ
+  vì `unauthorized` / `invalid_credentials` — trông y hệt một lỗi xác thực thật.
+
+- **Bài test không được XOÁ dòng cấu hình mà hệ thống sở hữu.** Từ migration 0018, các khoá
+  `st-*` trong `app_settings` là cấu hình thật có giá trị mặc định. Bài test cần đổi thì đổi
+  rồi **trả lại giá trị gốc**, đừng `DELETE` — xoá đi là lượt chạy sau không tìm thấy khoá và
+  hành vi mặc định lặng lẽ quay lại.
 - **`worker/src/questions.js` ↔ `name="q1..q8"` trong `apps/funnel/designs/2-form.dc.html`** là một
   hợp đồng ngầm giữa hai file cách xa nhau. Đổi bộ câu hỏi phải sửa cả hai; lệch nhau thì chấm điểm
   khách tiềm năng sai mà không báo lỗi.
