@@ -1060,7 +1060,14 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const upload = await alice.call('POST', '/api/files', {});
   check('duong tai anh da co nguoi xu ly (khong con 404)',
     upload.status !== 404, { status: upload.status, data: upload.data });
-  check('chua co kho anh thi bao bang cau HOC VIEN doc duoc',
+  // Nhan hai trang thai, vi kho anh bat/tat la mot cong tac van hanh:
+  //   R2 TAT -> 503 'kho_anh_chua_bat'      (files.js:52)
+  //   R2 BAT -> 400 'du_lieu_khong_hop_le'  (files.js:72, vi day gui JSON rong
+  //                                          chu khong phai multipart)
+  // Dieu PHAI dung o ca hai: cau hien ra cho HOC VIEN doc, nen khong duoc chua
+  // chu Cloudflare/Dashboard/R2 - do la viec cua quan tri vien, va no nam o log
+  // may chu (files.js:56).
+  check('loi tai anh luon la cau HOC VIEN doc duoc, khong lo ha tang',
     (upload.status === 503 || upload.status === 400)
     && !/Cloudflare|Dashboard|R2/i.test(JSON.stringify(upload.data || '')),
     upload.data);
