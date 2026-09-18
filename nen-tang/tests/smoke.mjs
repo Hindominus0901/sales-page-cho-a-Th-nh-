@@ -422,12 +422,29 @@ const ANSWERS = {
     board.data.items.every((row, i, arr) => i === 0 || arr[i - 1].referrals >= row.referrals));
   check('nguoi xem thay vi tri cua chinh minh', board.data?.me?.position >= 1, board.data?.me);
 
-  // An ten khoi bang xep hang
+  // An khoi bang xep hang: phai an CA TEN LAN MA GIOI THIEU.
+  //
+  // Ban cu chi che ten (maskName -> "Nguyen V. A.") nhung van tra `code`. Ma
+  // ma gioi thieu sinh TU CHINH TEN (newCode: 6 chu cuoi cua ten + 3 ky tu),
+  // vi du "THANHK7D" - nen che ten xong van doc nguoc ra duoc nguoi do, va
+  // viec "an" tro thanh mot loi hua khong giu.
   const hide = await call('POST', `/api/affiliate/${affToken}/settings`, { hide_from_leaderboard: true });
   check('bat che ten tren bang xep hang', hide.data?.hide_from_leaderboard === true, hide.data);
+
   const boardHidden = await call('GET', '/api/leaderboard');
-  const meRow = boardHidden.data.items.find((r) => r.code === refCode);
-  check('ten bi che tren bang xep hang', !!meRow && meRow.name.includes('.'), meRow);
+  check('an roi thi bang xep hang KHONG con tra ma gioi thieu',
+    !boardHidden.data.items.some((r) => r.code === refCode),
+    boardHidden.data?.items?.map((r) => r.code));
+
+  const dongAn = boardHidden.data.items.find((r) => r.code === null);
+  check('ten bi che tren bang xep hang', !!dongAn && dongAn.name.includes('.'), dongAn);
+
+  // Nguoi an VAN phai biet vi tri cua chinh minh - an la an voi nguoi khac,
+  // khong phai tu mu.
+  const rankKhiAn = await call('GET', '/api/affiliate/me');
+  check('nguoi an van thay dung hang cua minh',
+    Number(rankKhiAn.data?.rank?.position) >= 1, rankKhiAn.data?.rank);
+
   await call('POST', `/api/affiliate/${affToken}/settings`, { hide_from_leaderboard: false });
 
   console.log('\n7. Admin');

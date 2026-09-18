@@ -397,13 +397,25 @@ export function createAffiliates({ store, cfg, rewards }) {
       ORDER BY referrals DESC, a.id ASC
       LIMIT 50`, win.args);
 
-    const ranked = rows.filter((r) => num(r.referrals) > 0).map((r, index) => ({
-      position: index + 1,
-      code: r.code,
-      name: num(r.hide_from_leaderboard) ? maskName(r.full_name) : r.full_name,
-      referrals: num(r.referrals),
-      level: num(r.unlocked_level) || 1,
-    }));
+    // AN THI PHAI AN CA MA GIOI THIEU.
+    //
+    // Ban cu che ten bang maskName ("Nguyen V. A.") nhung van tra `code` -
+    // ma ma gioi thieu sinh TU CHINH TEN (newCode: "THANHK7D" = 6 chu cuoi cua
+    // ten + 3 ky tu). Nen che ten xong van doc nguoc ra duoc nguoi do, va viec
+    // an tro thanh mot lo`i hua khong giu.
+    //
+    // `code` chi de trang Dai ly danh dau "day la ban" - ma cho do da co `rank`
+    // rieng tu rankOf(), khong can doi chieu qua bang cong khai.
+    const ranked = rows.filter((r) => num(r.referrals) > 0).map((r, index) => {
+      const an = !!num(r.hide_from_leaderboard);
+      return {
+        position: index + 1,
+        code: an ? null : r.code,
+        name: an ? maskName(r.full_name) : r.full_name,
+        referrals: num(r.referrals),
+        level: num(r.unlocked_level) || 1,
+      };
+    });
 
     cache = { at: nowMs, rows: ranked };
     return ranked.slice(0, limit);

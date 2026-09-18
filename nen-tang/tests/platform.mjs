@@ -939,6 +939,19 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   const entsAgain = sql(`SELECT id FROM entitlements WHERE user_id='${alice.id}' AND ref='${SKU_TEST}'`);
   check('xac nhan lai lan hai KHONG tao quyen trung', entsAgain.length === 1, entsAgain.length);
 
+  // VA NHAT KY PHAI NOI THAT LA LAN HAI MO DUOC 0 QUYEN.
+  //
+  // `store.run()` tra ve { changes, lastId } - LUON truthy - nen `if (res)`
+  // trong fulfilOrder dem ca nhung lan INSERT OR IGNORE bo qua. Nhat ky
+  // `order.fulfilled` ghi "granted: 2" cho mot lan chay mo 0 quyen, va do la
+  // dong duy nhat de doi soat xem ai da duoc mo gi.
+  //
+  // Cung mot ho voi loi `?.meta?.changes` tung lam MOI luot doi qua bao het hang.
+  const nhatKyMo = sql(`SELECT meta_json FROM audit_log WHERE action='order.fulfilled' AND target='${orderCode}' ORDER BY id`);
+  check('nhat ky ghi DUNG so quyen moi mo duoc o lan hai (0)',
+    nhatKyMo.length >= 2 && JSON.parse(nhatKyMo[nhatKyMo.length - 1].meta_json || '{}').granted === 0,
+    nhatKyMo.map((r) => r.meta_json));
+
   sql(`DELETE FROM entitlements WHERE user_id='${alice.id}'`);
   sql(`DELETE FROM commissions WHERE order_id IN (SELECT id FROM orders WHERE code='${orderCode}')`);
   sql(`DELETE FROM orders WHERE code='${orderCode}'`);
@@ -1668,7 +1681,13 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
     && /cảm nhận/i.test((thieuCamNhan.data?.con_thieu || []).join(' ')),
     thieuCamNhan.data?.con_thieu);
 
-  sql(`DELETE FROM app_settings WHERE key = 'st-ngay-khong-bai-tap'`);
+  // TRA LAI GIA TRI GOC, khong XOA dong.
+  //
+  // Tu migration 0018, dong nay do HE THONG so huu (mac dinh '[]') chu khong
+  // con la thu bai test tu bia ra. Xoa di la bo test lam mat mot dong cau hinh
+  // that: lan chay sau se khong tim thay khoa, va hanh vi mac dinh quay lai -
+  // dung kieu hong ma ca migration nay sinh ra de dap.
+  sql(`INSERT INTO app_settings (key,value,type,created_date,updated_date) VALUES ('st-ngay-khong-bai-tap','[]','json',datetime('now'),datetime('now')) ON CONFLICT(key) DO UPDATE SET value='[]', type='json'`);
 
   sql(`DELETE FROM challenge_submissions WHERE challenge_id = '${idTTL}'`);
   sql(`DELETE FROM challenge_members WHERE challenge_id = '${idTTL}'`);

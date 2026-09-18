@@ -118,7 +118,16 @@ export async function fulfilOrder(rc, order) {
       console.warn('[fulfil] khong cap duoc quyen', g.kind, g.ref, err?.message || err);
       return null;
     });
-    if (res) granted += 1;
+    // DEM DONG THUC SU DUOC CHEN, khong dem so lan goi.
+    //
+    // `store.run()` tra ve mot object { changes, lastId } - LUON truthy khi
+    // khong nem loi. Nen `if (res)` dem ca nhung lan INSERT OR IGNORE bo qua vi
+    // nguoi do DA CO quyen, va nhat ky `order.fulfilled` ghi "granted: 3" cho
+    // mot lan chay thuc te mo 0 quyen.
+    //
+    // Cung mot ho voi loi `?.meta?.changes` tung lam MOI luot doi qua bao het
+    // hang: doc nham hinh dang gia tri tra ve, va khong gi bao dong.
+    if (Number(res?.changes) > 0) granted += 1;
     /* eslint-enable no-await-in-loop */
   }
 
