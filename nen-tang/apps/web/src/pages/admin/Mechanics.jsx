@@ -23,11 +23,16 @@ import {
 
 /** Ten nhom hien cho de doc; nhom la chua biet thi lay nguyen khoa. */
 const CATEGORY_LABEL = {
+  'loc-nguoi': 'Ai được vào học',
+  challenge: 'Challenge',
+  diem: 'Điểm & chống cày điểm',
+  // Cac nhom duoi day thuoc 23 dong cai dat KHONG AI DOC, da bi migration 0018
+  // xoa. Giu lai nhan de neu database that con sot dong cu (migration chua
+  // chay) thi no van hien ra co ten tu te thay vi mot khoa tran.
   streak: 'Chuỗi ngày (streak)',
   leaderboard: 'Bảng xếp hạng',
   rewards: 'Quà tặng & xu',
   courses: 'Lớp học',
-  challenge: 'Challenge',
   affiliate: 'Affiliate',
   reminder: 'Nhắc nhở học viên',
   ai: 'AI chấm bài',
@@ -303,13 +308,64 @@ function LevelRow({ level, onSave, pending }) {
  * Mot o cau hinh, hinh dang do cot `type` cua chinh dong du lieu quyet dinh.
  * Nut Luu chi hien khi gia tri thuc su doi, de khong ai bam nham.
  */
+/**
+ * Danh sach so kieu JSON ('[0,3]') <-> chuoi de go ('0, 3').
+ *
+ * VI SAO PHAI CO: gia tri that trong database la JSON, con o nhap truoc day roi
+ * vao nhanh "text" - tuc la chi Thanh phai tu go dau ngoac vuong. Go "0, 3"
+ * thay vi "[0,3]" thi settings.js:22 JSON.parse that bai, tra ve null, va ben
+ * doc coi nhu DANH SACH RONG. Khong mot dong loi nao.
+ *
+ * Voi `st-ngay-chi-diem-danh` thi danh sach rong nghia la buoi Kick-Off quay
+ * lai nam trong mau so tinh "hoan thanh thu thach" - tuc la mot dau ngoac
+ * thieu lam ca lop khong ai nhan duoc phan thuong hoan thanh, va khong ai
+ * doan ra vi sao. Do la dung cai bay ma migration 0018 vua go ra.
+ */
+function docDanhSachSo(raw) {
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(Number).filter(Number.isFinite);
+  } catch { /* chua phai JSON - thu doc kieu nguoi go ben duoi */ }
+  return null;
+}
+
 function SettingField({ setting, onSave, pending }) {
-  const [value, setValue] = React.useState(setting.value ?? '');
-  const dirty = String(value) !== String(setting.value ?? '');
+  const laDanhSachSo = setting.type === 'json';
+  const [value, setValue] = React.useState(() => {
+    if (!laDanhSachSo) return setting.value ?? '';
+    const ds = docDanhSachSo(setting.value ?? '[]');
+    return ds ? ds.join(', ') : String(setting.value ?? '');
+  });
+
+  // Voi danh sach so, so sanh theo GIA TRI da chuan hoa chu khong theo chuoi:
+  // "0, 3" va "[0,3]" la mot, khong duoc hien nut Luu nhu the vua co thay doi.
+  const chuanHoa = laDanhSachSo
+    ? (() => {
+      const so = String(value).split(',').map((x) => Number(x.trim()))
+        .filter((n) => Number.isFinite(n));
+      return String(value).trim() === '' ? '[]' : JSON.stringify(so);
+    })()
+    : String(value);
+  const hopLe = !laDanhSachSo
+    || String(value).trim() === ''
+    || String(value).split(',').every((x) => Number.isFinite(Number(x.trim())) && x.trim() !== '');
+  const dirty = laDanhSachSo
+    ? chuanHoa !== JSON.stringify(docDanhSachSo(setting.value ?? '[]') || [])
+    : String(value) !== String(setting.value ?? '');
   const options = readOptions(setting.options_json);
 
   let control;
-  if (setting.type === 'bool') {
+  if (laDanhSachSo) {
+    control = (
+      <CellInput
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className="w-40"
+        placeholder="0, 3"
+        aria-invalid={!hopLe}
+      />
+    );
+  } else if (setting.type === 'bool') {
     control = (
       <Switch
         checked={value === 'true' || value === true}
@@ -345,9 +401,23 @@ function SettingField({ setting, onSave, pending }) {
         <div className="mt-1 font-mono text-[10px] text-muted-foreground">{setting.key}</div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        {control}
-        {dirty && (
-          <Button size="sm" className="rounded-full" disabled={pending} onClick={() => onSave(String(value))}>
+        <div className="flex flex-col items-end gap-1">
+          {control}
+          {/* Go sai thi NOI RA VA CHAN LUU, khong luu mot gia tri se bi doc
+              thanh danh sach rong. */}
+          {!hopLe && (
+            <span className="text-[11px] leading-tight text-destructive">
+              Chỉ điền số, cách nhau bằng dấu phẩy. Ví dụ: 0, 3
+            </span>
+          )}
+        </div>
+        {dirty && hopLe && (
+          <Button
+            size="sm"
+            className="rounded-full"
+            disabled={pending}
+            onClick={() => onSave(laDanhSachSo ? chuanHoa : String(value))}
+          >
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Lưu'}
           </Button>
         )}

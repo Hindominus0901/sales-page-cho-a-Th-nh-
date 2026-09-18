@@ -1660,6 +1660,73 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   sql(`DELETE FROM challenge_day_tasks WHERE challenge_id = '${idTTL}'`);
   sql(`DELETE FROM challenges WHERE id = '${idTTL}'`);
 
+  // ======================================================================
+  // HOAN THANH THU THACH -> PHAI TRA THUONG
+  //
+  // Day la bai chung minh CA MOT CHUOI da song, khong phai mot ham le.
+  //
+  // `chotBaiThuThach` tinh "hoan thanh" bang:
+  //     tongNgay = so ngay cua thu thach TRU nhung ngay trong st-ngay-chi-diem-danh
+  //     done >= tongNgay  ->  completed = 1, tra reward_xp / reward_coin
+  //
+  // Ma khoa `st-ngay-chi-diem-danh` KHONG BAO GIO DOC DUOC tren ban that:
+  // settings.js tra theo cot `key`, con moi dong nap trong 0004_seed.sql lai de
+  // chuoi 'st-...' o cot `id`. Danh sach mien nop rong -> buoi Kick-Off (ngay 0,
+  // khong ai nop duoc gi) van nam trong mau so -> khong ai hoan thanh noi.
+  // Dung sai so ma chu thich trong chinh ham do mo ta: "262 nguoi tham gia,
+  // 0 nguoi hoan thanh".
+  //
+  // BAI NAY CO Y KHONG TU INSERT CAI DAT. No doc dung gia tri migration 0018
+  // nap san - vi bai test cu tu INSERT roi moi kiem chinh la ly do bo test xanh
+  // suot trong khi ban that hong.
+  console.log('\nN. Hoan thanh thu thach -> tra thuong (doc cai dat that)');
+
+  const caiDat = sql("SELECT value FROM app_settings WHERE key = 'st-ngay-chi-diem-danh'");
+  check('cai dat "ngay chi diem danh" CO TON TAI voi dung ten khoa',
+    caiDat.length === 1, caiDat);
+  check('va mac dinh la [0] - buoi Kick-Off',
+    String(caiDat[0]?.value || '').replace(/\s/g, '') === '[0]', caiDat[0]);
+
+  const idTTHT = `tt-ht-${Date.now()}`;
+  const homNayVN = new Date(Date.now() + 420 * 60000).toISOString().slice(0, 10);
+  sql(`INSERT INTO challenges (id,name,description,start_date,duration_days,is_active,reward_xp,reward_coin,created_date,updated_date) VALUES ('${idTTHT}','Thu thach tra thuong','','${homNayVN}',2,1,500,300,datetime('now'),datetime('now'))`);
+  // Ngay 0 = Kick-Off (nam trong danh sach mien nop), ngay 1 = hom nay.
+  sql(`INSERT INTO challenge_day_tasks (id,challenge_id,day,title,guide,xp,coin,created_date,updated_date) VALUES ('nvht-0-${Date.now()}','${idTTHT}',0,'Kick-Off','',0,0,datetime('now'),datetime('now'))`);
+  sql(`INSERT INTO challenge_day_tasks (id,challenge_id,day,title,guide,xp,coin,created_date,updated_date) VALUES ('nvht-1-${Date.now()}','${idTTHT}',1,'Ngay 1','',10,5,datetime('now'),datetime('now'))`);
+
+  const thamGiaHT = await alice.call('POST', '/api/functions/joinChallenge', { challenge_id: idTTHT });
+  check('tham gia duoc thu thach tra thuong', thamGiaHT.status === 200, thamGiaHT.data);
+
+  const xpTruocHT = (await alice.call('GET', '/api/auth/me')).data.total_xp;
+  const nopHT = await alice.call('POST', '/api/functions/submitChallengeDay', {
+    challenge_id: idTTHT,
+    day: 1,
+    content: 'Bai ngay 1',
+    link: 'https://vi-du.test/bai-tap',
+    file_url: 'https://facebook.com/vi-du/cam-nhan',
+  });
+  check('nop du bai ngay 1 -> tu duyet', nopHT.status === 200 && nopHT.data?.tu_duyet === true, nopHT.data);
+
+  // KHONG nop ngay 0: khong ai nop duoc buoi Kick-Off. Do chinh la diem cua bai.
+  const tvHT = sql(`SELECT completed, progress FROM challenge_members WHERE challenge_id='${idTTHT}' AND user_id='${alice.id}'`);
+  check('lam het nhung ngay CO THE nop -> duoc tinh la HOAN THANH',
+    Number(tvHT[0]?.completed) === 1,
+    { completed: tvHT[0]?.completed, progress: tvHT[0]?.progress,
+      giai_thich: 'neu = 0 nghia la ngay Kick-Off van bi tinh vao mau so' });
+
+  const xpSauHT = (await alice.call('GET', '/api/auth/me')).data.total_xp;
+  check('phan thuong hoan thanh DUOC TRA that (+500 XP)',
+    xpSauHT - xpTruocHT === 500, { truoc: xpTruocHT, sau: xpSauHT });
+
+  const tinHT = sql(`SELECT COUNT(*) AS n FROM notifications WHERE user_id='${alice.id}' AND type='challenge'`);
+  check('hoc vien duoc bao tin hoan thanh', Number(tinHT[0]?.n) >= 1, tinHT[0]);
+
+  sql(`DELETE FROM point_awards WHERE source_id = 'hoanthanh-${idTTHT}'`);
+  sql(`DELETE FROM challenge_submissions WHERE challenge_id = '${idTTHT}'`);
+  sql(`DELETE FROM challenge_members WHERE challenge_id = '${idTTHT}'`);
+  sql(`DELETE FROM challenge_day_tasks WHERE challenge_id = '${idTTHT}'`);
+  sql(`DELETE FROM challenges WHERE id = '${idTTHT}'`);
+
   // ------------------ mua goi TRUOC, chi Thanh them khoa vao goi SAU
   // Day la tinh huong that cua 44 nguoi da mua ve VIP khi `grants_json` con
   // rong. `fulfilOrder` cap quyen theo grants_json TAI THOI DIEM tra tien, nen
