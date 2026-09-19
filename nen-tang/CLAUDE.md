@@ -48,6 +48,28 @@ làm" trong `README.md`.
 
 ## Bất biến — vi phạm là hỏng ngầm
 
+- **KIỂM NGAY: thư mục này có phải kho Git không.** Chạy `git status`. Báo lỗi
+  "not a git repository" thì **dừng lại và bảo người dùng chạy ba lệnh này trước
+  khi nhờ bạn sửa bất cứ thứ gì**:
+
+  ```bash
+  git init && git add -A && git commit -m "Ban ban giao"
+  ```
+
+  Hai thứ hỏng khi không có Git, và cả hai đều hỏng **im lặng**:
+
+  1. **Không có đường lùi.** Bạn sửa hỏng một file thì không ai xem được bạn đã
+     đổi gì (`git diff`) và không ai trả lại được (`git checkout -- <file>`).
+     Với một hệ thống đang nhận tiền thật, đó là rủi ro không đáng nhận.
+  2. **Cửa kiểm trước deploy TỰ TẮT.** `scripts/cf.mjs:96` bắt lỗi rồi `return`
+     kèm chú thích "khong phai kho git thi khong co gi de kiem". Nghĩa là cửa
+     chặn "cây làm việc còn thay đổi chưa commit" **không chạy** — mã sửa dở
+     dang lên thẳng bản thật mà không ai cản.
+
+  Chuyện này xảy ra thật khi người ta nhận bộ mã nguồn bằng file zip:
+  `git archive` không kèm thư mục `.git`. Nhìn thì y hệt một kho Git bình
+  thường, chỉ là không phải.
+
 - **Migration chỉ có cấu trúc.** Nội dung (sản phẩm, cấp bậc, huy hiệu) do `brand:seed` nạp. Nhét
   nội dung vào migration là đánh nhau với quản trị viên: họ sửa trong trang quản trị, migration chạy
   lại đè mất, hoặc không chạy và không ai biết.

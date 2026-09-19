@@ -374,6 +374,26 @@ Bản chạy ở máy dùng một cơ sở dữ liệu riêng, rỗng — nghị
 - **Node.js phiên bản 22 trở lên** — tải ở `nodejs.org`, chọn bản LTS
 - **Git** — `git-scm.com`
 
+### Bước 0 — chỉ khi anh nhận bằng file zip: tạo kho Git
+
+Làm **trước tiên**, trong thư mục ngoài cùng vừa giải nén:
+
+```powershell
+git init
+git add -A
+git commit -m "Ban ban giao"
+```
+
+Ba dòng, một lần, và **đừng bỏ qua**. File zip không kèm lịch sử Git, mà thiếu
+nó thì hai thứ hỏng cùng lúc — cả hai đều hỏng im lặng:
+
+1. **Không có đường lùi.** AI sửa hỏng một file thì anh không xem được nó vừa
+   đổi gì, và không trả lại được như cũ. Có Git rồi thì `git diff` cho xem, và
+   `git checkout -- <tên file>` trả lại.
+2. **Cửa kiểm trước khi deploy tự tắt.** Bình thường nó chặn anh lại khi trong
+   thư mục còn thay đổi dở dang, không cho đẩy lên bản thật. Không phải kho Git
+   thì nó bỏ qua, và mã sửa dở dang lên thẳng trang khách đang dùng.
+
 ### Sáu bước
 
 Mở PowerShell, vào thư mục `nen-tang` bên trong bộ mã nguồn, rồi:
