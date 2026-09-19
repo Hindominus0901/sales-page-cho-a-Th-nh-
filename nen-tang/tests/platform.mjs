@@ -495,6 +495,31 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   check('nguoi ngoai bang VAN nhan duoc dong cua chinh minh',
     !!bangHep.data?.me && bangHep.data.me.is_me === true, bangHep.data?.me);
 
+  // NGUOI CHAM BAI KHONG DUNG CHUNG BANG VOI NGUOI NOP BAI.
+  //
+  // Truoc day getLeaderboard chi loc `u.status = 'active'` - khong loc vai tro,
+  // nen tai khoan quan tri va coach nam chung bang voi hoc vien. De y thay vi
+  // tai khoan quan tri co 0 XP nen no nam cuoi bang; nhung trang Nhan su ghi
+  // THANG vao `users.role`, tuc la coach la nguoi that, co dung app va co tich
+  // diem. Mot cuoc thi co giai thuong ma nguoi cham bai canh tranh voi nguoi
+  // nop bai thi khong con la mot cuoc thi.
+  const emailCoach = `coachbxh${Date.now()}@smoketest.local`;
+  const idCoach = `u-coach-bxh-${Date.now()}`;
+  sql(`INSERT INTO users (id,email,full_name,role,status,total_xp,created_date,updated_date) VALUES ('${idCoach}','${emailCoach}','Coach Diem Cao','coach','active',999999,datetime('now'),datetime('now'))`);
+
+  const bangCoCoach = await alice.call('POST', '/api/functions/getLeaderboard', {
+    period: 'all_time', metric: 'xp', limit: 100,
+  });
+  check('coach 999999 XP KHONG xuat hien tren bang xep hang hoc vien',
+    !(bangCoCoach.data?.ranking || []).some((r) => r.user_id === idCoach
+      || r.full_name === 'Coach Diem Cao'),
+    (bangCoCoach.data?.ranking || []).slice(0, 3));
+  check('va khong chiem mat vi tri dau bang',
+    (bangCoCoach.data?.ranking || [])[0]?.full_name !== 'Coach Diem Cao',
+    bangCoCoach.data?.ranking?.[0]);
+
+  sql(`DELETE FROM users WHERE id = '${idCoach}'`);
+
   // So hang phai khop voi so nguoi thuc su dang tren - dem bang chinh cong
   // thuc ORDER BY cua bang: diem cao hon, hoac bang diem ma vao truoc.
   const toi = sql(`SELECT total_xp, created_date FROM users WHERE id = '${alice.id}'`)[0];
@@ -1142,6 +1167,32 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   // duoc tra gap 4 lan muc dinh, tran 10 lan/ngay -> 200 XP/ngay.
   console.log('\nN. Diem hoat dong lay theo tung loai, khong phai mot so chung');
 
+  // MAC DINH TU MIGRATION 0020 LA TAT.
+  //
+  // Chi Thanh chot: diem chi tinh cho viec tham gia lop va thu thach, khong
+  // tinh cho hoat dong hang ngay tu khai. Kiem dieu do TRUOC, roi moi bat luat
+  // len de kiem phan logic tinh diem theo tung loai - logic do van con trong
+  // ma nguon va van phai dung neu co ngay nao bat lai.
+  const nopKhiTat = await alice.call('POST', '/api/functions/logActivity', {
+    activity_type_key: 'content', title: 'Thu khi da tat diem', description: 'x',
+    evidence_link: 'https://drive.google.com/file/d/bangchung/view',
+  });
+  if (nopKhiTat.status === 200) {
+    const xpTruocTat = (await alice.call('GET', '/api/auth/me')).data.total_xp;
+    const duyetKhiTat = await admin.call('POST', '/api/functions/approveActivity', {
+      activity_id: nopKhiTat.data.activity.id, action: 'approve',
+    });
+    const xpSauTat = (await alice.call('GET', '/api/auth/me')).data.total_xp;
+    check('MAC DINH: duyet hoat dong KHONG con cong XP',
+      xpSauTat === xpTruocTat, { xpTruocTat, xpSauTat, awarded: duyetKhiTat.data?.awarded });
+    check('nhung hoat dong VAN duoc ghi nhan va van duyet duoc',
+      duyetKhiTat.status === 200, duyetKhiTat.data);
+    sql(`DELETE FROM activities WHERE id = '${nopKhiTat.data.activity.id}'`);
+  }
+
+  // Bat lai trong pham vi hai khoi duoi, TRA VE TAT o cuoi.
+  sql("UPDATE point_rules SET is_active = 1 WHERE event_key = 'activity_approved'");
+
   const keyLoai = `thu${Date.now().toString(36).slice(-5)}`;
   sql(`INSERT INTO activity_types (id,name,key,description,icon,category,xp_reward,coin_reward,daily_cap,is_active,sort_order,created_date,updated_date) VALUES ('at-${keyLoai}','Loai kiem thu','${keyLoai}','','','test',7,3,5,1,99,datetime('now'),datetime('now'))`);
 
@@ -1228,6 +1279,12 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   sql(`DELETE FROM coin_transactions WHERE user_id = '${alice.id}' AND source = 'activity_approved'`);
   sql(`DELETE FROM activities WHERE activity_type_key = '${keyTran}'`);
   sql(`DELETE FROM activity_types WHERE key = '${keyTran}'`);
+
+  // TRA LAI mac dinh cua migration 0020 (tat). Khong tra lai thi moi bo test
+  // chay sau trong cung mot D1 se thay mot he thong con cong diem hoat dong -
+  // dung kieu "bai test lam mat mot dong cau hinh he thong so huu" ma CLAUDE.md
+  // canh bao.
+  sql("UPDATE point_rules SET is_active = 0 WHERE event_key = 'activity_approved'");
 
   // Duong ghi thu hai: API entity truc tiep, khong qua ham nghiep vu
   const quaEntity = await alice.call('POST', '/api/entities/Activity', {

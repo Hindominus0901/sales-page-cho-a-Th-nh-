@@ -2015,6 +2015,18 @@ async function grantEntitlement(rc, svc) {
  * de D1 lam viec do.
  */
 async function getLeaderboard(rc) {
+  // Bang xep hang la cua HOC VIEN. Loc ca vai tro, khong chi trang thai.
+  //
+  // Truoc day o day chi co `u.status = 'active'`, nen tai khoan quan tri va
+  // coach nam chung bang voi hoc vien. Hom nay tai khoan quan tri co 0 XP nen
+  // no nam cuoi va khong ai de y - nhung trang Nhan su ghi THANG vao
+  // `users.role`, tuc la coach la nguoi that co dung app va co tich diem.
+  // Mot cuoc thi co giai thuong ma nguoi cham bai dung chung bang voi nguoi
+  // nop bai la khong con la mot cuoc thi.
+  //
+  // `role` la NOT NULL DEFAULT 'member' (0002_auth.sql) nen phep so sanh nay
+  // khong vuong NULL.
+  const DK_HOC_VIEN = "u.status = 'active' AND u.role = 'member'";
   const { store } = rc;
   const period = ['today', 'week', 'month', 'all_time'].includes(rc.body?.period)
     ? rc.body.period : 'all_time';
@@ -2062,7 +2074,7 @@ async function getLeaderboard(rc) {
          COUNT(DISTINCT u.id) AS so_nguoi,
          COALESCE(SUM(p.xp), 0) AS tong_diem
        FROM teams t
-       LEFT JOIN users u ON u.team_id = t.id AND u.status = 'active'
+       LEFT JOIN users u ON u.team_id = t.id AND ${DK_HOC_VIEN}
        LEFT JOIN point_awards p ON p.user_id = u.id
          AND p.event_key IN (${choThiDua}) ${dk}
        GROUP BY t.id
@@ -2118,7 +2130,7 @@ async function getLeaderboard(rc) {
        FROM users u
        LEFT JOIN point_awards p ON p.user_id = u.id
          AND p.event_key IN (${choThiDua}) ${dk}
-       WHERE u.status = 'active'
+       WHERE ${DK_HOC_VIEN}
        GROUP BY u.id`,
       args,
     };
@@ -2128,7 +2140,7 @@ async function getLeaderboard(rc) {
       content: 'u.content_count', call: 'u.call_count', assignment: 'u.assignment_count',
     }[metric];
     nen = {
-      sql: `SELECT ${cols}, ${orderBy} AS score FROM users u WHERE u.status = 'active'`,
+      sql: `SELECT ${cols}, ${orderBy} AS score FROM users u WHERE ${DK_HOC_VIEN}`,
       args: [],
     };
   } else if (metric === 'coin') {
@@ -2136,7 +2148,7 @@ async function getLeaderboard(rc) {
       sql: `SELECT ${cols}, COALESCE(SUM(c.amount),0) AS score
        FROM users u LEFT JOIN coin_transactions c ON c.user_id = u.id
          AND c.created_date >= ? AND c.amount > 0
-       WHERE u.status = 'active'
+       WHERE ${DK_HOC_VIEN}
        GROUP BY u.id`,
       args: [since()],
     };
@@ -2145,7 +2157,7 @@ async function getLeaderboard(rc) {
       sql: `SELECT ${cols}, COALESCE(SUM(x.amount),0) AS score
        FROM users u LEFT JOIN xp_transactions x ON x.user_id = u.id
          AND x.created_date >= ? AND x.amount > 0
-       WHERE u.status = 'active'
+       WHERE ${DK_HOC_VIEN}
        GROUP BY u.id`,
       args: [since()],
     };
@@ -2154,7 +2166,7 @@ async function getLeaderboard(rc) {
       sql: `SELECT ${cols}, COUNT(a.id) AS score
        FROM users u LEFT JOIN activities a ON a.user_id = u.id
          AND a.status = 'approved' AND a.activity_type_key = ? AND a.created_date >= ?
-       WHERE u.status = 'active'
+       WHERE ${DK_HOC_VIEN}
        GROUP BY u.id`,
       args: [metric, since()],
     };
