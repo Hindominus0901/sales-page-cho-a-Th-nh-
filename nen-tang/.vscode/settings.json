@@ -1,0 +1,56 @@
+{
+  // ===================================================================
+  // DUNG DE TRINH SOAN THAO TU DINH DANG LAI FILE SINH RA
+  //
+  // Bon file duoi day do `scripts/brand/apply.mjs` sinh ra tu
+  // `brand/brand.json`. Chung mang dau "SINH TU brand/brand.json" va co cac
+  // vung danh dau (BRAND:ROUTES, BRAND:R2, BRAND:VARS) ma
+  // `npm run brand:check --strict` doi chieu.
+  //
+  // CHUYEN DA XAY RA: trinh soan thao bat "dinh dang khi luu" da mo
+  // wrangler.jsonc va viet lai no - bung mang mot dong thanh nhieu dong, doi
+  // thut dau dong sang tab, xoa dong trong. KHONG mot gia tri nao doi (ten
+  // mien, so tai khoan, thung R2 deu y nguyen), nhung git thi thay 23 dong
+  // them va 24 dong bot, va cua kiem truoc deploy chan lai:
+  //
+  //     DUNG: cay lam viec con 1 thay doi chua commit
+  //
+  // Mat mot luot deploy de doc diff chi de ket luan "khong co gi doi ca".
+  // Va no se lap lai moi lan file duoc mo va luu.
+  //
+  // Dat `false` cho rieng cac file nay chu khong tat dinh dang toan cuc: cac
+  // file khac trong du an van duoc dinh dang binh thuong.
+  // ===================================================================
+  "[jsonc]": {
+    "editor.formatOnSave": false
+  },
+  "files.associations": {
+    "wrangler.jsonc": "jsonc"
+  },
+
+  // Ba file duoi day sinh ra TOAN BO, sua tay la mat trang o lan
+  // `npm run brand:apply` tiep theo. Dat chi-doc de khong ai sua nham.
+  //
+  // `wrangler.jsonc` CO Y KHONG nam trong danh sach nay: chi cac vung giua dau
+  // BRAND:ROUTES / BRAND:R2 / BRAND:VARS la sinh ra, phan con lai (assets, D1,
+  // KV, cron, va khoi ghi chu ve bat Queues) la sua tay duoc va co luc phai
+  // sua that. Khoa cung ca file la chan nham mot viec hop le.
+  "files.readonlyInclude": {
+    "apps/web/src/brand.generated.js": true,
+    "apps/web/src/brand.generated.css": true,
+    "worker/src/routes.generated.js": true
+  },
+
+  // Nhung thu muc khong bao gio can mo: chung lam cham tim kiem va de nguoi ta
+  // mo nham mot ban sao thay vi file that.
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.wrangler/**": true,
+    "**/dist/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.wrangler": true,
+    "**/dist": true
+  }
+}
