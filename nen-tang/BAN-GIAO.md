@@ -7,20 +7,30 @@ vẫn đọc và làm theo được.
 
 ## Phần 0 — Trạng thái thật, ngày bàn giao
 
-Hệ thống **đã chạy trên tên miền thật**. Nhưng **chưa sẵn sàng nhận tiền của
-khách thật** — còn 3 việc ở Phần 3. Đừng chạy quảng cáo trước khi xong 3 việc đó.
+Hệ thống **đã chạy trên tên miền thật** và đã bán được. Còn **một việc chặn
+tiền tự động** ở Phần 3.
 
 | | Trạng thái |
 |---|---|
-| `manhthanh.net` — trang bán hàng | ✅ đã trỏ về hệ mới |
+| `manhthanh.net` — trang bán hàng | ✅ đang chạy |
 | `app.manhthanh.net` — khu thành viên | ✅ đang chạy |
 | Tạo đơn, sinh mã QR | ✅ chạy |
-| Webhook ngân hàng → tự mở quyền học | ✅ chạy (đã thử trọn vòng) |
-| Gửi email | ❌ **chưa bật** — xem Phần 3.3 |
-| Số Zalo | ❌ **còn số giả** — xem Phần 3.1 |
+| **Webhook ngân hàng → tự xác nhận đơn** | ❌ **CHƯA BẬT** — xem Phần 3.2 |
+| Gửi email | ✅ đã bật, đã nhận được thư thật |
+| Số Zalo | ✅ số thật `0377526213` |
+| Kho ảnh (R2) | ✅ đã bật |
+| Đăng nhập bằng Google | ❌ chưa bật — không chặn ai, nút tự ẩn |
+| AI chấm bài | ❌ chưa bật — tự duyệt vẫn chạy nên không chặn ai |
 | Nội dung 21 ngày | ❌ chưa nhập — xem Phần 4 |
 
-Bộ kiểm tra tự động: **377/377 xanh** (373 đạt + 4 bỏ qua vì kho ảnh đang tắt).
+Cách tự kiểm bất cứ lúc nào, không cần hỏi ai: mở
+`https://manhthanh.net/api/config` và xem ô `capabilities`. Nó đọc thẳng từ máy
+chủ nên nó nói đúng cái máy chủ đang thấy, không phải cái tài liệu này nhớ.
+
+> **Một dòng trong bản cũ của tài liệu này từng ghi webhook ngân hàng "✅ chạy
+> (đã thử trọn vòng)".** Điều đó không đúng: khoá `BANK_WEBHOOK_SECRET` chưa
+> bao giờ được nạp, và thiếu nó thì `webhook.js:85` từ chối mọi cú gọi. Một tài
+> liệu nói sai về đường tiền còn nguy hơn không có tài liệu, nên đã sửa.
 
 ---
 
@@ -128,18 +138,34 @@ nhánh `claude/exciting-keller-n58lug`. Mọi lần deploy đều chạy từ đ
 
 ---
 
-## Phần 3 — BA VIỆC PHẢI XONG TRƯỚC KHI CÓ KHÁCH THẬT
+## Phần 3 — Việc còn lại trước khi chạy quảng cáo
 
-### 3.1. Số Zalo thật — đang là số giả
+Phần này ban đầu có ba việc. **Hai việc đã xong** và được giữ lại ở đây thay vì
+xoá đi, để anh biết chúng đã từng là vấn đề và đã được xử lý thế nào. Còn lại
+một việc thật: **3.2**.
 
-Trong khu thành viên có nút **"Gửi bill về Zalo để mình xác nhận nhé"**. Nó đang
-trỏ tới `zalo.me/0000000000` — **link chết, ngay chỗ khách vừa chuyển tiền**.
+### 3.1. ~~Số Zalo~~ — XONG
 
-Cần: số Zalo thật của anh Thành, và link nhóm Zalo nếu có. Sửa 3 dòng trong
-`brand/brand.json` (`contact.zaloPhone`, `contact.zaloUrl`,
-`contact.zaloGroupUrl`) rồi chạy lại 3 lệnh ở Phần 6.
+Đã thay số thật `0377526213` và link nhóm Zalo. Nút "Gửi bill về Zalo" trong
+khu thành viên giờ dẫn tới đúng chỗ.
 
-### 3.2. Quét thử mã QR một lần — bằng mắt người
+### 3.2. Webhook ngân hàng — VIỆC ĐÁNG LÀM NHẤT CÒN LẠI
+
+Khoá `BANK_WEBHOOK_SECRET` **chưa được nạp**. Thiếu nó thì `webhook.js:85` từ
+chối mọi cú gọi từ SePay, nghĩa là **không đơn nào tự xác nhận** — mọi khách
+chuyển tiền đều phải chờ anh vào trang quản trị bấm tay.
+
+Nạp xong là hết:
+
+```powershell
+npx wrangler secret put BANK_WEBHOOK_SECRET
+```
+
+Dán đúng chuỗi đã đặt bên SePay. Không cần deploy lại. Kiểm bằng cách mở
+`https://manhthanh.net/api/config` — ô `thanh_toan_tu_dong` phải đổi từ `false`
+sang `true`.
+
+### 3.3. Quét thử mã QR một lần — bằng mắt người
 
 Vào `https://manhthanh.net`, điền form như một khách thật, tới trang thanh toán,
 rồi **mở app ngân hàng quét mã đó**. Chỉ để nhìn thấy đúng:
@@ -153,19 +179,13 @@ Không cần chuyển tiền. Xem xong thoát.
 > vẫn đẹp, mã QR vẫn hiện, và **tiền khách chảy vào tài khoản người khác** — không
 > báo lỗi, không ai biết cho tới khi khách hỏi.
 
-### 3.3. Email — đang tắt, và vì sao vẫn bán được
+### 3.4. ~~Email~~ — XONG
 
-Chưa có `RESEND_API_KEY` nên hệ thống **không gửi được email nào**: không thư xác
-thực, không thư "đã nhận tiền", không thư mời vào lớp. Thư bị ghi vào nhật ký với
-trạng thái `chua dat RESEND_API_KEY` chứ không mất im lặng.
+`RESEND_API_KEY` đã nạp, tên miền đã xác minh, và **đã nhận được thư thật**.
+Thư xác thực, thư "đã nhận tiền", thư mời vào lớp, đặt lại mật khẩu — đều chạy.
 
-Có **lưới đỡ**: sau khi trả tiền, khách bấm **"Vào lớp ngay"** ngay trên trang cảm
-ơn là vào được, không cần email. Nên hệ thống vẫn bán và giao hàng được khi chưa
-có email.
-
-Nhưng khách **quên mật khẩu thì tắc** — đặt lại mật khẩu đi qua email. Vì vậy:
-bật email trước khi số khách đông. Cần tạo tài khoản Resend, xác minh tên miền
-`manhthanh.net` (thêm bản ghi DKIM), rồi nạp khoá.
+Muốn xem thư gửi cho một người có tới nơi không: **Học viên** → bấm vào tên →
+khối **Thư đã gửi**. Cột lỗi nói thẳng lý do nếu thư không đi được.
 
 ---
 
@@ -175,16 +195,29 @@ bật email trước khi số khách đông. Cần tạo tài khoản Resend, x�
 
 | Muốn làm gì | Vào đâu |
 |---|---|
-| Xác nhận khách đã chuyển tiền | Doanh thu → đơn hàng → **Đã nhận tiền** |
-| Nhập nội dung 21 ngày | Quản trị → **Thử thách** |
-| Thêm bài giảng, khoá học | Quản trị → **Khoá học** |
-| Sửa chữ trên trang bán hàng (số liệu, FAQ, lời chứng thực) | Quản trị → **Nội dung trang** |
-| Gửi thông báo cho học viên | Quản trị → **Thông báo** |
-| Xem cộng tác viên, hoa hồng | Quản trị → **Cộng tác viên** |
-| Xem ai làm gì | Quản trị → **Nhật ký** |
+| Xác nhận khách đã chuyển tiền | **Doanh thu** → đơn hàng → **Đã nhận tiền**. Khách nhận email biên nhận tự động |
+| Duyệt bài tập và hoạt động | **Duyệt bài** — huy hiệu đỏ đếm cả hai hàng chờ |
+| **Xem mọi thứ về một học viên** | **Học viên** → **bấm thẳng vào tên**. Hồ sơ có: đơn hàng, hoa hồng, bài tập, tiến độ từng bài, quyền đang có, quà đã đổi, thư đã gửi |
+| Tìm người lập nhiều tài khoản | **Tài khoản trùng** |
+| Giới hạn số chỗ mỗi khoá | **Sản phẩm** → cột **Sức chứa**. Để trống = không giới hạn. Bán đủ rồi thì bấm **"Mở khoá mới"** để đếm lại |
+| Bật/tắt tự duyệt bài, đổi luật cộng điểm | **Cơ chế** |
+| Nhập nội dung 21 ngày | **Challenge** |
+| Thêm bài giảng, khoá học | **Khoá học** |
+| Ẩn bài viết xấu | **Cộng đồng** — ẩn chứ không xoá, hoàn tác được |
+| Gửi thông báo cho học viên | **Thông báo** |
+| Xem cộng tác viên, hoa hồng | **Affiliate** |
+| Cấp quyền coach cho người khác | **Nhân sự** |
+| Xem ai làm gì | **Nhật ký** |
+
+**Tất cả những việc trên sửa xong là chạy ngay, không cần deploy.**
 
 Ba chỗ trang bán hàng đang tự ẩn vì thiếu nội dung, điền vào là hiện:
-khối 4 ô số liệu, một câu FAQ chưa có câu trả lời, và nghề của người chứng thực.
+khối 4 ô số liệu, một câu FAQ chưa có câu trả lời (*"Lớp học vào khung giờ nào,
+học trên nền tảng gì?"*), và nghề của người chứng thực.
+
+> **Điểm giờ chỉ tính cho lớp và thử thách.** Hoạt động hằng ngày tự khai vẫn
+> được ghi nhận và vẫn duyệt như cũ, nhưng không ra XP/xu nữa. Muốn bật lại:
+> **Cơ chế** → bật luật *"Hoạt động được duyệt"*.
 
 ---
 
@@ -245,6 +278,46 @@ app.manhthanh.net (custom domain)
 
 ---
 
+## Phần 6b — Nhờ AI sửa hộ, không cần lập trình viên
+
+Cách dễ nhất cho người không rành kỹ thuật: **Claude Code trên web**. Mở
+`claude.ai/code`, nối vào repo GitHub của dự án, rồi gõ tiếng Việt như nói
+chuyện bình thường. Không phải cài gì lên máy.
+
+Cần ba thứ:
+
+1. Một tài khoản Claude trả phí của riêng anh Thành
+2. Quyền trên repo GitHub (xem Phần 2)
+3. Muốn nó deploy được thì `nen-tang/.env` phải có `CLOUDFLARE_API_TOKEN`.
+   Lấy ở Cloudflare → My Profile → API Tokens → mẫu **"Edit Cloudflare
+   Workers"**, và **thêm hai quyền**: `D1:Edit` và `Workers R2 Storage:Edit`
+   (mẫu mặc định thiếu hai cái này, thiếu là báo lỗi `code: 7403`)
+
+### Nói thế nào cho hiệu quả
+
+- **Nói hiện tượng, đừng nói giải pháp.** *"Học viên bấm nộp bài xong không
+  thấy gì"* tốt hơn *"sửa file Challenges.jsx"*. Nó tự tìm được file.
+- **Bắt nó chạy `npm test` trước khi commit.** Có hơn 500 bài test đang xanh;
+  chúng tồn tại để bắt lỗi thay anh.
+- **Bắt nó giải thích trước khi sửa** nếu anh không chắc việc đó ảnh hưởng gì.
+- Nghe một câu trả lời chắc nịch mà không kèm bằng chứng → hỏi lại
+  **"dựa vào đâu?"**. Câu đó lọc được phần lớn những thứ nó đoán.
+
+### Đừng
+
+- **Đừng dán token, mật khẩu, khoá API vào khung chat.** Lệnh
+  `npx wrangler secret put` sẽ hỏi và anh dán thẳng vào cửa sổ dòng lệnh.
+- Đừng bảo nó deploy khi chưa chạy test.
+- Đừng để nó sửa thẳng lên nhánh chính mà không xem lại.
+
+### Những việc KHÔNG cần tới AI
+
+Mọi thứ trong bảng ở Phần 4 sửa được ngay trong `/admin`. Chỉ cần tới AI khi
+muốn đổi thứ nằm trong mã nguồn: bố cục trang bán hàng, thêm màn hình mới, đổi
+cách tính điểm.
+
+---
+
 ## Phần 7 — Khi có sự cố
 
 | Hiện tượng | Làm gì |
@@ -252,7 +325,8 @@ app.manhthanh.net (custom domain)
 | Trang trắng / lỗi sau khi deploy | Mở `goc-creator-platform.nhipsongsoserenitylife.workers.dev` — còn sống thì là lỗi tên miền, không phải lỗi hệ thống |
 | Muốn quay về bản trước | Cloudflare → Workers → `goc-creator-platform` → Deployments → chọn bản cũ → Rollback |
 | Khách báo không vào được lớp | Quản trị → Doanh thu → tìm đơn → xem đã "đã trả" chưa; chưa thì bấm **Đã nhận tiền** |
-| Khách quên mật khẩu mà email chưa bật | Chưa có đường tự phục vụ — xem Phần 3.3 |
+| Khách nói không nhận được mail | **Học viên** → bấm tên → khối **Thư đã gửi**. Cột lỗi nói thẳng lý do |
+| Chuyển tiền rồi mà đơn chưa tự xác nhận | `BANK_WEBHOOK_SECRET` chưa nạp — xem Phần 3.2. Trong lúc đó xác nhận tay ở **Doanh thu** |
 | Kiểm hệ thống còn sống không | Mở `https://manhthanh.net/api/health`, phải thấy `ok: true` |
 
 ---
