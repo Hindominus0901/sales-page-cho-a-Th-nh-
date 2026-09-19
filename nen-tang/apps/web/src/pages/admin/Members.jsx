@@ -232,14 +232,32 @@ export default function Members() {
                   return (
                     <React.Fragment key={u.id}>
                       <tr className="border-b border-border hover:bg-secondary/40">
+                        {/* Bam thang vao TEN la mo ho so.
+
+                            Truoc day ten chi la chu, muon xem mot nguoi phai
+                            do tim nut "Ho so" lan giua mot hang nut nho cuoi
+                            dong. Ten la thu nguoi ta nhin vao dau tien va la
+                            thu ho muon bam - de no tro thi khong ai tim ra
+                            duong vao ho so.
+
+                            Van giu nut "Ho so" o cuoi dong: doi mot thoi quen
+                            da co ma khong de lai duong cu la lam kho dung nguoi
+                            dang dung quen. */}
                         <td className="p-2.5">
-                          <div className="flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-2.5 rounded-lg p-1 text-left transition-colors hover:bg-primary/10"
+                            onClick={() => setHoSoCua(u)}
+                            title={`Xem hồ sơ đầy đủ của ${u.full_name || u.email}`}
+                          >
                             <InitialAvatar name={u.full_name} size={34} />
                             <div className="min-w-0">
-                              <div className="truncate font-semibold">{u.full_name || 'Chưa đặt tên'}</div>
+                              <div className="truncate font-semibold underline-offset-4 group-hover:underline">
+                                {u.full_name || 'Chưa đặt tên'}
+                              </div>
                               <div className="truncate text-xs text-muted-foreground">{u.email}</div>
                             </div>
-                          </div>
+                          </button>
                         </td>
                         <td className="whitespace-nowrap p-2.5">{lvl.icon} {lvl.name}</td>
                         <td className="p-2.5 text-right font-bold">{fmtNumber(u.total_xp)}</td>
@@ -793,7 +811,24 @@ function HoSoDialog({ user, onClose }) {
     enabled: bat,
   });
 
-  const dangTai = [quyen, hoatDong, tienDo, doiQua, huyHieu, giuCho, thuThach].some((x) => x.isLoading);
+  // Don hang + hoa hong: KHONG di qua lop entity duoc.
+  //
+  // `orders`, `commissions`, `leads` khong nam trong entities/schema.js, nen
+  // khong co `base44.entities.Order` de goi. Truoc duong /api/admin/ho-so nay,
+  // man hinh quan tri khong co cach nao tra loi cau "nguoi nay da mua gi" hay
+  // "da kiem duoc bao nhieu hoa hong" ve MOT nguoi cu the.
+  const tien = useQuery({
+    queryKey: ['admin', 'ho-so', 'tien', uid],
+    queryFn: () => base44.adminApi.hoSo(uid),
+    enabled: bat,
+  });
+
+  const dangTai = [quyen, hoatDong, tienDo, doiQua, huyHieu, giuCho, thuThach, tien]
+    .some((x) => x.isLoading);
+
+  const donHang = tien.data?.don_hang || [];
+  const aff = tien.data?.affiliate || null;
+  const thuDaGui = tien.data?.thu_da_gui || [];
 
   const ngay = (v) => (v ? String(v).slice(0, 10) : '—');
 
@@ -868,6 +903,56 @@ function HoSoDialog({ user, onClose }) {
                 rong="Chưa giữ chỗ buổi nào."
                 items={giuCho.data}
                 ve={(e) => `${e.event_title || e.event_id} — ${e.status}`}
+              />
+
+              {/* Hai khoi duoi day la thu truoc day KHONG man hinh nao xem
+                  duoc theo tung nguoi. Chung khong di qua lop entity - xem chu
+                  thich o truy van `tien` phia tren. */}
+              <Khoi
+                tieuDe={`Đơn hàng${tien.data?.da_tra ? ` · đã trả ${fmtNumber(tien.data.da_tra)}đ` : ''}`}
+                rong="Chưa có đơn hàng nào đứng tên người này."
+                items={donHang}
+                ve={(d) => `${d.code} · ${d.product_name || d.product_sku} · ${fmtNumber(d.paid_amount || d.amount)}đ · ${d.status}${d.paid_at ? ` · ${String(d.paid_at).slice(0, 10)}` : ''}`}
+              />
+
+              <section className="rounded-xl border border-border p-3">
+                <h4 className="mb-2 text-sm font-bold">Cộng tác viên</h4>
+                {!aff ? (
+                  <p className="text-[12.5px] text-muted-foreground">
+                    Người này chưa có cổng đại lý.
+                  </p>
+                ) : (
+                  <>
+                    <dl className="mb-2 text-[12.5px]">
+                      <Dong nhan="Mã giới thiệu" giaTri={aff.code} />
+                      <Dong nhan="Trạng thái" giaTri={aff.status} />
+                      <Dong nhan="Đã giới thiệu" giaTri={`${fmtNumber(aff.so_gioi_thieu)} người`} />
+                      {/* Ba con so TACH ROI, khong gop thanh mot tong. Voi
+                          nguoi dang doi tien, "da nhan" va "dang cho" la hai
+                          chuyen khac han nhau. */}
+                      <Dong nhan="Hoa hồng đã trả" giaTri={`${fmtNumber(aff.da_tra)}đ`} />
+                      <Dong nhan="Đang chờ trả" giaTri={`${fmtNumber(aff.dang_cho)}đ`} />
+                      {aff.da_huy > 0 && (
+                        <Dong nhan="Đã huỷ" giaTri={`${fmtNumber(aff.da_huy)}đ`} />
+                      )}
+                    </dl>
+                    <Khoi
+                      tieuDe="Từng dòng hoa hồng"
+                      rong="Chưa có dòng hoa hồng nào."
+                      items={aff.hoa_hong}
+                      ve={(c) => `${c.order_code} · ${fmtNumber(c.amount)}đ · ${c.status}${c.paid_at ? ` · ${String(c.paid_at).slice(0, 10)}` : ''}`}
+                    />
+                  </>
+                )}
+              </section>
+
+              {/* Tra loi thang cau hoi hay gap nhat: "sao em khong nhan duoc
+                  mail". Cot `error` noi that vi sao, thay vi de anh Thanh doan. */}
+              <Khoi
+                tieuDe="Thư đã gửi"
+                rong="Chưa gửi thư nào tới địa chỉ này."
+                items={thuDaGui}
+                ve={(t) => `${t.template} · ${t.status}${t.error ? ` · ${t.error}` : ''} · ${String(t.created_at || '').slice(0, 16).replace('T', ' ')}`}
               />
             </>
           )}

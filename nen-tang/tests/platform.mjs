@@ -2537,6 +2537,71 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
     sql("DELETE FROM affiliates WHERE code='KTHU1'");
   }
 
+  // =======================================================================
+  // T. Ho so mot nguoi: MOI THU trong mot lan goi
+  //
+  // Truoc duong nay, trang Hoc vien xe thong tin mot nguoi ra BA hop thoai va
+  // van THIEU hai thu quan trong nhat - da mua gi, va kiem duoc bao nhieu hoa
+  // hong - vi `orders`/`commissions` khong nam trong lop entity, nen giao dien
+  // khong co duong nao doc chung theo tung nguoi.
+  //
+  // Khoi nay PHAI nam truoc phan don dep ben duoi: dong
+  // `DELETE FROM users WHERE email LIKE '%@smoketest.local'` xoa ca tai khoan
+  // admin cua bo test, va moi cu goi sau do tra 401. Lan dau toi dat no sau va
+  // ca bay bai deu do vi ly do do - khong phai vi endpoint hong.
+  // =======================================================================
+  console.log('\nT. Ho so mot nguoi');
+
+  const hsMail = `hoso${Date.now()}@smoketest.local`;
+  const hsSdt = '+84988000901';
+  sql(`INSERT INTO leads (full_name,email,phone,phone_e164,created_at,updated_at) VALUES ('Nguoi Co Ho So','${hsMail}','0988000901','${hsSdt}',datetime('now'),datetime('now'))`);
+  const hsLead = sql(`SELECT id FROM leads WHERE phone_e164='${hsSdt}'`)[0]?.id;
+
+  const hsUid = `u-hoso-${Date.now()}`;
+  sql(`INSERT INTO users (id,email,full_name,role,status,legacy_lead_id,created_date,updated_date) VALUES ('${hsUid}','${hsMail}','Nguoi Co Ho So','member','active',${hsLead},datetime('now'),datetime('now'))`);
+
+  const hsDon = `HS${Date.now().toString(36).toUpperCase().slice(-8)}`;
+  sql(`INSERT INTO orders (lead_id,code,product_sku,product_name,amount,paid_amount,status,paid_at,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES (${hsLead},'${hsDon}','${SKU_TEST}','Ve chinh',2000000,2000000,'paid',datetime('now'),'${hsDon}','Nguoi Co Ho So','${hsMail}','0988000901',datetime('now'),datetime('now'))`);
+
+  sql(`INSERT INTO affiliates (code,token,full_name,email,phone,status,created_at,updated_at) VALUES ('HSAFF1','tok-hoso-${Date.now()}','Nguoi Co Ho So','${hsMail}','0988000901','active',datetime('now'),datetime('now'))`);
+  const hsAff = sql("SELECT id FROM affiliates WHERE code='HSAFF1'")[0]?.id;
+  sql(`INSERT INTO commissions (affiliate_id,order_id,order_code,order_amount,rate,amount,status,created_at) VALUES (${hsAff},999777,'DONKHAC',2000000,0.2,400000,'paid',datetime('now'))`);
+
+  const hs = await admin.call('GET', `/api/admin/ho-so/${hsUid}`);
+  check('ho so tra ve dung nguoi',
+    hs.status === 200 && hs.data?.nguoi?.id === hsUid, { status: hs.status });
+  check('ho so co LICH SU MUA HANG (thu giao dien truoc day khong doc duoc)',
+    (hs.data?.don_hang || []).some((d) => d.code === hsDon), hs.data?.don_hang);
+  check('ho so cong dung so tien da tra',
+    hs.data?.da_tra === 2000000, hs.data?.da_tra);
+  check('ho so co cong dai ly va dong hoa hong',
+    hs.data?.affiliate?.code === 'HSAFF1'
+    && (hs.data?.affiliate?.hoa_hong || []).some((c) => c.order_code === 'DONKHAC'),
+    hs.data?.affiliate);
+  check('hoa hong DA TRA va DANG CHO la hai con so tach roi',
+    hs.data?.affiliate?.da_tra === 400000 && hs.data?.affiliate?.dang_cho === 0,
+    { da_tra: hs.data?.affiliate?.da_tra, dang_cho: hs.data?.affiliate?.dang_cho });
+
+  // Nguoi KHONG co lead van phai tim ra don qua email - bo duong nay la mot
+  // nua so nguoi mua hien ra "chua mua gi" trong khi ho da tra tien.
+  const hsMail2 = `hoso2${Date.now()}@smoketest.local`;
+  const hsUid2 = `u-hoso2-${Date.now()}`;
+  sql(`INSERT INTO users (id,email,full_name,role,status,created_date,updated_date) VALUES ('${hsUid2}','${hsMail2}','Khong Co Lead','member','active',datetime('now'),datetime('now'))`);
+  const hsDon2 = `HX${Date.now().toString(36).toUpperCase().slice(-8)}`;
+  sql(`INSERT INTO orders (code,product_sku,product_name,amount,paid_amount,status,paid_at,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${hsDon2}','${SKU_TEST}','Ve chinh',2000000,2000000,'paid',datetime('now'),'${hsDon2}','Khong Co Lead','${hsMail2}','0988000902',datetime('now'),datetime('now'))`);
+
+  const hs2 = await admin.call('GET', `/api/admin/ho-so/${hsUid2}`);
+  check('khong co lead van tim ra don qua email',
+    (hs2.data?.don_hang || []).some((d) => d.code === hsDon2), hs2.data?.don_hang);
+
+  const hsLa = await admin.call('GET', '/api/admin/ho-so/khong-ton-tai-dau');
+  check('ho so cua nguoi khong ton tai -> 404, khong phai trang rong',
+    hsLa.status === 404, hsLa.status);
+
+  sql(`DELETE FROM commissions WHERE affiliate_id=${hsAff}`);
+  sql("DELETE FROM affiliates WHERE code='HSAFF1'");
+  sql(`DELETE FROM orders WHERE code IN ('${hsDon}','${hsDon2}')`);
+
   // ------------------------------------------------------------------ don dep
   sql("DELETE FROM kit_sync_log WHERE email LIKE '%@smoketest.local'");
   sql("DELETE FROM leads WHERE email LIKE '%@smoketest.local'");

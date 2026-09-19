@@ -9,6 +9,7 @@ import { kitStatus, kitLists, kitTest, kitBackfill } from './admin-kit.js';
 import { fulfilOrder } from '../commerce/fulfil.js';
 import { traoThuongTheoLuot } from '../commerce/thuong-gioi-thieu.js';
 import { guiLaiThuMoi, guiThuDaThanhToan } from '../auth/invite.js';
+import { affiliateOfUser } from './affiliate.js';
 
 /**
  * Mot dong du lieu hong (vd tu dot di tru) khong duoc lam sap ca trang danh
@@ -819,6 +820,116 @@ async function adminLeaderboard(rc) {
  *   3. `ten_ip`   - hai lead cung TEN va cung IP luc dien form. Yeu nhat: ca
  *                   nha dung chung mot mang la trung IP, nen chi dung de goi y.
  */
+/**
+ * GET /api/admin/ho-so/:userId - MOI THU he thong biet ve mot nguoi, mot lan goi.
+ *
+ * ============ VI SAO PHAI LA MOT DUONG RIENG ============
+ *
+ * Truoc day trang Hoc vien xe thong tin mot nguoi ra BA hop thoai (ho so, bai
+ * tap, lich su diem) va van THIEU hai thu quan trong nhat: da mua gi, va kiem
+ * duoc bao nhieu hoa hong.
+ *
+ * Khong phai quen hien. `orders`, `commissions`, `leads` KHONG nam trong lop
+ * entity (worker/src/entities/schema.js co 32 entity, khong co ba bang nay),
+ * nen giao dien khong co duong nao doc chung theo tung nguoi. Them mot cau
+ * truy vay ben React cung khong giai quyet duoc.
+ *
+ * ============ NOI MOT NGUOI VOI DON HANG: HAI DUONG, KHONG MOT ============
+ *
+ * `legacy_lead_id` la duong chac chan, nhung chi co khi tai khoan duoc noi vao
+ * mot lead (bridgeLead). Ai tu dang ky bang email moi thi cot do NULL - va don
+ * cua ho van ton tai, tim bang `customer_email`. Bo duong thu hai la mot nua so
+ * nguoi mua hien ra "chua mua gi" trong khi ho da tra tien.
+ *
+ * Doi chieu khong phan biet HOA THUONG: email luu o hai bang co the khac nhau
+ * o chu hoa chu thuong, va mot ban ghi khong khop vi chu 'A' la mot loi khong
+ * ai nhin ra.
+ */
+async function hoSoNguoi(rc) {
+  const { store } = rc;
+  const uid = String(rc.params.id || '').trim();
+  if (!uid) return apiError(400, 'missing', 'Thiếu mã học viên');
+
+  const u = await store.get('SELECT * FROM users WHERE id = ?', [uid]);
+  if (!u) return apiError(404, 'not_found', 'Không tìm thấy học viên này');
+
+  const email = String(u.email || '').toLowerCase();
+  const leadId = u.legacy_lead_id || null;
+
+  const lead = leadId
+    ? await store.get('SELECT * FROM leads WHERE id = ?', [leadId]).catch(() => null)
+    : (email
+      ? await store.get('SELECT * FROM leads WHERE lower(email) = ? ORDER BY id DESC LIMIT 1',
+        [email]).catch(() => null)
+      : null);
+
+  // Don hang: theo lead_id HOAC theo email. Xem chu thich o dau ham.
+  const donHang = await store.all(
+    `SELECT id, code, product_sku, product_name, amount, paid_amount, currency, status,
+            paid_at, created_at
+       FROM orders
+      WHERE (lead_id IS NOT NULL AND lead_id = ?)
+         OR (? <> '' AND lower(customer_email) = ?)
+      ORDER BY id DESC LIMIT 100`,
+    [leadId, email, email]).catch(() => []);
+
+  // Cong dai ly cua chinh nguoi nay - dung lai dung duong ma /api/affiliate/me
+  // di, de hai man hinh khong bao giờ noi hai con so khac nhau.
+  const aff = await affiliateOfUser(rc, u).catch(() => null);
+  const hoaHong = aff
+    ? await store.all(
+      `SELECT id, order_code, order_amount, rate, amount, status, paid_at, created_at
+         FROM commissions WHERE affiliate_id = ? ORDER BY id DESC LIMIT 100`,
+      [aff.id]).catch(() => [])
+    : [];
+
+  // Nguoi nay da gioi thieu duoc ai. Chi dem, khong tra danh sach email nguoi
+  // khac ra man hinh nay.
+  //
+  // Dem y HET cach affiliates.js:473 dem (`leads.referred_by` kem co
+  // `referral_valid = 1`), KHONG tu nghi mot cong thuc khac. Hai man hinh noi
+  // hai con so khac nhau ve cung mot nguoi la thu lam mat long tin nhanh nhat,
+  // va khong ai biet ben nao dung.
+  const soGioiThieu = aff
+    ? await store.get(
+      'SELECT COUNT(*) AS n FROM leads WHERE referred_by = ? AND referral_valid = 1',
+      [aff.id]).catch(() => null)
+    : null;
+
+  // Thu da gui cho dia chi nay - tra loi thang cau "sao em khong nhan duoc mail".
+  const thu = email
+    ? await store.all(
+      `SELECT template, status, error, created_at, sent_at FROM emails_sent
+        WHERE lower(to_addr) = ? ORDER BY rowid DESC LIMIT 20`, [email]).catch(() => [])
+    : [];
+
+  const tong = (ds, loc) => ds.filter(loc).reduce((s, r) => s + Number(r.amount || 0), 0);
+
+  return json({
+    ok: true,
+    nguoi: u,
+    lead,
+    don_hang: donHang,
+    da_tra: donHang
+      .filter((d) => d.status === 'paid' || d.status === 'overpaid')
+      .reduce((s, d) => s + Number(d.paid_amount || d.amount || 0), 0),
+    affiliate: aff
+      ? {
+        code: aff.code,
+        status: aff.status,
+        so_gioi_thieu: Number(soGioiThieu?.n || 0),
+        hoa_hong: hoaHong,
+        // Tach ba con so thay vi mot tong: "da nhan" va "dang cho" la hai
+        // chuyen khac nhau voi nguoi dang doi tien, va gop lai la noi sai.
+        da_tra: tong(hoaHong, (c) => c.status === 'paid'),
+        dang_cho: tong(hoaHong, (c) => c.status !== 'paid' && c.status !== 'void'),
+        da_huy: tong(hoaHong, (c) => c.status === 'void'),
+      }
+      : null,
+    thu_da_gui: thu,
+  });
+}
+
 async function taiKhoanTrung(rc) {
   const { store } = rc;
   const gioiHan = intParam(rc.url, 'limit', 100, 500);
@@ -1010,6 +1121,7 @@ const ROUTES = [
   { method: 'GET', pattern: /^\/api\/admin\/leaderboard$/, handler: adminLeaderboard },
   { method: 'GET', pattern: /^\/api\/admin\/referrals\/pending$/, handler: pendingReferrals },
   { method: 'GET', pattern: /^\/api\/admin\/tai-khoan-trung$/, handler: taiKhoanTrung },
+  { method: 'GET', pattern: /^\/api\/admin\/ho-so\/([A-Za-z0-9_-]+)$/, handler: hoSoNguoi, params: ['id'] },
   { method: 'GET', pattern: /^\/api\/admin\/ref-ma-la$/, handler: listMaLa },
   { method: 'POST', pattern: /^\/api\/admin\/trao-thuong-bu$/, handler: traoThuongBu },
   { method: 'POST', pattern: /^\/api\/admin\/ref-ma-la\/([A-Z0-9]+)\/gan$/i, handler: ganMaLa, params: ['ma'] },

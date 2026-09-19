@@ -198,6 +198,16 @@ export const adminApi = {
   // ma khong mo thang database.
   bankTxns: (limit) => adminHttp.get('/bank-txns' + qs({ limit })),
 
+  // MOI THU ve mot nguoi trong mot lan goi - gom ca don hang va hoa hong, hai
+  // thu ma lop entity khong he mo ra (`orders`, `commissions`, `leads` khong
+  // nam trong worker/src/entities/schema.js), nen truoc duong nay giao dien
+  // khong co cach nao xem lich su mua hang cua mot hoc vien.
+  hoSo: (userId) => adminHttp.get(`/ho-so/${encodeURIComponent(userId)}`),
+
+  // Nhung nguoi co dau hieu co NHIEU HON MOT tai khoan. Duong nay da co tu
+  // truoc nhung khong man hinh nao goi - quyen thi co, duong thi khong.
+  taiKhoanTrung: (limit) => adminHttp.get('/tai-khoan-trung' + qs({ limit })),
+
   pendingReferrals: (limit) => adminHttp.get('/referrals/pending' + qs({ limit })),
   maLa: (limit) => adminHttp.get('/ref-ma-la' + qs({ limit })),
   traoThuongBu: () => adminHttp.post('/trao-thuong-bu', {}),
