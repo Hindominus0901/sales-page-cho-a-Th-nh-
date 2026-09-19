@@ -346,6 +346,63 @@ cách tính điểm.
 
 ---
 
+## Phần 10 — Chạy bản này ở máy anh Thành
+
+Phần này dành cho lúc anh muốn thử sửa gì đó **mà không đụng tới bản thật**.
+Bản chạy ở máy dùng một cơ sở dữ liệu riêng, rỗng — nghịch thoải mái, không
+ảnh hưởng một khách nào.
+
+### Cần có trước
+
+- **Node.js phiên bản 22 trở lên** — tải ở `nodejs.org`, chọn bản LTS
+- **Git** — `git-scm.com`
+
+### Sáu bước
+
+Mở PowerShell, vào thư mục `nen-tang` bên trong bộ mã nguồn, rồi:
+
+```powershell
+npm install
+
+# Tao file cau hinh rieng cua may nay. KHONG BAO GIO dua file .env len mang.
+copy .env.example .env
+
+# Sinh mat khau quan tri cho ban chay o may
+npm run hash-password "mat khau anh tu dat"
+# -> chep chuoi in ra, dan vao dong ADMIN_PASSWORD_HASH= trong .env
+
+npm run db:migrate                       # tao bang trong co so du lieu o may
+npm run brand:seed -- --local --admin-email thanh@manhthanh.net
+npm run build
+npm run dev:worker                       # mo http://localhost:8787
+```
+
+Mở trình duyệt vào `http://localhost:8787` là thấy trang bán hàng chạy ở máy.
+Khu quản trị ở `http://localhost:8787/admin`.
+
+### Kiểm mọi thứ còn nguyên vẹn
+
+```powershell
+npm test
+```
+
+Hơn 500 bài kiểm tra tự động. **Tất cả phải xanh.** Có bài đỏ nghĩa là thứ gì
+đó vừa hỏng — đừng deploy, hỏi lại trước.
+
+Lần chạy đầu mất vài phút vì nó tự bật máy chủ. Máy chủ phải đang chạy ở cổng
+8787 thì bộ test mới làm việc được.
+
+### Ba điều tuyệt đối đừng làm
+
+- **Đừng chạy `npm test` trỏ vào cơ sở dữ liệu thật.** Bộ test có lệnh xoá dọn.
+  Mặc định nó chỉ chạy ở máy — đừng đổi.
+- **Đừng đưa file `.env` cho ai, đừng đẩy lên mạng.** Nó giữ mật khẩu và khoá.
+  File này đã được cấu hình để không bao giờ lên GitHub.
+- **Đừng sửa file có dòng chữ `SINH TU brand/brand.json`.** Sửa `brand.json`
+  rồi chạy `npm run brand:apply`.
+
+---
+
 ## Phần 9 — Tài liệu khác trong repo
 
 | File | Cho ai |
