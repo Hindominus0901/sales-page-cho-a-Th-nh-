@@ -535,6 +535,9 @@ export const ENTITIES = {
       delivery_url: 'string', delivery_note: 'string', zalo_group_url: 'string',
       // Ty le hoa hong rieng cua san pham nay (migration 0017). NULL = chua dat.
       commission_rate: 'number',
+      // Suc chua theo khoa (migration 0019). seats_total NULL = khong gioi han.
+      // `cohort_start_at` la moc "mo khoa moi": doi no la bo dem ve 0.
+      seats_total: 'number', seats_offset: 'number', cohort_start_at: 'string',
     },
     // Gian hang phai hien ten, gia, anh cho MOI NGUOI - nhung link tai lieu va
     // loi nhan sau khi mua thi chi nguoi da mua goi do moi thay. Khong che thi

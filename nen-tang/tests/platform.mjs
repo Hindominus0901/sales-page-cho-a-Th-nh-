@@ -2581,6 +2581,107 @@ async function makeUser(tag, role = 'member', { lead = true } = {}) {
   sql("DELETE FROM ref_ma_la_phien WHERE ma = 'MALATEST9'");
   sql("DELETE FROM orders WHERE lead_id IN (SELECT id FROM leads WHERE phone_e164 = '+84988000111')");
   sql("DELETE FROM leads WHERE phone_e164 = '+84988000111'");
+  // =======================================================================
+  // S. Suc chua theo khoa
+  //
+  // Trang ban hang tra loi "Lop co bao nhieu nguoi?" bang "Toi da 30 cho moi
+  // khoa". Truoc migration 0019 khong co gi dem cho - nguoi thu 31 dat don
+  // binh thuong, va cau tren trang la mot loi hua he thong khong giu duoc.
+  //
+  // Bon thu phai dung cung luc, va moi thu deu la mot cach hong that:
+  //   1. CHUA dat tran  -> khong chan gi (mac dinh khong duoc doi hanh vi)
+  //   2. DA du cho      -> don MOI bi tu choi 409
+  //   3. don DANG CHO   -> van tra tien duoc (chan ho la mat tien that)
+  //   4. mo khoa moi    -> ban lai duoc (thieu duong nay la khoa cua tu ben trong)
+  // =======================================================================
+  console.log('\nS. Suc chua theo khoa');
+
+  const skuSC = `SUCCHUA${Date.now().toString(36).toUpperCase().slice(-5)}`;
+  sql(`INSERT INTO products (id,sku,name,kind,price,currency,grants_json,is_active,created_date,updated_date) VALUES ('sp-${skuSC}','${skuSC}','San pham kiem suc chua','course',100000,'VND','[]',1,datetime('now'),datetime('now'))`);
+
+  const taoLeadSC = (ten, sdt, mail) => {
+    sql(`INSERT INTO leads (full_name,email,phone,phone_e164,created_at,updated_at) VALUES ('${ten}','${mail}','${sdt.replace('+84', '0')}','${sdt}',datetime('now'),datetime('now'))`);
+    return sql(`SELECT id FROM leads WHERE phone_e164='${sdt}'`)[0]?.id;
+  };
+
+  const leadSC = taoLeadSC('Nguoi Kiem Suc Chua', '+84988000777', 'sc1@smoketest.local');
+
+  // --- 1. Chua dat tran thi khong chan gi ---------------------------------
+  const donKhiChuaDat = await khach.call('POST', '/api/orders', {
+    phone: '0988000777', country_code: '+84', product_sku: skuSC,
+  });
+  check('chua dat tran -> van tao don binh thuong',
+    [200, 201].includes(donKhiChuaDat.status) && !!donKhiChuaDat.data?.order?.code,
+    { status: donKhiChuaDat.status, err: donKhiChuaDat.data?.error });
+
+  // --- 2. Day cho thi tu choi don MOI ------------------------------------
+  //
+  // Dat moc khoa ve hom nay roi nap DUNG mot don da tra tien sau moc do, va
+  // tran = 1. Dem theo product_sku nen don cua san pham khac khong an vao day.
+  const maDaTra = `SC${Date.now().toString(36).toUpperCase().slice(-8)}`;
+  sql(`INSERT INTO orders (code,product_sku,product_name,amount,status,paid_at,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maDaTra}','${skuSC}','San pham kiem suc chua',100000,'paid',datetime('now'),'${maDaTra}','Da tra','datra@smoketest.local','0988000778',datetime('now'),datetime('now'))`);
+  sql(`UPDATE products SET seats_total=1, cohort_start_at=datetime('now','-1 hour') WHERE sku='${skuSC}'`);
+
+  // Don dang cho cua chinh lead nay phai duoc tra lai (khong bi chan), nen xoa
+  // no di truoc de kiem dung duong "khach MOI den khi da day".
+  sql(`DELETE FROM orders WHERE lead_id=${leadSC} AND status='pending'`);
+
+  const leadSC2 = taoLeadSC('Nguoi Den Sau', '+84988000779', 'sc2@smoketest.local');
+  const donKhiDay = await khach.call('POST', '/api/orders', {
+    phone: '0988000779', country_code: '+84', product_sku: skuSC,
+  });
+  check('day cho -> don MOI bi tu choi 409 het_cho',
+    donKhiDay.status === 409 && donKhiDay.data?.error?.code === 'het_cho',
+    { status: donKhiDay.status, err: donKhiDay.data?.error });
+  check('loi het cho noi ro con bao nhieu cho, bang cau khach doc duoc',
+    donKhiDay.data?.error?.tran === 1
+    && /đủ 1 chỗ/.test(String(donKhiDay.data?.error?.message || '')),
+    donKhiDay.data?.error);
+
+  // --- 3. Don DANG CHO van tra tien duoc ---------------------------------
+  //
+  // Nguoi bam dang ky TRUOC khi lop day dang o giua duong chuyen khoan. Chan ho
+  // o day la ho quet ma QR khong ra don - hoac te hon, da chuyen tien roi moi
+  // thay bao het cho. Cua chan phai nam SAU duong tra lai don cu.
+  const maCho = `SCP${Date.now().toString(36).toUpperCase().slice(-7)}`;
+  sql(`INSERT INTO orders (lead_id,code,product_sku,product_name,amount,status,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES (${leadSC2},'${maCho}','${skuSC}','San pham kiem suc chua',100000,'pending','${maCho}','Dang cho','dangcho@smoketest.local','0988000779',datetime('now'),datetime('now'))`);
+  const donCuKhiDay = await khach.call('POST', '/api/orders', {
+    phone: '0988000779', country_code: '+84', product_sku: skuSC,
+  });
+  check('day cho nhung don DANG CHO van duoc tra lai de tra tien',
+    donCuKhiDay.status === 200 && donCuKhiDay.data?.reused === true
+    && donCuKhiDay.data?.order?.code === maCho,
+    { status: donCuKhiDay.status, code: donCuKhiDay.data?.order?.code });
+
+  // --- 4. Mo khoa moi thi ban lai duoc -----------------------------------
+  sql(`DELETE FROM orders WHERE code='${maCho}'`);
+  sql(`UPDATE products SET cohort_start_at=datetime('now') WHERE sku='${skuSC}'`);
+  const donKhoaMoi = await khach.call('POST', '/api/orders', {
+    phone: '0988000779', country_code: '+84', product_sku: skuSC,
+  });
+  check('mo khoa moi -> don cu thoi chiem cho, ban lai duoc',
+    [200, 201].includes(donKhoaMoi.status) && !!donKhoaMoi.data?.order?.code,
+    { status: donKhoaMoi.status, err: donKhoaMoi.data?.error });
+
+  // --- 5. Don cua san pham KHAC khong an cho cua lop ---------------------
+  sql(`DELETE FROM orders WHERE lead_id IN (${leadSC},${leadSC2})`);
+  // Xoa ca don khong gan lead - no van la don da tra tien CUA CHINH skuSC.
+  sql(`DELETE FROM orders WHERE product_sku='${skuSC}'`);
+  sql(`UPDATE products SET seats_total=1, cohort_start_at=datetime('now','-1 hour') WHERE sku='${skuSC}'`);
+  const maMonKhac = `SCX${Date.now().toString(36).toUpperCase().slice(-7)}`;
+  sql(`INSERT INTO orders (code,product_sku,product_name,amount,status,paid_at,transfer_content,customer_name,customer_email,customer_phone,created_at,updated_at) VALUES ('${maMonKhac}','${SKU_TEST}','Mon khac',100000,'paid',datetime('now'),'${maMonKhac}','Mon khac','monkhac@smoketest.local','0988000780',datetime('now'),datetime('now'))`);
+  const donSauMonKhac = await khach.call('POST', '/api/orders', {
+    phone: '0988000777', country_code: '+84', product_sku: skuSC,
+  });
+  check('don cua san pham KHAC khong an cho cua lop',
+    [200, 201].includes(donSauMonKhac.status), { status: donSauMonKhac.status, err: donSauMonKhac.data?.error });
+
+  sql(`DELETE FROM orders WHERE code='${maMonKhac}'`);
+  sql(`DELETE FROM orders WHERE code='${maDaTra}'`);
+  sql(`DELETE FROM orders WHERE lead_id IN (${leadSC},${leadSC2})`);
+  sql(`DELETE FROM leads WHERE id IN (${leadSC},${leadSC2})`);
+  sql(`DELETE FROM products WHERE sku='${skuSC}'`);
+
   sql('DELETE FROM rate_limits');
   console.log('\n  (da don du lieu test)');
 

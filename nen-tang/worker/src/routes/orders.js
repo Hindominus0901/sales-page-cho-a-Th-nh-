@@ -5,6 +5,7 @@ import { transferInfo } from '../lib/vietqr.js';
 import { bankSafe, validatePhone } from '../lib/validate.js';
 import { notifyAsync } from '../lib/notify.js';
 import { loadUser } from '../auth/guard.js';
+import { sucChua } from '../commerce/suc-chua.js';
 
 // Bo ky tu de nham khi go tay: khong co 0/O, 1/I.
 const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -146,6 +147,28 @@ export async function createOrder(rc) {
   const pending = await store.getPendingOrderByLead(lead.id);
   if (pending && pending.product_sku === sp.sku && Number(pending.amount) === sp.price) {
     return json({ ok: true, reused: true, order: orderPayload(cfg, pending) });
+  }
+
+  // Het cho -> khong nhan don MOI.
+  //
+  // Cua nay PHAI nam sau doan tra lai don dang cho o tren. Nguoi da bam dang ky
+  // truoc khi lop day dang o giua duong chuyen khoan; chan ho o day la ho quet
+  // ma QR khong ra don, hoac te hon la da chuyen tien roi moi thay bao het cho.
+  // Don da mo thi cho ho tra cho xong - chi tu choi nguoi den sau.
+  //
+  // Chua dat `products.seats_total` thi `conBan` luon true, tuc la khong doi gi
+  // so voi hom nay. Xem worker/src/commerce/suc-chua.js.
+  const cho = await sucChua(store, sp.sku);
+  if (!cho.conBan) {
+    // Cau nhac Zalo chi hien khi THAT SU co kenh. cfg.zalo tra ve rong khi chua
+    // dien (config.js:157), va bao mot nguoi vua bi tu choi di "nhan Zalo" trong
+    // khi khong co Zalo nao de nhan la mot duong cut thu hai ngay sau duong cut
+    // thu nhat.
+    const kenh = cfg.zalo?.supportUrl || '';
+    return apiError(409, 'het_cho',
+      `Lớp đã đủ ${cho.tran} chỗ nên bên em tạm dừng nhận đăng ký.`
+      + (kenh ? ' Anh chị nhắn Zalo để em giữ chỗ khoá sau giúp nhé.' : ''),
+      { tran: cho.tran, zalo: kenh || null });
   }
 
   const code = await newOrderCode(store, cfg.product.orderPrefix);

@@ -18,6 +18,7 @@ import {
   vaoLopTuongThich, traCuuTuongThich,
 } from './routes/tuong-thich.js';
 import { bankWebhook } from './routes/webhook.js';
+import { sucChua } from './commerce/suc-chua.js';
 import { trackRef, getPortal, updateSettings, getLeaderboard } from './routes/affiliate.js';
 
 const ORDER_RE = /^\/api\/orders\/([A-Za-z0-9]+)$/;
@@ -86,6 +87,10 @@ export async function handleApi(rc) {
 
   if (pathname === '/api/config' && method === 'GET') {
     const { cfg } = rc;
+    // So cho con lai cua khoa hien tai. `tran: null` = chua dat tran, va khi do
+    // giao dien KHONG duoc hien gi ca - bia ra "con 30 cho" trong khi khong ai
+    // dem cho chinh la thu ma co che nay sinh ra de dap.
+    const cho = await sucChua(rc.store, cfg.product.sku);
     return json({
       ok: true,
       product: {
@@ -93,6 +98,11 @@ export async function handleApi(rc) {
         price: cfg.product.price,
         price_text: cfg.formatPrice(cfg.product.price),
         list_price_text: cfg.formatPrice(cfg.product.listPrice),
+      },
+      seats: cho.tran === null ? null : {
+        tran: cho.tran,
+        con_lai: cho.conLai,
+        con_ban: cho.conBan,
       },
       zalo: {
         url: cfg.zalo.supportUrl,

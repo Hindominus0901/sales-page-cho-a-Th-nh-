@@ -133,6 +133,7 @@ export default function AdminProducts() {
                   <th className="p-2.5 font-semibold">Loại</th>
                   <th className="p-2.5 text-right font-semibold">Giá</th>
                   <th className="p-2.5 text-right font-semibold">Hoa hồng</th>
+                  <th className="p-2.5 font-semibold">Sức chứa</th>
                   <th className="p-2.5 font-semibold">Mua xong nhận gì</th>
                   <th className="p-2.5 font-semibold">Đang bán</th>
                   <th className="p-2.5" />
@@ -292,6 +293,61 @@ function DongSanPham({ sp, khoaHoc, onSave, onDelete, dangLuu }) {
         <span className="ml-1 text-xs text-muted-foreground">%</span>
       </td>
 
+      {/* Suc chua theo khoa.
+
+          De TRONG = khong gioi han, va do la mac dinh. Dat mot con so vao day
+          la tu do `createOrder` tu choi don MOI khi da du - tuc la cau "Toi da
+          30 cho moi khoa" tren trang ban hang tro thanh su that thay vi mot loi
+          hua khong ai giu.
+
+          Nut "Mo khoa moi" la phan BAT BUOC di kem, khong phai tien ich: dat
+          tran ma khong co duong dat lai moc dem thi ban du 30 la cong dang ky
+          dong VINH VIEN, va khong mot nut nao trong ca trang quan tri mo lai
+          duoc. */}
+      <td className="p-2.5 align-top">
+        <div className="min-w-[190px] space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <CellInput
+              type="number"
+              min="0"
+              placeholder="—"
+              value={draft.seats_total === null || draft.seats_total === undefined
+                ? '' : draft.seats_total}
+              onChange={(e) => setDraft((d) => ({
+                ...d,
+                seats_total: e.target.value === '' ? null : Number(e.target.value),
+              }))}
+              className="w-20 text-right font-mono"
+              aria-label="Số chỗ tối đa mỗi khoá"
+            />
+            <span className="text-xs text-muted-foreground">chỗ/khoá</span>
+          </div>
+
+          {draft.seats_total === null || draft.seats_total === undefined ? (
+            <p className="text-[11px] text-muted-foreground">
+              Để trống = không giới hạn.
+            </p>
+          ) : (
+            <>
+              <p className="text-[11px] text-muted-foreground">
+                {draft.cohort_start_at
+                  ? `Đang đếm đơn đã trả tiền từ ${String(draft.cohort_start_at).slice(0, 10)}.`
+                  : 'Đang đếm toàn bộ đơn đã trả tiền từ trước tới nay.'}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full text-[11px]"
+                onClick={() => setDraft((d) => ({ ...d, cohort_start_at: new Date().toISOString() }))}
+                title="Đặt lại mốc đếm về hôm nay — đơn của khoá cũ thôi chiếm chỗ của khoá mới"
+              >
+                Mở khoá mới (đếm lại từ hôm nay)
+              </Button>
+            </>
+          )}
+        </div>
+      </td>
+
       <td className="p-2.5">
         <div className="min-w-[280px] space-y-2">
           {/* Ba duong giao hang, dung duoc rieng le hoac cung luc. Truoc day chi
@@ -391,6 +447,14 @@ function DongSanPham({ sp, khoaHoc, onSave, onDelete, dangLuu }) {
               grants_json: mo.map((ref) => ({ kind: 'course', ref })),
               is_active: !!draft.is_active,
               sort_order: Number(draft.sort_order) || 0,
+              // null phai di xuong nguyen ven: no la "khong gioi han", khac han
+              // so 0. `Number(null) || 0` se bien no thanh 0 - tuc la KHONG CON
+              // CHO NAO, dong cong thanh toan ngay lap tuc.
+              seats_total: draft.seats_total === null || draft.seats_total === undefined
+                ? null
+                : Number(draft.seats_total),
+              seats_offset: Number(draft.seats_offset) || 0,
+              cohort_start_at: draft.cohort_start_at || null,
             })}
           >
             Lưu
