@@ -20,6 +20,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import ONhapVideo from '@/components/ONhapVideo';
+import ONhapAnh from '@/components/ONhapAnh';
 import {
   CellInput, CellSelect, ConfirmDialog, EmptyBlock, LoadingBlock, PageHeader, Panel, QueryState,
   StatusPill, errText, fmtDate, fmtNumber,
@@ -395,11 +396,13 @@ function ChallengeDialog({ value, onClose, onSubmit, pending }) {
               <Input type="number" value={draft.duration_days ?? 0} onChange={set('duration_days')} className="rounded-xl" />
             </Field>
             <Field label="Ảnh bìa thử thách">
-              <Input
-                value={draft.banner_url || ''}
-                onChange={set('banner_url')}
-                className="rounded-xl"
-                placeholder="https://..."
+              {/* Truoc day o nay la mot o chu tran: khong nut tai len, nen
+                  nguoi van hanh co mot tam anh trong may thi khong co duong
+                  nao dua no len. Gio co ca hai duong - xem ONhapAnh.jsx. */}
+              <ONhapAnh
+                nhan="Ảnh bìa"
+                value={draft.banner_url}
+                onChange={(v) => setDraft((d) => ({ ...d, banner_url: v }))}
               />
             </Field>
             <Field label="Link video giới thiệu">

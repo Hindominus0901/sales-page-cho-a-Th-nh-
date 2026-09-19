@@ -15,6 +15,7 @@ import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Loader2, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import ONhapAnh from '@/components/ONhapAnh';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -334,8 +335,12 @@ export function CourseDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Ảnh bìa (URL)</Label>
-              <Input value={draft.thumbnail_url || ''} onChange={set('thumbnail_url')} className="rounded-xl" />
+              <Label className="text-xs">Ảnh bìa</Label>
+              <ONhapAnh
+                nhan="Ảnh bìa"
+                value={draft.thumbnail_url}
+                onChange={(v) => setDraft((d) => ({ ...d, thumbnail_url: v }))}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Cấp bậc tối thiểu</Label>

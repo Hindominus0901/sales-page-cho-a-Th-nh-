@@ -41,6 +41,11 @@ export const ADMIN_NAV = [
   // theo no, may chu chan tim/binh luan tren bai da an - nhung khong man hinh
   // nao bam duoc cai nut do. Quyen thi co, duong thi khong.
   { key: 'congDong', to: '/admin/cong-dong', label: 'Cộng đồng', icon: MessagesSquare },
+  // Duong /api/admin/tai-khoan-trung da chay duoc tu lau nhung KHONG man hinh
+  // nao goi - muon xem phai mo terminal go lenh, tuc la voi nguoi van hanh
+  // that thi no khong ton tai. Day la cau hoi anh Thanh hoi di hoi lai ("ai
+  // co nhieu hon mot tai khoan"), nen no can mot cho co dinh trong menu.
+  { key: 'taiKhoanTrung', to: '/admin/tai-khoan-trung', label: 'Tài khoản trùng', icon: ShieldAlert },
   { key: 'notify', to: '/admin/notify', label: 'Thông báo', icon: Bell },
   { key: 'staff', to: '/admin/staff', label: 'Nhân sự', icon: Briefcase },
   { key: 'events', to: '/admin/events', label: 'Lịch & sự kiện', icon: CalendarDays },

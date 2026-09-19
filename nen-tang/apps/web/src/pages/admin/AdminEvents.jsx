@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Trash2, Check, X, Users } from 'lucide-react';
 import BRAND from '@/brand.generated';
 import { base44 } from '@/api/base44Client';
+import ONhapAnh from '@/components/ONhapAnh';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -335,10 +336,14 @@ export default function AdminEvents() {
               <span className="text-sm font-medium">Link xem lại (dán sau khi buổi kết thúc)</span>
               <CellInput value={draft.recording_url || ''} onChange={set('recording_url')} placeholder="https://..." />
             </label>
-            <label className="grid gap-1 sm:col-span-2">
+            <div className="grid gap-1 sm:col-span-2">
               <span className="text-sm font-medium">Ảnh bìa buổi học</span>
-              <CellInput value={draft.cover_url || ''} onChange={set('cover_url')} placeholder="https://..." />
-            </label>
+              <ONhapAnh
+                nhan="Ảnh bìa"
+                value={draft.cover_url}
+                onChange={(v) => setDraft((d) => ({ ...d, cover_url: v }))}
+              />
+            </div>
 
             {/* Khung diem danh. TRUOC DAY khong co o nao o day, nen muon doi
                 gio chot 9:15 la phai sua thang trong co so du lieu - chi Thanh
