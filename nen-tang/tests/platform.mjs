@@ -84,15 +84,27 @@ function sql(query) {
 
 /**
  * `sql()` goi `wrangler d1 execute` trong khi `wrangler dev` dang chay, va lan
- * goi do lam dut ket noi keep-alive dang mo. Lan fetch ke tiep chet bang
- * UND_ERR_SOCKET va ca bo test dung giua chung - khong phai loi cua san pham:
- * chinh duong dan do goi lai bang curl thi 200. Thu lai dung mot lan.
+ * goi do lam dut ket noi keep-alive dang mo. Lan fetch ke tiep chet va ca bo
+ * test dung giua chung - khong phai loi cua san pham: chinh duong dan do goi
+ * lai bang curl thi 200. Thu lai dung mot lan.
+ *
+ * BA ma loi, khong phai mot. Ban dau cho nay chi bat UND_ERR_SOCKET, va bo test
+ * VAN chet - lan nay bang `write EPIPE`. Hai ma do la hai nhip cua cung mot
+ * chuyen: undici lay mot socket trong be ra dung lai, may chu thi da dong no.
+ * Doc truoc khi ghi -> UND_ERR_SOCKET ("other side closed"); ghi truoc khi doc
+ * -> EPIPE. ECONNRESET la nhip thu ba.
+ *
+ * THU LAI O DAY AN TOAN KE CA VOI POST: ca ba ma deu co nghia la byte dau tien
+ * chua bao gio toi duoc may chu. Da doi chieu: luc bo test chet, workerd khong
+ * ghi nhan mot request loi nao - vi no chua he nhan duoc gi.
  */
+const MA_LOI_SOCKET_CHET = new Set(['UND_ERR_SOCKET', 'EPIPE', 'ECONNRESET']);
+
 async function fetchLaiMotLan(url, init) {
   try {
     return await fetch(url, init);
   } catch (err) {
-    if (err?.cause?.code !== 'UND_ERR_SOCKET') throw err;
+    if (!MA_LOI_SOCKET_CHET.has(err?.cause?.code)) throw err;
     return fetch(url, init);
   }
 }

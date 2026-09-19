@@ -28,6 +28,34 @@ const check = (name, ok, detail) => {
   }
 };
 
+/**
+ * `sqlQuery()` goi `wrangler d1 execute` trong khi `wrangler dev` dang chay, va
+ * lan goi do lam dut ket noi keep-alive dang mo. Lan fetch ke tiep chet, va ca
+ * bo test dung giua chung.
+ *
+ * Bo nay tung chet deu o bai 47 - ngay sau hai lenh sqlQuery lien tiep - voi
+ * `TypeError: fetch failed / other side closed`. Da mat nhieu gio di tim loi
+ * trong san pham: may chu van song, van tra /api/health 200, va workerd KHONG
+ * ghi nhan mot request loi nao - vi request chua bao gio toi noi.
+ *
+ * tests/platform.mjs da gap va da giai chuyen nay tu truoc (xem chu thich o
+ * fetchLaiMotLan ben do). Bo nay thi chua co lop do nao - nen no chet, con bo
+ * kia thi khong. Day la ly do that su, khong phai "may hom nay yeu".
+ *
+ * Thu lai mot lan la an toan ke ca voi POST: ca ba ma loi deu co nghia la byte
+ * dau tien chua bao gio toi duoc may chu.
+ */
+const MA_LOI_SOCKET_CHET = new Set(['UND_ERR_SOCKET', 'EPIPE', 'ECONNRESET']);
+
+async function fetchLaiMotLan(url, init) {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    if (!MA_LOI_SOCKET_CHET.has(err?.cause?.code)) throw err;
+    return fetch(url, init);
+  }
+}
+
 /** Moi "trinh duyet" gia lap giu mot ro cookie rieng. */
 function newBrowser() {
   const jar = {};
@@ -41,7 +69,7 @@ function newBrowser() {
       if (!'GET HEAD'.includes(method) && jar.pf_csrf && extraHeaders['X-CSRF-Token'] === undefined) {
         headers['X-CSRF-Token'] = jar.pf_csrf;
       }
-      const res = await fetch(BASE + path, {
+      const res = await fetchLaiMotLan(BASE + path, {
         method, headers, body: body === undefined ? undefined : JSON.stringify(body), redirect: 'manual',
       });
       for (const c of res.headers.getSetCookie?.() || []) {

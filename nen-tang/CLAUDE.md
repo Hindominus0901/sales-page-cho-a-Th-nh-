@@ -65,6 +65,24 @@ làm" trong `README.md`.
   `ps -C node` trước khi bắt đầu một lượt mới. Triệu chứng khi vấp phải là hàng loạt bài đỏ
   vì `unauthorized` / `invalid_credentials` — trông y hệt một lỗi xác thực thật.
 
+  Đừng tìm tiến trình bằng `pgrep -f wrangler`: mẫu đó khớp cả dòng lệnh của **chính lệnh
+  bạn đang gõ**, nên bạn tự giết shell của mình và không hiểu vì sao không có output.
+  Dùng `lsof -ti tcp:8787` hoặc một script rời.
+
+- **`tests/auth.mjs` chết ngang với `UND_ERR_SOCKET` = môi trường, không phải mã nguồn.**
+  Triệu chứng: đang xanh đều thì đứt ở khoảng bài 47 với `TypeError: fetch failed` /
+  `other side closed`. Máy chủ vẫn sống và vẫn trả `/api/health` 200, workerd **không** ghi
+  nhận request lỗi nào — tức là request chưa bao giờ tới nơi.
+
+  Đã mất nhiều giờ vì chuyện này. Bốn giả thuyết đều bị thí nghiệm bác bỏ: máy chủ sập
+  (không), hết giờ nhàn rỗi (rảnh 15s vẫn gọi được), `wrangler d1 execute` làm đứt (không),
+  cuộc đua keep-alive ở khoảng nghỉ 2,6s (0/20 lần đứt).
+
+  Thứ **thật sự** làm nó hết: container mới. Cùng commit, cùng lệnh, chạy trên container vừa
+  khởi động lại thì `auth` đi trọn 53/53. Cơ chế chính xác chưa chỉ ra được, nhưng điều kiện
+  thì rõ: nó chỉ xảy ra trên container đã chạy lâu. Nếu gặp, **đừng đi tìm lỗi trong bản vá
+  của mình** — khởi động lại môi trường (hoặc xoá `.wrangler/state`) rồi chạy lại trước đã.
+
 - **Bài test không được XOÁ dòng cấu hình mà hệ thống sở hữu.** Từ migration 0018, các khoá
   `st-*` trong `app_settings` là cấu hình thật có giá trị mặc định. Bài test cần đổi thì đổi
   rồi **trả lại giá trị gốc**, đừng `DELETE` — xoá đi là lượt chạy sau không tìm thấy khoá và
