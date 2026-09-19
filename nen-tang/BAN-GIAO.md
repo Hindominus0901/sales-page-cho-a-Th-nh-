@@ -3,6 +3,22 @@
 Viết cho **người vận hành**, không phải lập trình viên. Ai chưa từng mở repo này
 vẫn đọc và làm theo được.
 
+> ### Nếu anh nhận bộ này dưới dạng file zip
+>
+> File zip là **một bản chụp tại một thời điểm**. Nó đủ để chạy, để sửa, để
+> deploy — nhưng có hai chỗ hụt, nói trước để anh khỏi mất công tìm:
+>
+> **1. Không tự cập nhật được.** Zip không kèm lịch sử Git, nên lệnh
+> `git pull` sẽ không chạy. Lần sau có bản sửa, anh phải xin file zip mới rồi
+> chép đè — dễ lệch phiên bản, và dễ mất những thứ anh đã tự sửa.
+>
+> **2. Chưa nhờ AI sửa hộ được ngay** (Phần 6b). Claude Code trên web cần một
+> repo GitHub để nối vào, mà zip thì không có.
+>
+> Cả hai chỗ hụt này biến mất khi anh được mời vào repo GitHub của dự án —
+> một lần, rồi từ đó `git pull` là có bản mới nhất. Nếu định dùng lâu dài,
+> xin quyền GitHub là việc đáng làm sớm.
+
 ---
 
 ## Phần 0 — Trạng thái thật, ngày bàn giao
@@ -103,7 +119,8 @@ Tài khoản Cloudflare **đã là của anh Thành** — tên miền, Worker, c
 **Kiểu A — anh Thành tự làm chủ hoàn toàn.** Chọn kiểu này nếu anh Thành (hoặc
 người kỹ thuật của anh ấy) sẽ tự chạy deploy mỗi khi sửa gì.
 
-1. Anh Thành chép mã nguồn về máy mình: `git clone`, `npm ci`.
+1. Anh Thành có mã nguồn trên máy mình — giải nén file zip được gửi, hoặc
+   `git clone` nếu đã được mời vào repo GitHub. Rồi `npm install`.
 2. Anh Thành **tự tạo API token mới** trên Cloudflare của mình, điền vào `.env`
    của máy mình cùng các giá trị khác.
 3. Đổi mật khẩu quản trị (Phần 5).
